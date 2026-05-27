@@ -73,8 +73,7 @@
         input[type="text"], textarea, select, input[type="number"], input[type="password"] { width: 100%; padding: 14px; border: 1px solid var(--ui-border); border-radius: 8px; font-family: inherit; font-size: 15px; transition: 0.3s; background-color: var(--ui-input-bg); color: var(--ui-text); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         input[type="text"]:focus, select:focus, input[type="password"]:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(74, 0, 224, 0.1); }
 
-        /* تعديلات محرر الأسئلة ليدعم الصور */
-        .rich-textarea { width: 100%; height: 280px; padding: 14px; border: 1px solid var(--ui-border); border-radius: 8px; font-family: inherit; font-size: 15px; background-color: var(--ui-input-bg); color: var(--ui-text); overflow-y: auto; outline: none; transition: 0.3s; line-height: 1.8; }
+        .rich-textarea { width: 100%; height: 350px; padding: 14px; border: 1px solid var(--ui-border); border-radius: 0 0 8px 8px; font-family: inherit; font-size: 15px; background-color: var(--ui-input-bg); color: var(--ui-text); overflow-y: auto; outline: none; transition: 0.3s; line-height: 1.8; unicode-bidi: plaintext; }
         .rich-textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 0, 224, 0.1); }
         .rich-textarea[placeholder]:empty:before { content: attr(placeholder); color: #94a3b8; pointer-events: none; display: block; }
         .rich-textarea img { max-width: 100%; cursor: pointer; transition: 0.2s; border-radius: 6px; border: 2px solid transparent; }
@@ -85,14 +84,16 @@
         .editor-toolbar button:hover { background: #e2e8f0; }
         .editor-toolbar .divider { width: 1px; height: 24px; background: #cbd5e1; margin: 0 4px; }
         
+        .btn-sci { font-family: 'Times New Roman', serif !important; font-size: 16px !important; font-weight: bold !important; color: #065f46 !important; }
+        .btn-sci:hover { background: var(--primary-color) !important; color: white !important; border-color: var(--primary-color) !important; }
+
         .editor-area-wrapper { background-color: #e2e8f0; padding: 40px 20px; border: 1px solid var(--ui-border); border-radius: 0 0 8px 8px; overflow-y: auto; height: 800px; display: flex; justify-content: center; }
-        .editor-area { background: #ffffff; color: #000000; width: 210mm; min-height: 297mm; padding: 25mm 20mm; box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05); font-size: 18px; line-height: 1.8; outline: none; word-wrap: break-word; }
+        .editor-area { background: #ffffff; color: #000000; width: 210mm; min-height: 297mm; padding: 25mm 20mm; box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05); font-size: 18px; line-height: 1.8; outline: none; word-wrap: break-word; unicode-bidi: plaintext;}
         .editor-area img { max-width: 100%; border-radius: 4px; margin: 15px 0; border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
         .editor-area img:hover { border-color: var(--primary-color); }
         .editor-area table { width: 100%; border-collapse: collapse; margin: 20px 0; }
         .editor-area td, .editor-area th { border: 1px solid #94a3b8; padding: 12px; }
 
-        /* شريط أدوات الصور المطور */
         .image-toolbar { position: absolute; background: white; border: 1px solid var(--ui-border); padding: 10px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); z-index: 10000; display: none; gap: 8px; flex-direction: column; width: 220px; text-align: center; }
         .image-toolbar .toolbar-row { display: flex; gap: 6px; justify-content: center; }
         .image-toolbar button { flex: 1; background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 5px; border-radius: 6px; cursor: pointer; font-weight: bold; color: #1e293b; font-size: 13px; font-family: inherit; transition: 0.2s; }
@@ -120,20 +121,18 @@
         .exam-header-print div { flex: 1; text-align: center; } .exam-header-print .right { text-align: right; } .exam-header-print .left { text-align: left; }
         .student-info-print { border: 2px solid var(--primary-color); border-radius: 8px; padding: 15px; margin-bottom: 25px; font-size: 16px; font-weight: bold; color: var(--text-color); background: rgba(255,255,255,0.9); display: flex; justify-content: space-between; }
         .two-columns-layout { column-count: 2; column-gap: 40px; column-rule: 1px solid #e2e8f0; }
-
-        .section-title-wrapper { text-align: var(--title-align); margin-bottom: 30px; width: 100%; }
-        .section-title { font-size: var(--title-size); color: var(--title-color); background: var(--title-bg); padding: var(--title-padding); border-radius: var(--title-radius); border: var(--title-border); display: inline-block; max-width: 95%; word-wrap: break-word; box-shadow: var(--title-shadow); font-weight: 900;}
         
-        .content-card { background-color: var(--text-bg-color) !important; border: 1px solid var(--card-border-color); border-right: 6px solid var(--primary-color); padding: 20px; margin-bottom: 16px; border-radius: var(--card-radius); position: relative; z-index: 10; width: 100%; box-sizing: border-box; max-width: 100%; display: inline-block; }
+        .content-card { background-color: var(--text-bg-color) !important; border: 1px solid var(--card-border-color); border-right: 6px solid var(--primary-color); padding: 20px; margin-bottom: 16px; border-radius: var(--card-radius); position: relative; z-index: 10; width: 100%; box-sizing: border-box; max-width: 100%; display: inline-block; clear: both; }
         .content-card.mode-text { border: none !important; background: transparent !important; padding: 5px 0 !important; border-radius: 0 !important; box-shadow: none !important; margin-bottom: 12px; }
-        .q-text { font-size: var(--q-font-size); color: var(--q-color); font-weight: 900; margin-bottom: 15px; line-height: 1.6; unicode-bidi: plaintext; }
         
-        .options-list { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; padding: 0; margin: 0; } 
-        .option-item { font-size: var(--opt-font-size); color: var(--opt-color); padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-weight: 700; background-color: #f8fafc; box-sizing: border-box; word-wrap: break-word; transition: 0.2s; unicode-bidi: plaintext; }
+        .q-text { font-size: var(--q-font-size); color: var(--q-color); font-weight: 900; margin-bottom: 15px; line-height: 1.6; unicode-bidi: plaintext; text-align: start; }
+        
+        .options-list { display: flex; flex-wrap: wrap; gap: 15px; list-style: none; padding: 0; margin: 10px 0 0 0; width: 100%; box-sizing: border-box; } 
+        .option-item { font-size: var(--opt-font-size); color: var(--opt-color); padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-weight: 700; background-color: #f8fafc; box-sizing: border-box; word-wrap: break-word; transition: 0.2s; unicode-bidi: plaintext; text-align: start; }
         .content-card.mode-text .option-item { border: none; background: transparent; padding: 4px 0; }
 
         .options-list.layout-row { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: flex-start !important; }
-        .options-list.layout-row .option-item { flex: 1 1 auto !important; min-width: 20% !important; max-width: 100% !important; }
+        .options-list.layout-row .option-item { flex: 1 1 auto !important; min-width: 22% !important; max-width: 100% !important; margin: 0 !important; }
         .options-list.layout-grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)) !important; gap: 12px !important; }
         .options-list.layout-grid .option-item { width: 100% !important; margin: 0 !important; }
         .options-list.layout-col { display: flex !important; flex-direction: column !important; }
@@ -250,25 +249,23 @@
             .word-preview-area { padding: 0 !important; background: transparent !important; display: block !important; overflow: visible !important; }
             
             .print-border-overlay { display: var(--print-border-display, none) !important; position: fixed; top: 8mm; left: 8mm; right: 8mm; bottom: 8mm; border: var(--border-width) var(--border-style) var(--border-color) !important; border-radius: var(--hdr-radius, 0) !important; z-index: 9999; pointer-events: none; }
-            .pdf-page { min-height: 100vh !important; height: auto !important; padding: 12mm 15mm !important; box-sizing: border-box; margin: 0; width: 100% !important; border: none !important; background-color: transparent !important; transform: none !important; box-shadow: none !important; page-break-after: always; }
+            .pdf-page { min-height: 100vh !important; height: auto !important; padding: 25mm 15mm 20mm 15mm !important; box-sizing: border-box; margin: 0; width: 100% !important; border: none !important; background-color: transparent !important; transform: none !important; box-shadow: none !important; page-break-after: always; }
             
             .exam-header-print { margin-bottom: 15px !important; font-size: 14pt !important; padding-bottom: 8px !important; }
             .student-info-print { padding: 10px 15px !important; margin-bottom: 20px !important; font-size: 13pt !important; border-width: 1px !important; }
-            .section-title-wrapper { margin-bottom: 20px !important; }
-            .section-title { font-size: 18pt !important; padding: 8px 25px !important; }
             
-            .content-card { page-break-inside: avoid !important; break-inside: avoid !important; display: block !important; width: 100% !important; padding: 12px 15px !important; margin-bottom: 12px !important; border-width: 1px !important; border-right-width: 4px !important; }
+            .content-card { page-break-inside: avoid !important; break-inside: avoid !important; display: block !important; width: 100% !important; padding: 12px 15px !important; margin-bottom: 25px !important; clear: both !important; border-width: 1px !important; border-right-width: 4px !important; }
             .content-card.mode-text { padding: 0 !important; margin-bottom: 8px !important; border: none !important; box-shadow: none !important; }
             .q-text { font-size: 14pt !important; margin-bottom: 10px !important; line-height: 1.4 !important; }
             
-            .options-list.layout-row { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: flex-start !important; gap: 8px !important; }
-            .options-list.layout-row .option-item { flex: 1 1 auto !important; width: auto !important; max-width: 100% !important; font-size: 12pt !important; border: none !important; background: transparent !important; padding: 4px 6px !important; margin: 0 !important; white-space: normal !important; text-align: right !important; }
+            .options-list.layout-row { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: flex-start !important; gap: 15px !important; width: 100% !important; }
+            .options-list.layout-row .option-item { flex: 1 1 auto !important; width: auto !important; max-width: 100% !important; font-size: 12pt !important; border: none !important; background: transparent !important; padding: 4px 6px !important; margin: 0 !important; white-space: normal !important; text-align: start !important; }
             
             .options-list.layout-grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)) !important; gap: 10px !important; }
-            .options-list.layout-grid .option-item { width: 100% !important; margin: 0 !important; font-size: 12pt !important; border: none !important; background: transparent !important; padding: 4px 6px !important; }
+            .options-list.layout-grid .option-item { width: 100% !important; margin: 0 !important; font-size: 12pt !important; border: none !important; background: transparent !important; padding: 4px 6px !important; text-align: start !important; }
             
             .options-list.layout-col { display: flex !important; flex-direction: column !important; gap: 6px !important; }
-            .options-list.layout-col .option-item { width: 100% !important; margin: 0 !important; font-size: 12pt !important; border: none !important; background: transparent !important; padding: 4px 6px !important; }
+            .options-list.layout-col .option-item { width: 100% !important; margin: 0 !important; font-size: 12pt !important; border: none !important; background: transparent !important; padding: 4px 6px !important; text-align: start !important; }
             
             .print-mode-text .general-text-display { line-height: 1.6; }
 
@@ -289,7 +286,7 @@
         <button type="button" onclick="alignImage('left')" title="محاذاة لليسار">⬅️ يسار</button>
     </div>
     <div class="toolbar-row">
-        <button type="button" onclick="resizeImage('30%')" title="حجم صغير جداً">S</button>
+        <button type="button" onclick="resizeImage('30%')" title="حجم صغير">S</button>
         <button type="button" onclick="resizeImage('60%')" title="حجم متوسط">M</button>
         <button type="button" onclick="resizeImage('100%')" title="حجم كامل">L</button>
     </div>
@@ -309,8 +306,7 @@
             <span style="font-size: 20px;">🔙</span> العودة للمحرر
         </button>
     </div>
-    <div class="word-preview-area" id="wordPrintPreviewArea">
-    </div>
+    <div class="word-preview-area" id="wordPrintPreviewArea"></div>
 </div>
 
 <div class="setup-container" id="setupContainer">
@@ -345,7 +341,6 @@
 
     <div class="settings-panel" id="accountHistoryPanel">
         <h3>🔐 نظام الحسابات السحابي (Firebase) وسجل المستندات الكلي</h3>
-        
         <div id="authSection">
             <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">قم بتسجيل الدخول لحفظ بياناتك في السحابة ومزامنة تراخيص الـ VIP الخاصة بك بين أجهزتك (الحد الأقصى 3 أجهزة).</p>
             <div class="settings-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -357,7 +352,6 @@
                 </div>
             </div>
         </div>
-
         <div id="userProfileSection" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--ui-border); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -369,7 +363,6 @@
                     <button class="btn-tool btn-danger" onclick="handleLogoutCloud()" style="padding: 8px 15px;">🚪 تسجيل خروج</button>
                 </div>
             </div>
-            
             <h4 style="margin: 10px 0; font-weight: 900; color: var(--ui-text);">🗂️ سجل المستندات السحابي المكتمل:</h4>
             <div id="historyListContainer" style="max-height: 220px; overflow-y: auto; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border);">
                 <p style="color: #64748b; font-size: 13px; text-align: center; margin: 10px 0;">السجل فارغ حالياً، سيتم مزامنة مشروعك تلقائياً للسحابة بمجرد كتابته.</p>
@@ -378,16 +371,23 @@
     </div>
 
     <div id="questionsTab" class="input-section active">
+        
+        <div class="system-switcher-container" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; background: var(--ui-input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--ui-border); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <div style="font-weight: 900; color: var(--primary-color); align-self: center; margin-left: 10px; font-size: 16px;">أنظمة الإدخال والتنسيق المتقدم:</div>
+            <button id="sysBtnArabic" class="btn-tool active" onclick="setQuestionSystem('arabic')" style="border-color: var(--primary-color); background: var(--primary-color); color: white; flex: 1; justify-content: center; min-width: 200px;">🇸🇦 النظام العربي المطور (Default)</button>
+            <button id="sysBtnForeign" class="btn-tool" onclick="setQuestionSystem('foreign')" style="flex: 1; justify-content: center; min-width: 200px;">🇬🇧 نظام اللغات الأجنبية (LTR)</button>
+            <button id="sysBtnScience" class="btn-tool" onclick="setQuestionSystem('science')" style="flex: 1; justify-content: center; min-width: 200px;">⚛️ النظام العلمي (الرياضيات والعلوم)</button>
+        </div>
+
         <div style="margin-bottom: 20px; background: var(--ui-container); padding: 20px; border-radius: 8px; border: 1px solid var(--ui-border); display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <span style="font-weight: bold; color: var(--ui-text); display: flex; align-items: center; margin-left: 10px;">أدوات الإدراج:</span>
-                <button class="btn-tool" onclick="insertQuestionTemplate('mcq')" style="border-color: #10b981; color: #10b981;">➕ سؤال اختياري</button>
-                <button class="btn-tool" onclick="insertQuestionTemplate('tf')" style="border-color: #f59e0b; color: #d97706;">➕ سؤال صح/خطأ</button>
-                <button class="btn-tool" onclick="insertQuestionTemplate('essay')" style="border-color: #8b5cf6; color: #8b5cf6;">➕ سؤال مقالي</button>
+                <button id="btnInsertMCQ" class="btn-tool" onclick="insertQuestionTemplate('mcq')" style="border-color: #10b981; color: #10b981;">➕ سؤال اختياري</button>
+                <button id="btnInsertTF" class="btn-tool" onclick="insertQuestionTemplate('tf')" style="border-color: #f59e0b; color: #d97706;">➕ سؤال صح/خطأ</button>
+                <button id="btnInsertEssay" class="btn-tool" onclick="insertQuestionTemplate('essay')" style="border-color: #8b5cf6; color: #8b5cf6;">➕ سؤال مقالي</button>
                 <button class="btn-tool" onclick="document.getElementById('qImageUpload').click()" style="border-color: #3b82f6; color: #3b82f6;">🖼️ إدراج صورة</button>
                 <input type="file" id="qImageUpload" accept="image/*" style="display:none" onchange="insertImageToQuestion(event)">
             </div>
-            
             <div style="display: flex; gap: 10px; flex-wrap: wrap; border-right: 1px solid var(--ui-border); padding-right: 15px;">
                 <button class="btn-tool" onclick="showAnalytics()">📊 تحليل البنك</button>
                 <button class="btn-tool" onclick="shuffleQuestions()">🔀 خلط شامل</button>
@@ -396,54 +396,89 @@
         </div>
 
         <div class="grid-layout">
-            <div class="form-group"><label>📌 عنوان صفحة الأسئلة الأساسي:</label><input type="text" id="qTitleInput" value="الأسئلة والامتحانات"></div>
-            <div class="form-group"><label>📌 عنوان صفحة الإجابات:</label><input type="text" id="aTitleInput" value="نموذج الإجابات والحلول"></div>
-        </div>
-        <div class="grid-layout">
             <div class="form-group">
-                <label>1. محرر الأسئلة: (الصق أو اكتب الأسئلة هنا - يدعم الصور بجميع أحجامها)</label>
-                <div id="questionsInput" contenteditable="true" class="rich-textarea" placeholder="1. اكتب سؤالك هنا...&#10;أ) الخيار الأول&#10;ب) الخيار الثاني [✓]&#10;ج) الخيار الثالث&#10;د) الخيار الرابع"></div>
+                <label>1. محرر العناوين والأسئلة:</label>
+                <div class="editor-toolbar" style="border-radius: 8px 8px 0 0; border: 1px solid var(--ui-border); border-bottom: none;">
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('bold')" title="عريض" style="font-weight:900;">B</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('italic')" title="مائل" style="font-style:italic;">I</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('underline')" title="تسطير" style="text-decoration:underline;">U</button>
+                    <div class="divider"></div>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyRight')" title="محاذاة لليمين">➡️</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyCenter')" title="توسيط">↔️</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyLeft')" title="محاذاة لليسار">⬅️</button>
+                    <div class="divider"></div>
+                    <input type="color" onchange="formatText('foreColor', this.value)" title="لون النص" style="width:30px; height:30px; padding:0; border:none; border-radius:4px;">
+                    <select onchange="formatText('fontSize', this.value)" title="حجم الخط" style="max-width: 90px; height: 32px; padding: 2px 8px;">
+                        <option value="">حجم</option><option value="3">عادي</option><option value="4">متوسط</option><option value="5">كبير</option><option value="6">ضخم</option><option value="7">عملاق</option>
+                    </select>
+                </div>
+                <div id="scientificToolbar" class="editor-toolbar" style="display:none; border-radius: 0; border-bottom: none; background: #f0fdf4; border-top: 1px dashed var(--ui-border); padding: 8px; border-left: 1px solid var(--ui-border); border-right: 1px solid var(--ui-border);">
+                    <span style="font-size:12px; font-weight:bold; color:#065f46; margin-left:5px;">رموز علمية:</span>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( x^2 \\)')">x²</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( x_2 \\)')">x₂</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\frac{a}{b} \\)')">a/b</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\sqrt{x} \\)')">√</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\sum \\)')">∑</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\infty \\)')">∞</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\pm \\)')">±</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\rightarrow \\)')">→</button>
+                    <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\Delta \\)')">Δ</button>
+                    <div class="divider"></div>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="insertMathEquation()" style="color:#ef4444; font-weight:bold; font-size: 13px;">{ } كتابة كود LaTeX حر</button>
+                </div>
+                <div id="questionsInput" contenteditable="true" class="rich-textarea" dir="auto" placeholder="اكتب العنوان الرئيسي هنا، ثم انزل سطراً واكتب:&#10;1. اكتب سؤالك الأول هنا...&#10;أ) الخيار الأول&#10;ب) الخيار الثاني [✓]&#10;ج) الخيار الثالث&#10;د) الخيار الرابع"></div>
             </div>
+            
             <div class="form-group">
                 <label>2. مفتاح الإجابات: (يتم التوليد تلقائياً أو الصق يدوياً)</label>
-                <div id="answersInput" contenteditable="true" class="rich-textarea" placeholder="إذا لم تضع الإجابة بجوار الخيار، اكتبها هنا:&#10;1- ب&#10;2- صح"></div>
+                <div class="editor-toolbar" style="border-radius: 8px 8px 0 0; border: 1px solid var(--ui-border); border-bottom: none;">
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('bold')" title="عريض" style="font-weight:900;">B</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('italic')" title="مائل" style="font-style:italic;">I</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('underline')" title="تسطير" style="text-decoration:underline;">U</button>
+                    <div class="divider"></div>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyRight')" title="محاذاة لليمين">➡️</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyCenter')" title="توسيط">↔️</button>
+                    <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyLeft')" title="محاذاة لليسار">⬅️</button>
+                    <div class="divider"></div>
+                    <input type="color" onchange="formatText('foreColor', this.value)" title="لون النص" style="width:30px; height:30px; padding:0; border:none; border-radius:4px;">
+                    <select onchange="formatText('fontSize', this.value)" title="حجم الخط" style="max-width: 90px; height: 32px; padding: 2px 8px;">
+                        <option value="">حجم</option><option value="3">عادي</option><option value="4">متوسط</option><option value="5">كبير</option><option value="6">ضخم</option><option value="7">عملاق</option>
+                    </select>
+                </div>
+                <div id="answersInput" contenteditable="true" class="rich-textarea" dir="auto" placeholder="عنوان صفحة الإجابات هنا...&#10;إذا لم تضع الإجابة بجوار الخيار، اكتبها هنا:&#10;1- ب&#10;2- صح"></div>
             </div>
         </div>
     </div>
 
     <div id="textTab" class="input-section">
-        <div class="form-group"><label>📌 عنوان المستند:</label><input type="text" id="textTitleInput" value="المستند العام"></div>
         <div class="form-group">
-            <label>📝 محرر المستندات المتقدم (متوافق مع أدوات وتنسيقات Word):</label>
+            <label>📝 محرر المستندات المتقدم (متوافق مع أدوات وتنسيقات Word مجاناً):</label>
             <div class="editor-toolbar">
-                <button type="button" onclick="formatText('undo')" title="تراجع">↩️</button>
-                <button type="button" onclick="formatText('redo')" title="إعادة">↪️</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('bold')" title="عريض" style="font-weight:900;">B</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('italic')" title="مائل" style="font-style:italic;">I</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('underline')" title="تسطير" style="text-decoration:underline;">U</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('strikeThrough')" title="يتوسطه خط" style="text-decoration:line-through;">S</button>
                 <div class="divider"></div>
-                <button type="button" onclick="formatText('bold')" title="عريض" style="font-weight:900;">B</button>
-                <button type="button" onclick="formatText('italic')" title="مائل" style="font-style:italic;">I</button>
-                <button type="button" onclick="formatText('underline')" title="تسطير" style="text-decoration:underline;">U</button>
-                <button type="button" onclick="formatText('strikeThrough')" title="يتوسطه خط" style="text-decoration:line-through;">S</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyRight')" title="محاذاة لليمين">➡️</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyCenter')" title="توسيط">↔️</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('justifyLeft')" title="محاذاة لليسار">⬅️</button>
                 <div class="divider"></div>
-                <button type="button" onclick="formatText('justifyRight')" title="محاذاة لليمين">➡️</button>
-                <button type="button" onclick="formatText('justifyCenter')" title="توسيط">↔️</button>
-                <button type="button" onclick="formatText('justifyLeft')" title="محاذاة لليسار">⬅️</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('insertOrderedList')" title="قائمة رقمية">1.</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="formatText('insertUnorderedList')" title="قائمة نقطية">•</button>
                 <div class="divider"></div>
-                <button type="button" onclick="formatText('insertOrderedList')" title="قائمة رقمية">1.</button>
-                <button type="button" onclick="formatText('insertUnorderedList')" title="قائمة نقطية">•</button>
-                <div class="divider"></div>
-                <input type="color" id="fontColorPicker" onchange="formatText('foreColor', this.value)" title="لون النص" style="width:30px; height:30px; padding:0; border:none; border-radius:4px;">
-                <input type="color" id="hiliteColorPicker" onchange="formatText('hiliteColor', this.value)" title="لون التمييز" style="width:30px; height:30px; padding:0; border:none; border-radius:4px;" value="#ffff00">
-                <select id="fontSizeSelect" onchange="formatText('fontSize', this.value)" title="حجم الخط" style="max-width: 90px; height: 32px; padding: 2px 8px;">
-                    <option value="">حجم</option><option value="3">عادي</option><option value="4">متوسط</option><option value="5">كبير</option><option value="6">ضخم</option>
+                <input type="color" onchange="formatText('foreColor', this.value)" title="لون النص" style="width:30px; height:30px; padding:0; border:none; border-radius:4px;">
+                <input type="color" onchange="formatText('hiliteColor', this.value)" title="لون التمييز" style="width:30px; height:30px; padding:0; border:none; border-radius:4px;" value="#ffff00">
+                <select onchange="formatText('fontSize', this.value)" title="حجم الخط" style="max-width: 90px; height: 32px; padding: 2px 8px;">
+                    <option value="">حجم</option><option value="3">عادي</option><option value="4">متوسط</option><option value="5">كبير</option><option value="6">ضخم</option><option value="7">عملاق</option>
                 </select>
                 <div class="divider"></div>
-                <button type="button" onclick="document.getElementById('imageUploadEditor').click()" style="color:#3b82f6;">🖼️ إدراج صورة</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="document.getElementById('imageUploadEditor').click()" style="color:#3b82f6;">🖼️ إدراج صورة</button>
                 <input type="file" id="imageUploadEditor" accept="image/*" style="display:none" onchange="insertImage(event)">
-                <button type="button" onclick="insertTable()" style="color:#10b981;">📊 جدول</button>
-                <button type="button" onclick="insertMathEquation()" style="color:#ef4444; font-weight:bold;">∑ معادلة LaTeX</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="insertTable()" style="color:#10b981;">📊 جدول</button>
+                <button type="button" onmousedown="event.preventDefault();" onclick="insertMathEquation()" style="color:#ef4444; font-weight:bold;">∑ معادلة LaTeX</button>
             </div>
             <div class="editor-area-wrapper">
-                <div id="generalTextInput" contenteditable="true" class="editor-area">اكتب محتوى المستند الخاص بك هنا...</div>
+                <div id="generalTextInput" contenteditable="true" class="editor-area" dir="auto">اكتب محتوى المستند الخاص بك هنا...</div>
             </div>
         </div>
     </div>
@@ -474,41 +509,11 @@
     <div class="settings-panel" id="bubbleSettingsPanel">
         <h3>⭕ تنسيقات ومحاذاة البابل شيت (Bubble Sheet)</h3>
         <div class="settings-grid">
-            <div class="form-group">
-                <label>شكل الفقاعة</label>
-                <select id="bubbleShape">
-                    <option value="circle">دائرة ⭕</option>
-                    <option value="square">مربع ⏹️</option>
-                    <option value="oval">بيضاوي ⬭</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>موضع أحرف الإجابة</label>
-                <select id="bubbleTextPosition">
-                    <option value="above">أعلى الفقاعة (الأفضل للمسح)</option>
-                    <option value="beside">بجانب الفقاعة</option>
-                    <option value="inside">داخل الفقاعة</option>
-                    <option value="hidden">بدون أحرف (تصميم أصم)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>نوع الأحرف</label>
-                <select id="bubbleLettersType">
-                    <option value="arabic">أ ، ب ، ج ، د ، هـ ، و</option>
-                    <option value="english">A, B, C, D, E, F</option>
-                    <option value="numbers">1, 2, 3, 4, 5, 6</option>
-                </select>
-            </div>
+            <div class="form-group"><label>شكل الفقاعة</label><select id="bubbleShape"><option value="circle">دائرة ⭕</option><option value="square">مربع ⏹️</option><option value="oval">بيضاوي ⬭</option></select></div>
+            <div class="form-group"><label>موضع أحرف الإجابة</label><select id="bubbleTextPosition"><option value="above">أعلى الفقاعة</option><option value="beside">بجانب الفقاعة</option><option value="inside">داخل الفقاعة</option><option value="hidden">بدون أحرف</option></select></div>
+            <div class="form-group"><label>نوع الأحرف</label><select id="bubbleLettersType"><option value="arabic">أ ، ب ، ج ، د ، هـ ، و</option><option value="english">A, B, C, D, E, F</option><option value="numbers">1, 2, 3, 4, 5, 6</option></select></div>
             <div class="form-group"><label>أقصى عدد للخيارات لكل سؤال</label><input type="number" id="bubbleOptionsCount" value="4" min="2" max="6"></div>
-            <div class="form-group">
-                <label>عدد الأعمدة في الورقة</label>
-                <select id="bubbleColumns">
-                    <option value="1">عمود واحد</option>
-                    <option value="2">عمودين</option>
-                    <option value="3" selected>3 أعمدة (الأفضل)</option>
-                    <option value="4">4 أعمدة (مكثف)</option>
-                </select>
-            </div>
+            <div class="form-group"><label>عدد الأعمدة في الورقة</label><select id="bubbleColumns"><option value="1">عمود واحد</option><option value="2">عمودين</option><option value="3" selected>3 أعمدة</option><option value="4">4 أعمدة</option></select></div>
             <div class="form-group"><label>حجم الفقاعة (px)</label><input type="number" id="bubbleSize" value="26" min="15" max="50"></div>
             <div class="form-group"><label>لون الفقاعات والأحرف</label><input type="color" id="bubbleStrokeColor" value="#334155"></div>
         </div>
@@ -543,18 +548,6 @@
             <div class="form-group"><label>مربع بيانات الطالب</label><select id="enableStudentBox"><option value="yes">إظهار</option><option value="no">إخفاء</option></select></div>
             <div class="form-group"><label>تصميم الإطار</label><select id="hdrBorderType"><option value="bottom">خط سفلي</option><option value="box">مربع كامل</option><option value="none">بدون</option></select></div>
             <div class="form-group"><label>الزوايا</label><input type="number" id="hdrRadius" value="0"></div>
-        </div>
-    </div>
-
-    <div class="settings-panel" id="titleSettingsPanel">
-        <h3>🏷️ تخطيط العناوين الرئيسية</h3>
-        <div class="settings-grid">
-            <div class="form-group"><label>المحاذاة</label><select id="titleAlign"><option value="center">منتصف</option><option value="right">يمين</option><option value="left">يسار</option></select></div>
-            <div class="form-group"><label>نمط الخلفية</label><select id="titleHasBg"><option value="yes">ملونة</option><option value="no">نصية</option></select></div>
-            <div class="form-group"><label>حجم الخط</label><input type="number" id="titleSize" value="26"></div>
-            <div class="form-group"><label>الإطار</label><select id="titleShape"><option value="50px">بيضاوي</option><option value="8px">مستطيل ناعم</option><option value="0px">مستطيل حاد</option></select></div>
-            <div class="form-group"><label>لون الخلفية</label><input type="color" id="titleBg" value="#4A00E0"></div>
-            <div class="form-group"><label>لون النص</label><input type="color" id="titleColor" value="#ffffff"></div>
         </div>
     </div>
 
@@ -693,9 +686,41 @@
 <div id="printArea"></div>
 
 <script>
+    // --- متغيرات التحديد (Selection Variables) المضافة لتشغيل الألوان والأحجام ---
+    let savedSelection = null;
+    let activeEditor = null;
+
+    // حفظ تحديد النص (Selection) تلقائياً عند تغيير المؤشر داخل المحرر
+    document.addEventListener('selectionchange', () => {
+        if (document.activeElement && document.activeElement.getAttribute('contenteditable') === 'true') {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                savedSelection = sel.getRangeAt(0);
+                activeEditor = document.activeElement;
+            }
+        }
+    });
+
+    // دالة التنسيق المُحدثة لتعمل في جميع الخانات ولجميع الأزرار
+    function formatText(cmd, val = null) { 
+        if (activeEditor && savedSelection) {
+            activeEditor.focus();
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedSelection);
+        }
+        document.execCommand(cmd, false, val); 
+        
+        // تحديث التحديد بعد التنسيق ليظل فعالاً للمرات القادمة
+        if (window.getSelection().rangeCount > 0) {
+            savedSelection = window.getSelection().getRangeAt(0);
+        }
+        
+        autoSaveData(); 
+        syncTextToDatabase();
+    }
     // -------------------------------------------------------------
-    // إعدادات ومفاتيح Firebase السحابية لمشروعك المعرّف
-    // -------------------------------------------------------------
+
     const firebaseConfig = {
         apiKey: "AIzaSyDAbNo9AHi73rTNogXHpKk9MDp8HpY16Mw",
         authDomain: "elalfey-app.firebaseapp.com",
@@ -710,11 +735,11 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
     
-    // مُعرّف بصمة فريد لجهاز العميل الحالي للتحقق من قاعدة الـ 3 أجهزة
     let localDeviceId = localStorage.getItem('elalfey_device_id') || Math.random().toString(36).substring(2, 15);
     localStorage.setItem('elalfey_device_id', localDeviceId);
 
     let currentMode = 'questions';
+    let currentQuestionSystem = 'arabic'; 
     let questionsDatabase = [];
     let appHistory = [];
     let appHistoryIndex = -1;
@@ -723,9 +748,48 @@
     let pendingActionParam = null;
     let historySaveTimeout;
     
-    // -------------------------------------------------------------
-    // نظام تحجيم ومحاذاة الصور الذكي (مضاف حديثاً)
-    // -------------------------------------------------------------
+    function setQuestionSystem(sys) {
+        currentQuestionSystem = sys;
+        document.getElementById('sysBtnArabic').style = "background:var(--ui-container); color:var(--ui-text); flex: 1; justify-content: center; min-width: 200px;";
+        document.getElementById('sysBtnForeign').style = "background:var(--ui-container); color:var(--ui-text); flex: 1; justify-content: center; min-width: 200px;";
+        document.getElementById('sysBtnScience').style = "background:var(--ui-container); color:var(--ui-text); flex: 1; justify-content: center; min-width: 200px;";
+
+        let activeBtn = sys === 'arabic' ? 'sysBtnArabic' : sys === 'foreign' ? 'sysBtnForeign' : 'sysBtnScience';
+        document.getElementById(activeBtn).style = "background:var(--primary-color); color:white; border-color:var(--primary-color); flex: 1; justify-content: center; min-width: 200px;";
+
+        const qInp = document.getElementById('questionsInput');
+        const aInp = document.getElementById('answersInput');
+        const sciTb = document.getElementById('scientificToolbar');
+        const mcqBtn = document.getElementById('btnInsertMCQ');
+        const tfBtn = document.getElementById('btnInsertTF');
+        const essayBtn = document.getElementById('btnInsertEssay');
+
+        if (sys === 'arabic') {
+            qInp.dir = "auto"; qInp.style.textAlign = "start"; qInp.style.fontFamily = "inherit";
+            aInp.dir = "auto"; aInp.style.textAlign = "start"; aInp.style.fontFamily = "inherit";
+            if(sciTb) sciTb.style.display = "none";
+            mcqBtn.innerHTML = "➕ سؤال اختياري"; tfBtn.innerHTML = "➕ سؤال صح/خطأ"; essayBtn.innerHTML = "➕ سؤال مقالي";
+        } else if (sys === 'foreign') {
+            qInp.dir = "ltr"; qInp.style.textAlign = "left"; qInp.style.fontFamily = "'Readex Pro', Arial, sans-serif";
+            aInp.dir = "ltr"; aInp.style.textAlign = "left"; aInp.style.fontFamily = "'Readex Pro', Arial, sans-serif";
+            if(sciTb) sciTb.style.display = "none";
+            mcqBtn.innerHTML = "➕ Add MCQ"; tfBtn.innerHTML = "➕ Add T/F"; essayBtn.innerHTML = "➕ Add Essay";
+        } else if (sys === 'science') {
+            qInp.dir = "auto"; qInp.style.textAlign = "left"; qInp.style.fontFamily = "inherit";
+            aInp.dir = "auto"; aInp.style.textAlign = "left"; aInp.style.fontFamily = "inherit";
+            if(sciTb) sciTb.style.display = "flex";
+            mcqBtn.innerHTML = "➕ MCQ (Science)"; tfBtn.innerHTML = "➕ T/F (Science)"; essayBtn.innerHTML = "➕ Essay (Science)";
+        }
+        showToast("تم تفعيل " + document.getElementById(activeBtn).innerText, 'info');
+    }
+
+    function insertSci(code) {
+        document.getElementById('questionsInput').focus();
+        document.execCommand('insertHTML', false, code);
+        if(window.MathJax) setTimeout(() => MathJax.typesetPromise(), 100);
+        autoSaveData(); syncTextToDatabase();
+    }
+
     let activeImage = null;
 
     document.addEventListener('click', function(e) {
@@ -734,7 +798,7 @@
             const t = document.getElementById('imageToolbar');
             const rect = activeImage.getBoundingClientRect();
             t.style.top = (rect.top + window.scrollY - 90) + 'px';
-            t.style.left = (rect.left + window.scrollX + (rect.width/2) - 110) + 'px'; // توسيط القائمة فوق الصورة
+            t.style.left = (rect.left + window.scrollX + (rect.width/2) - 110) + 'px'; 
             t.style.display = 'flex';
         } else if (!e.target.closest('#imageToolbar')) {
             const t = document.getElementById('imageToolbar');
@@ -763,19 +827,14 @@
         autoSaveData(); syncTextToDatabase();
     }
 
-    // استخراج النصوص بشكل آمن من المحرر الذكي مع الحفاظ على الصور
     function getEditorText(id) {
         const el = document.getElementById(id);
         if (!el) return '';
-        
         const clone = el.cloneNode(true);
-        // تحويل الفواصل البصرية لـ \n
         clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
         clone.querySelectorAll('div, p').forEach(div => div.replaceWith('\n' + div.innerHTML + '\n'));
-        
         let temp = document.createElement('div');
         temp.innerHTML = clone.innerHTML;
-        
         let finalStr = '';
         function traverse(node) {
             if (node.nodeType === 3) finalStr += node.nodeValue;
@@ -783,13 +842,22 @@
             else node.childNodes.forEach(traverse);
         }
         traverse(temp);
-        
         return finalStr.replace(/\n\n+/g, '\n').trim();
     }
 
-    // -------------------------------------------------------------
-    // مراقبة حالة اتصال المستندات والأجهزة بـ Firebase
-    // -------------------------------------------------------------
+    function getRawPreamble(elementId) {
+        const el = document.getElementById(elementId);
+        if(!el) return '';
+        let childNodes = Array.from(el.childNodes);
+        let html = '';
+        for(let node of childNodes) {
+            let text = node.textContent || node.innerText || "";
+            if(text.trim().match(/^\s*\**\d+\s*[\.\-\)]/)) break; 
+            html += node.nodeType === 1 ? node.outerHTML : node.textContent;
+        }
+        return html;
+    }
+
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             const docRef = db.collection('users').doc(user.uid);
@@ -798,7 +866,6 @@
                 let data = docSnap.data();
                 let devices = data.devices || [];
                 
-                // تطبيق فحص التزامن للأجهزة الثلاثة
                 if (!devices.includes(localDeviceId)) {
                     if (devices.length >= 3) {
                         alert("يجب تسجيل الخروج من أحد الأجهزة الثلاثة لتتمكن من تسجيل الدخول هنا");
@@ -815,7 +882,6 @@
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('userProfileSection').style.display = 'block';
                 
-                // التحقق من حساب المدير المعتمد
                 if (user.email === 'ayadmsd68@gmail.com') {
                     document.getElementById('adminPanelBtn').style.display = 'inline-block';
                 } else {
@@ -857,7 +923,7 @@
         try {
             await auth.signInWithEmailAndPassword(email, pass);
             showToast('تم تسجيل الدخول والمزامنة بنجاح!', 'success');
-        } catch (e) { showToast('بيانات الدخول غير صحيحة وعملية التحقق فشلت', 'error'); }
+        } catch (e) { showToast('بيانات الدخول غير صحيحة', 'error'); }
     }
 
     async function handleLogoutCloud() {
@@ -891,7 +957,6 @@
             const qInput = qEl ? qEl.innerHTML : '';
             const aInput = aEl ? aEl.innerHTML : '';
             const gText = document.getElementById('generalTextInput').innerHTML;
-            const title = currentMode === 'questions' ? document.getElementById('qTitleInput').value : document.getElementById('textTitleInput').value;
             
             if(!qInput.trim() && !aInput.trim() && gText === 'اكتب محتوى المستند الخاص بك هنا...') return;
             
@@ -899,7 +964,7 @@
             if(hist.length > 0 && hist[0].q === qInput && hist[0].a === aInput && hist[0].g === gText) return;
             
             hist.unshift({
-                title: title || "مشروع غير معنون",
+                title: "مستند محفوظ آلياً",
                 time: new Date().toLocaleTimeString('ar-EG') + ' - ' + new Date().toLocaleDateString('ar-EG'),
                 q: qInput, a: aInput, g: gText, mode: currentMode
             });
@@ -936,25 +1001,17 @@
         document.getElementById('questionsInput').innerHTML = item.q;
         document.getElementById('answersInput').innerHTML = item.a;
         document.getElementById('generalTextInput').innerHTML = item.g;
-        if(item.mode === 'questions') document.getElementById('qTitleInput').value = item.title;
-        else document.getElementById('textTitleInput').value = item.title;
         switchTab(item.mode, document.getElementById(item.mode === 'questions' ? 'btnTabQuestions' : 'btnTabText'));
         syncTextToDatabase(); autoSaveData(); showToast('تم استعادة المشروع المختار بنجاح', 'success');
     }
 
-    // -------------------------------------------------------------
-    // نظام الـ VIP المتطور (4 باقات ديناميكية) وفترة التجربة
-    // -------------------------------------------------------------
     function requireVIP(actionType, param) {
         let expiry = localStorage.getItem('elalfey_vip_expiry');
         let isVIP = false;
-        
         if (expiry === 'lifetime') isVIP = true;
         else if (expiry && parseInt(expiry) > Date.now()) isVIP = true;
 
-        if (isVIP) {
-            proceedWithAction(actionType, param); return;
-        }
+        if (isVIP) { proceedWithAction(actionType, param); return; }
 
         let trialStart = localStorage.getItem('elalfey_trial_start');
         if (!trialStart) {
@@ -1023,7 +1080,7 @@
             showToast('تم ترقية حسابك بنجاح للنسخة البرو المكتملة! 🎉', 'success');
             if(pendingAction) proceedWithAction(pendingAction, pendingActionParam);
 
-        } catch (e) { showToast('فشل التفعيل السحابي، تأكد من اتصال الإنترنت وقواعد Firestore', 'error'); }
+        } catch (e) { showToast('فشل التفعيل السحابي، تأكد من اتصال الإنترنت', 'error'); }
     }
 
     async function generateDynamicCodes() {
@@ -1031,7 +1088,6 @@
         const count = parseInt(document.getElementById('adminCodeCount').value);
         let prefix = days === 7 ? 'W-' : days === 30 ? 'M-' : days === 365 ? 'Y-' : 'L-';
         let generated = [];
-
         document.getElementById('generatedCodesOutput').value = 'جاري توليد الأكواد وحفظها سحابياً...';
 
         try {
@@ -1041,11 +1097,7 @@
                 let newCode = prefix + rStr;
                 let codeRef = db.collection('vip_codes').doc(newCode);
                 
-                batch.set(codeRef, {
-                    days: days,
-                    used: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                batch.set(codeRef, { days: days, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                 generated.push(newCode);
             }
             await batch.commit();
@@ -1060,9 +1112,6 @@
         else if (actionType === 'ai') document.getElementById('aiModal').style.display = 'flex';
     }
 
-    // -------------------------------------------------------------
-    // دوال المحرك ومزامنة البيانات وتوزيع التنسيقات
-    // -------------------------------------------------------------
     window.addEventListener('DOMContentLoaded', async () => { 
         await loadSavedData(); 
         document.querySelectorAll('input, select').forEach(el => { el.addEventListener('input', autoSaveData); }); 
@@ -1072,22 +1121,16 @@
         if(gText) gText.addEventListener('input', () => { autoSaveData(); syncCurrentToHistory(); }); 
         syncTextToDatabase(); recordHistory();
         
-        // مسح السجل المبدئي الخاطئ
         appHistory = [{q: qInp ? qInp.innerHTML : '', a: aInp ? aInp.innerHTML : ''}];
         appHistoryIndex = 0;
     });
 
     function recordHistory() {
         clearTimeout(historyTimeout);
-        // تم تصحيح خطأ الـ historyTimeout هنا لتعمل أزرار العودة والرجوع
         historyTimeout = setTimeout(() => {
-            const qEl = document.getElementById('questionsInput');
-            const aEl = document.getElementById('answersInput');
-            const qVal = qEl ? qEl.innerHTML : '';
-            const aVal = aEl ? aEl.innerHTML : '';
-            
+            const qEl = document.getElementById('questionsInput'); const aEl = document.getElementById('answersInput');
+            const qVal = qEl ? qEl.innerHTML : ''; const aVal = aEl ? aEl.innerHTML : '';
             if(appHistoryIndex >= 0 && appHistory[appHistoryIndex] && appHistory[appHistoryIndex].q === qVal && appHistory[appHistoryIndex].a === aVal) return;
-            
             if(appHistoryIndex < appHistory.length - 1) appHistory = appHistory.slice(0, appHistoryIndex + 1);
             appHistory.push({q: qVal, a: aVal});
             if(appHistory.length > 50) appHistory.shift(); else appHistoryIndex++;
@@ -1097,10 +1140,8 @@
     function execUndo() { 
         if(appHistoryIndex > 0) { 
             appHistoryIndex--; 
-            const qEl = document.getElementById('questionsInput');
-            const aEl = document.getElementById('answersInput');
-            if(qEl) qEl.innerHTML = appHistory[appHistoryIndex].q;
-            if(aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
+            const qEl = document.getElementById('questionsInput'); const aEl = document.getElementById('answersInput');
+            if(qEl) qEl.innerHTML = appHistory[appHistoryIndex].q; if(aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
             syncTextToDatabase(); autoSaveData(); showToast('تم التراجع عن الإجراء', 'info');
         } else { showToast('لا توجد خطوات سابقة', 'error'); }
     }
@@ -1108,10 +1149,8 @@
     function execRedo() { 
         if(appHistoryIndex < appHistory.length - 1) { 
             appHistoryIndex++; 
-            const qEl = document.getElementById('questionsInput');
-            const aEl = document.getElementById('answersInput');
-            if(qEl) qEl.innerHTML = appHistory[appHistoryIndex].q;
-            if(aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
+            const qEl = document.getElementById('questionsInput'); const aEl = document.getElementById('answersInput');
+            if(qEl) qEl.innerHTML = appHistory[appHistoryIndex].q; if(aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
             syncTextToDatabase(); autoSaveData(); showToast('تم إعادة الإجراء', 'info');
         } else { showToast('أنت في الخطوة الأحدث', 'error'); }
     }
@@ -1140,27 +1179,24 @@
     }
 
     const inputIdsToSave = [
-        'qTitleInput', 'aTitleInput', 'textTitleInput', 
         'enableBorder', 'borderStyle', 'borderWidth', 'borderColor', 'pageBgColor', 
         'wmText', 'wmColor', 'wmType', 'userFont', 'textAlign', 'textColor', 'textBgToggle', 'textBgColor', 
         'cardRadius', 'userPrimaryColor', 'hdrRight', 'hdrCenter', 'hdrLeft', 'enableHdr', 'enableStudentBox', 
-        'columnsLayout', 'titleAlign', 'titleSize', 'titleShape', 'titleBg', 'titleColor', 
-        'titleHasBg', 'qDisplayMode', 'optionsLayout', 'qFontSize', 'optFontSize', 
+        'columnsLayout', 'qDisplayMode', 'optionsLayout', 'qFontSize', 'optFontSize', 
         'qColor', 'optColor', 'correctColor', 'hdrSize', 'hdrTextColor', 'hdrBgColor', 'hdrBorderType', 'hdrRadius',
         'bubbleShape', 'bubbleTextPosition', 'bubbleLettersType', 'bubbleOptionsCount', 'bubbleColumns', 'bubbleSize', 'bubbleStrokeColor',
         'bHdrStyle', 'bHdrField1', 'bHdrField2', 'bHdrField3', 'bHdrIdTitle', 'bHdrNote', 'bHdrColor', 'bHdrBgColor', 'bHdrBorderColor', 'bHdrSize',
-        'modelNumberType', 'modelLabelPos', 'questionsInput', 'answersInput'
+        'modelNumberType', 'modelLabelPos'
     ];
 
     async function autoSaveData() { 
         try { 
             for (let id of inputIdsToSave) { 
                 let el = document.getElementById(id); 
-                if(el) {
-                    let val = (el.tagName === 'DIV') ? el.innerHTML : el.value;
-                    await localforage.setItem(`elalfey_${id}`, val); 
-                }
+                if(el) await localforage.setItem(`elalfey_${id}`, el.value); 
             } 
+            if(document.getElementById('questionsInput')) await localforage.setItem('elalfey_q_input', document.getElementById('questionsInput').innerHTML);
+            if(document.getElementById('answersInput')) await localforage.setItem('elalfey_a_input', document.getElementById('answersInput').innerHTML);
             if(document.getElementById('generalTextInput')) await localforage.setItem('elalfey_general_text', document.getElementById('generalTextInput').innerHTML); 
         } catch(e) {} 
     }
@@ -1169,14 +1205,10 @@
         try { 
             for (let id of inputIdsToSave) { 
                 let val = await localforage.getItem(`elalfey_${id}`); 
-                if(val !== null) {
-                    let el = document.getElementById(id);
-                    if(el) {
-                        if (el.tagName === 'DIV') el.innerHTML = val;
-                        else el.value = val;
-                    }
-                }
+                if(val !== null && document.getElementById(id)) document.getElementById(id).value = val;
             } 
+            let qData = await localforage.getItem('elalfey_q_input'); if(qData && document.getElementById('questionsInput')) document.getElementById('questionsInput').innerHTML = qData;
+            let aData = await localforage.getItem('elalfey_a_input'); if(aData && document.getElementById('answersInput')) document.getElementById('answersInput').innerHTML = aData;
             let eData = await localforage.getItem('elalfey_general_text'); if(eData && document.getElementById('generalTextInput')) document.getElementById('generalTextInput').innerHTML = eData; 
             let thm = await localforage.getItem('elalfey_theme'); if(thm === 'dark') document.body.classList.add('dark-mode'); 
         } catch (e) {} 
@@ -1194,54 +1226,126 @@
         const qText = getEditorText('questionsInput'); 
         const aText = getEditorText('answersInput');
         if (!qText.trim()) { questionsDatabase = []; return; }
-        const ansMap = {};
-        if (aText.trim()) { aText.split('\n').forEach(line => { let m = line.match(/^(\d+)\s*[\.\-\)]\s*(.+)/); if (m) ansMap[m[1]] = m[2].trim(); }); }
-
-        let qBlocks = ('\n' + qText).split(/\n(?=\s*\**\d+\s*[\.\-\)]\s*)/);
-        const parsed = [];
         
-        qBlocks.forEach(block => {
-            if(!block.trim()) return;
-            let match = block.match(/^\s*\**(\d+)\s*[\.\-\)]\s*\**([\s\S]*)/);
-            if(!match) return;
-            let num = match[1]; let rawBody = match[2].trim();
-            let tags = rawBody.match(/#[\w\u0600-\u06FF]+/g) || [];
-            let bodyNoTags = rawBody.replace(/#[\w\u0600-\u06FF]+/g, '').trim();
+        const ansMap = {};
+        if (aText.trim()) { 
+            aText.split('\n').forEach(line => { 
+                let m = line.match(/^(\d+)\s*[\.\-\)]\s*(.+)/); 
+                if (m) ansMap[m[1]] = m[2].trim(); 
+            }); 
+        }
 
-            let explicitAnsMatch = bodyNoTags.match(/\n\s*(?:الإجابة|الجواب|الحل)[\s\:\-]*([\s\S]+)$/i);
-            if (explicitAnsMatch) { ansMap[num] = ansMap[num] || explicitAnsMatch[1].trim(); bodyNoTags = bodyNoTags.replace(explicitAnsMatch[0], ''); }
-
-            let lines = bodyNoTags.split('\n'); let qTxt = ""; let opts = []; let curL = null; let curT = ""; let isOpt = false;
-            const oReg = /^[\s\*\-]*\[?\(?\s*([أ-يa-zA-Z0-9])\s*\)?\]?[\.\-\)]\s*(.+)/; const bReg = /^[\s]*[\*\-]\s+(.+)/; const lets = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim(); if (!line) continue;
-                let oM = line.match(oReg); let bM = line.match(bReg);
-                if (oM) { isOpt = true; if (curL) opts.push({l: curL, t: curT}); curL = oM[1]; curT = oM[2]; } 
-                else if (bM && (isOpt || i > 0)) { isOpt = true; if (curL) opts.push({l: curL, t: curT}); curL = lets[opts.length] || String.fromCharCode(97 + opts.length); curT = bM[1]; } 
-                else { if (isOpt) curT += " " + line; else qTxt += (qTxt ? "\n" : "") + line; }
+        let lines = qText.split('\n');
+        const parsed = [];
+        let curQ = null;
+        let isOptMode = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (!line) continue;
+            
+            let qMatch = line.match(/^\s*\**(\d+)\s*[\.\-\)]\s*\**([\s\S]*)/);
+            if (qMatch) {
+                if (curQ) { parsed.push(curQ); }
+                curQ = {
+                    num: qMatch[1],
+                    text: qMatch[2].trim(),
+                    options: [],
+                    type: 'essay',
+                    ans: ansMap[qMatch[1]] || "",
+                    tags: qMatch[2].match(/#[\w\u0600-\u06FF]+/g) || []
+                };
+                curQ.text = curQ.text.replace(/#[\w\u0600-\u06FF]+/g, '').trim();
+                isOptMode = false;
+                continue;
             }
-            if (curL) opts.push({l: curL, t: curT});
+            
+            const oReg = /^[\s\*\-]*\[?\(?\s*([أ-يa-zA-Z0-9])\s*\)?\]?[\.\-\)]\s*(.+)/;
+            const bReg = /^[\s]*[\*\-]\s+(.+)/;
+            let oM = line.match(oReg);
+            let bM = line.match(bReg);
+            
+            if (curQ) {
+                if (oM) {
+                    isOptMode = true;
+                    curQ.options.push({ l: oM[1], t: oM[2].trim() });
+                    continue;
+                } else if (bM && isOptMode) {
+                    let lets = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+                    let nextL = (currentQuestionSystem === 'foreign' || currentQuestionSystem === 'science') ? String.fromCharCode(65 + curQ.options.length) : (lets[curQ.options.length] || '•');
+                    curQ.options.push({ l: nextL, t: bM[1].trim() });
+                    continue;
+                }
+                
+                let explicitAnsMatch = line.match(/^(?:الإجابة|الجواب|الحل|Answer)[\s\:\-]*([\s\S]+)$/i);
+                if (explicitAnsMatch) {
+                    curQ.ans = explicitAnsMatch[1].trim();
+                    continue;
+                }
+                
+                if (isOptMode) {
+                    parsed.push(curQ);
+                    curQ = null;
+                    isOptMode = false;
+                    parsed.push({ type: 'heading', text: line });
+                } else {
+                    curQ.text += '\n' + line;
+                }
+            } else {
+                parsed.push({ type: 'heading', text: line });
+            }
+        }
+        if (curQ) { parsed.push(curQ); }
 
-            opts.forEach(o => { if (o.t.match(/[✓✔]/)) ansMap[num] = ansMap[num] || o.l; o.t = o.t.replace(/[✓✔\[\]\(\)]/g, '').replace(/\*\*/g, '').trim(); });
-            qTxt = qTxt.replace(/\*\*/g, '').trim();
-            let type = opts.length === 0 ? (qTxt.match(/\(\s*\)/) ? 'tf_inline' : 'essay') : 'mcq';
-            parsed.push({ num: num, text: qTxt || "سؤال للمراجعة", tags: tags, type: type, options: opts, ans: ansMap[num] || "" });
+        parsed.forEach(q => {
+            if (q.type !== 'heading') {
+                if (q.options.length > 0) {
+                    q.type = 'mcq';
+                    q.options.forEach(o => {
+                        if (o.t.match(/[✓✔]/)) q.ans = o.l;
+                        o.t = o.t.replace(/[✓✔\[\]\(\)]/g, '').replace(/\*\*/g, '').trim();
+                    });
+                } else {
+                    q.type = q.text.match(/\(\s*\)/) ? 'tf_inline' : 'essay';
+                }
+            }
         });
+
         questionsDatabase = parsed;
     }
 
     function insertQuestionTemplate(t) { 
-        let html = t==='mcq'?"<br>1. اكتب السؤال هنا:<br>أ) الخيار الأول<br>ب) الخيار الثاني<br>ج) الخيار الثالث<br>د) الخيار الرابع<br>" : t==='tf'?"<br>1. العبارة هنا (   )<br>":"<br>1. السؤال المقالي:<br><br>";
+        let html = '';
+        if (currentQuestionSystem === 'arabic') {
+             html = t==='mcq'?"<br>1. اكتب السؤال هنا:<br>أ) الخيار الأول<br>ب) الخيار الثاني<br>ج) الخيار الثالث<br>د) الخيار الرابع<br>" : 
+                   t==='tf'?"<br>1. العبارة هنا (   )<br>":
+                   "<br>1. السؤال المقالي:<br>......................................................................................<br>......................................................................................<br><br>";
+        } else if (currentQuestionSystem === 'foreign') {
+             html = t==='mcq'?"<br>1. Write your question here:<br>A) First Option<br>B) Second Option<br>C) Third Option<br>D) Fourth Option<br>" : 
+                   t==='tf'?"<br>1. Statement goes here (   )<br>":
+                   "<br>1. Essay Question:<br>......................................................................................<br>......................................................................................<br><br>";
+        } else if (currentQuestionSystem === 'science') {
+             html = t==='mcq'?"<br>1. قم بحل المسألة التالية \\( x^2=4 \\) :<br>A) \\( x=2 \\)<br>B) \\( x=-2 \\)<br>C) \\( x=\\pm 2 \\)<br>D) \\( x=4 \\)<br>" : 
+                   t==='tf'?"<br>1. \\( \\sqrt{16} = 4 \\) (   )<br>":
+                   "<br>1. أثبت صحة المعادلة التالية:<br>\\( E = mc^2 \\)<br>...........................................................<br><br>";
+        }
+
         document.getElementById('questionsInput').focus();
         document.execCommand('insertHTML', false, html);
     }
     
     function smartFormatAndClean() { 
-        syncTextToDatabase(); let qT = ""; let aT = ""; 
-        questionsDatabase.forEach((q, i) => { 
-            let n = i+1; let tg = q.tags.length>0?" "+q.tags.join(" "):""; 
-            qT+=`${n}. ${q.text}${tg}<br>`; 
+        syncTextToDatabase(); 
+        let qP = getRawPreamble('questionsInput');
+        let aP = getRawPreamble('answersInput');
+        let qT = qP; let aT = aP; 
+        questionsDatabase.forEach((q) => { 
+            if (q.type === 'heading') {
+                qT += `<br>${q.text}<br>`;
+                return;
+            }
+            let n = q.num; let tg = q.tags.length>0?" "+q.tags.join(" "):""; 
+            qT+=`<br>${n}. ${q.text}${tg}<br>`; 
             q.options.forEach(o=>qT+=` ${o.l}) ${o.t}<br>`); 
             qT+="<br>"; 
             if(q.ans) aT+=`${n}- ${q.ans}<br>`; 
@@ -1256,16 +1360,30 @@
         syncTextToDatabase(); 
         questionsDatabase.forEach(q=>{
             if(q.type==='mcq'&&q.options.length>0){
-                let cOpt=q.options.find(o=>o.l==q.ans);let cTxt=cOpt?cOpt.t:null;q.options.sort(()=>Math.random()-0.5);const ls=['أ','ب','ج','د','هـ','و'];
-                q.options.forEach((o,i)=>{o.l=ls[i]||o.l;if(cTxt&&o.t===cTxt)q.ans=o.l;});
+                let lA = (currentQuestionSystem === 'foreign' || currentQuestionSystem === 'science') ? ['A','B','C','D','E','F'] : ['أ','ب','ج','د','هـ','و'];
+                let cOpt=q.options.find(o=>o.l==q.ans);let cTxt=cOpt?cOpt.t:null;q.options.sort(()=>Math.random()-0.5);
+                q.options.forEach((o,i)=>{o.l=lA[i]||o.l;if(cTxt&&o.t===cTxt)q.ans=o.l;});
             }
         }); 
-        questionsDatabase.sort(()=>Math.random()-0.5); 
+        
+        let questionsOnly = questionsDatabase.filter(q => q.type !== 'heading');
+        questionsOnly.sort(()=>Math.random()-0.5); 
+        
+        let qIdx = 0;
+        questionsDatabase = questionsDatabase.map(q => {
+            if (q.type === 'heading') return q;
+            return questionsOnly[qIdx++];
+        });
+        
         smartFormatAndClean(); 
     }
     
     function showAnalytics() { 
-        syncTextToDatabase(); const t=questionsDatabase.length; const m=questionsDatabase.filter(q=>q.type==='mcq').length; const tf=questionsDatabase.filter(q=>q.type==='tf_inline').length; const e=questionsDatabase.filter(q=>q.type==='essay').length; document.getElementById('statTotal').innerText=t; document.getElementById('statMcqCount').innerText=m; document.getElementById('statTfCount').innerText=tf; document.getElementById('statEssayCount').innerText=e; document.getElementById('statMcqBar').style.width=`${t>0?(m/t)*100:0}%`; document.getElementById('statTfBar').style.width=`${t>0?(tf/t)*100:0}%`; document.getElementById('statEssayBar').style.width=`${t>0?(e/t)*100:0}%`; document.getElementById('analyticsModal').style.display='flex'; 
+        syncTextToDatabase(); 
+        const realQs = questionsDatabase.filter(q => q.type !== 'heading');
+        const t=realQs.length; const m=realQs.filter(q=>q.type==='mcq').length; const tf=realQs.filter(q=>q.type==='tf_inline').length; const e=realQs.filter(q=>q.type==='essay').length; 
+        document.getElementById('statTotal').innerText=t; document.getElementById('statMcqCount').innerText=m; document.getElementById('statTfCount').innerText=tf; document.getElementById('statEssayCount').innerText=e; 
+        document.getElementById('statMcqBar').style.width=`${t>0?(m/t)*100:0}%`; document.getElementById('statTfBar').style.width=`${t>0?(tf/t)*100:0}%`; document.getElementById('statEssayBar').style.width=`${t>0?(e/t)*100:0}%`; document.getElementById('analyticsModal').style.display='flex'; 
     }
 
     async function generateAIQuestions() {
@@ -1291,7 +1409,6 @@
         } catch(e) { showToast('خطأ توليد: ' + e.message, 'error'); }
     }
 
-    // إدراج الصور المرئي في بنك الأسئلة
     function insertImageToQuestion(e) { 
         if(e.target.files[0]) { 
             const rd=new FileReader();
@@ -1302,9 +1419,7 @@
                     let scale = 1; if(i.width > 800) scale = 800 / i.width;
                     c.width = i.width * scale; c.height = i.height * scale;
                     c.getContext('2d').drawImage(i,0,0, c.width, c.height);
-                    
                     const imgHTML = `<br><img src="${c.toDataURL('image/jpeg',0.8)}" style="width:50%; max-width:100%; display:block; margin:15px auto; border-radius:6px; cursor:pointer;" class="resizable-img"><br>`;
-                    
                     document.getElementById('questionsInput').focus();
                     document.execCommand('insertHTML', false, imgHTML);
                 };
@@ -1314,8 +1429,7 @@
         } 
         e.target.value=''; 
     }
-    
-    function formatText(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('generalTextInput').focus(); }
+
     function insertImage(e) { 
         if(e.target.files[0]) { 
             const rd=new FileReader();
@@ -1342,8 +1456,6 @@
         if(document.getElementById('textBgToggle').value === 'transparent') { r.style.setProperty('--text-bg-color', 'transparent'); r.style.setProperty('--card-border-color', 'transparent'); } else { r.style.setProperty('--text-bg-color', document.getElementById('textBgColor').value); r.style.setProperty('--card-border-color', '#e2e8f0'); }
         r.style.setProperty('--q-font-size', document.getElementById('qFontSize').value + 'px'); r.style.setProperty('--opt-font-size', document.getElementById('optFontSize').value + 'px'); r.style.setProperty('--q-color', document.getElementById('qColor').value); r.style.setProperty('--opt-color', document.getElementById('optColor').value); r.style.setProperty('--correct-color', document.getElementById('correctColor').value);
         if(document.getElementById('enableBorder').value === 'yes') { r.style.setProperty('--border-width', document.getElementById('borderWidth').value + 'px'); r.style.setProperty('--border-style', document.getElementById('borderStyle').value); r.style.setProperty('--border-color', document.getElementById('borderColor').value); r.style.setProperty('--print-border-display', 'block'); } else { r.style.setProperty('--print-border-display', 'none'); }
-        if(document.getElementById('titleHasBg').value === 'yes') { r.style.setProperty('--title-bg', document.getElementById('titleBg').value); r.style.setProperty('--title-color', document.getElementById('titleColor').value); r.style.setProperty('--title-padding', '12px 40px'); } else { r.style.setProperty('--title-bg', 'transparent'); r.style.setProperty('--title-color', document.getElementById('titleColor').value); r.style.setProperty('--title-padding', '0'); }
-        r.style.setProperty('--title-align', document.getElementById('titleAlign').value); r.style.setProperty('--title-size', document.getElementById('titleSize').value + 'px'); r.style.setProperty('--title-radius', document.getElementById('titleShape').value);
         r.style.setProperty('--hdr-size', document.getElementById('hdrSize').value + 'px'); r.style.setProperty('--hdr-text-color', document.getElementById('hdrTextColor').value); r.style.setProperty('--hdr-bg-color', document.getElementById('hdrBgColor').value);
         let hType = document.getElementById('hdrBorderType').value; let pColor = document.getElementById('userPrimaryColor').value;
         if(hType === 'bottom') { r.style.setProperty('--hdr-border', 'none'); r.style.setProperty('--hdr-border-bottom', `3px solid ${pColor}`); r.style.setProperty('--hdr-padding', '0 0 12px 0'); } else if(hType === 'box') { r.style.setProperty('--hdr-border', `2px solid ${pColor}`); r.style.setProperty('--hdr-border-bottom', `2px solid ${pColor}`); r.style.setProperty('--hdr-padding', '15px 20px'); } else { r.style.setProperty('--hdr-border', 'none'); r.style.setProperty('--hdr-border-bottom', 'none'); r.style.setProperty('--hdr-padding', '0'); }
@@ -1356,36 +1468,83 @@
         return `url('data:image/svg+xml,${encodeURIComponent(svg)}') ${t === 'repeat' ? 'repeat' : 'no-repeat center center fixed'}`;
     }
 
+    function getDirection(text) {
+        const arabicPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+        return arabicPattern.test(text) ? 'rtl' : 'ltr';
+    }
+
     function buildQAndA_HTML(dataArray, pColor) {
         let hN=''; let hA=''; const qM=document.getElementById('qDisplayMode').value; const oL=document.getElementById('optionsLayout').value; const cC=qM==='text'?'content-card mode-text':'content-card'; const lC=`options-list layout-${oL}`;
+        
         dataArray.forEach((q,i) => {
-            hN+=`<div class="${cC}"><div class="q-text">${i+1}. ${q.text.replace(/\n/g,'<br>')}</div>`;
-            if(q.type==='mcq'){hN+=`<ul class="${lC}">`;q.options.forEach(o=>hN+=`<li class="option-item">(&#x200E;${o.l}&#x200E;) ${o.t}</li>`);hN+=`</ul>`;}hN+=`</div>`;
+            if (q.type === 'heading') {
+                let hDir = getDirection(q.text);
+                let headingHTML = `<div class="print-heading-block" dir="${hDir}" style="direction: ${hDir}; text-align: start; width: 100%; margin-bottom: 18px; font-weight: bold; font-size: 18px; clear: both; line-height: 1.6; color: var(--text-color);">${q.text}</div>`;
+                hN += headingHTML;
+                hA += headingHTML;
+                return;
+            }
+
+            let qNumStr = q.num;
+            let qDir = getDirection(q.text);
+            
+            hN+=`<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both;"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${q.text.replace(/\n/g,'<br>')}</div>`;
+            if(q.type==='mcq'){
+                hN+=`<ul class="${lC}" dir="${qDir}" style="direction: ${qDir};">`;
+                // استخدام Flexbox لضمان بقاء الحرف على اليمين والنص على اليسار في العربي، والعكس في الإنجليزي بدون أي انعكاس
+                q.options.forEach(o=>hN+=`<li class="option-item" dir="${qDir}" style="display: flex; gap: 6px; text-align: ${qDir === 'rtl' ? 'right' : 'left'};"><span style="flex-shrink: 0;">(${o.l})</span> <span>${o.t}</span></li>`);
+                hN+=`</ul>`;
+            }
+            hN+=`</div>`;
+            
             let aT=q.text.replace(/\n/g,'<br>');
-            if(q.type==='tf_inline'){let m='';let mC='var(--correct-color)';let cA=q.ans?q.ans.trim().toLowerCase():'';if(['صح','ص','true','t','✓','yes','نعم'].includes(cA)){m='✓';mC='#10b981';}else if(['خطأ','خ','غلط','غ','false','f','✗','x','no','لا'].includes(cA)){m='✗';mC='#ef4444';}else{m=q.ans;}aT=aT.replace(/\(\s*\)/,`( <span style="color:${mC}; font-weight:900;">${m}</span> )`);}
-            hA+=`<div class="${cC}" style="${qM!=='text'?`border-right-color:${pColor};`:''}"><div class="q-text">${i+1}. ${aT}</div>`;
-            if(q.type==='mcq'){hA+=`<ul class="${lC}">`;q.options.forEach(o=>{let clA=q.ans?q.ans.toString().replace(/\s/g,'').trim():'';let clO=o.l.toString().replace(/\s/g,'').trim();if(clA===clO){hA+=`<li class="option-item correct" style="background:${qM==='text'?'transparent':'var(--correct-color)'}!important;color:${qM==='text'?'var(--correct-color)':'#fff'}!important;border:${qM==='text'?'2px dashed var(--correct-color)':'none'}!important;font-weight:900;"><span>✓</span> <span>(&#x200E;${o.l}&#x200E;) ${o.t}</span></li>`;}else{hA+=`<li class="option-item">(&#x200E;${o.l}&#x200E;) ${o.t}</li>`;}});hA+=`</ul>`;}
-            else if(q.type==='essay'&&q.ans){hA+=`<div style="margin-top:12px;padding:15px;background:#f0fdf4;border:1px dashed #10b981;border-radius:8px;color:#065f46;"><strong>الإجابة الإرشادية:</strong><div>${q.ans.replace(/\n/g,'<br>')}</div></div>`;}hA+=`</div>`;
+            if(q.type==='tf_inline'){
+                let m='';let mC='var(--correct-color)';let cA=q.ans?q.ans.trim().toLowerCase():'';
+                if(['صح','ص','true','t','✓','yes','نعم'].includes(cA)){m='✓';mC='#10b981';}
+                else if(['خطأ','خ','غلط','غ','false','f','✗','x','no','لا'].includes(cA)){m='✗';mC='#ef4444';}
+                else{m=q.ans;}
+                aT=aT.replace(/\(\s*\)/,`( <span style="color:${mC}; font-weight:900;" dir="${qDir}">${m}</span> )`);
+            }
+            hA+=`<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both; ${qM!=='text'?`border-right-color:${pColor};`:''}"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${aT}</div>`;
+            if(q.type==='mcq'){
+                hA+=`<ul class="${lC}" dir="${qDir}" style="direction: ${qDir};">`;
+                q.options.forEach(o=>{
+                    let clA=q.ans?q.ans.toString().replace(/\s/g,'').trim():'';let clO=o.l.toString().replace(/\s/g,'').trim();
+                    if(clA===clO){
+                        hA+=`<li class="option-item correct" dir="${qDir}" style="display: flex; gap: 6px; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; background:${qM==='text'?'transparent':'var(--correct-color)'}!important;color:${qM==='text'?'var(--correct-color)':'#fff'}!important;border:${qM==='text'?'2px dashed var(--correct-color)':'none'}!important;font-weight:900;"><span style="flex-shrink: 0;">✓</span> <span style="flex-shrink: 0;">(${o.l})</span> <span>${o.t}</span></li>`;
+                    }else{
+                        hA+=`<li class="option-item" dir="${qDir}" style="display: flex; gap: 6px; text-align: ${qDir === 'rtl' ? 'right' : 'left'};"><span style="flex-shrink: 0;">(${o.l})</span> <span>${o.t}</span></li>`;
+                    }
+                });
+                hA+=`</ul>`;
+            }
+            else if(q.type==='essay'&&q.ans){
+                hA+=`<div style="margin-top:12px;padding:15px;background:#f0fdf4;border:1px dashed #10b981;border-radius:8px;color:#065f46;" dir="${qDir}"><strong>الإجابة الإرشادية:</strong><div dir="${qDir}">${q.ans.replace(/\n/g,'<br>')}</div></div>`;
+            }
+            hA+=`</div>`;
         }); return {noAns:hN, withAns:hA};
     }
 
-    function generatePageHTML(contentHTML, pageTitle, bgCSS, isAnswers = false, modelBadge = '') {
+    function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = '') {
         let hdr=''; let std=''; let cols='';
         if (currentMode==='questions'&&!isAnswers) {
             hdr=document.getElementById('enableHdr').value==='yes'?`<div class="exam-header-print"><div class="right">${document.getElementById('hdrRight').value}</div><div class="center">${document.getElementById('hdrCenter').value}</div><div class="left">${document.getElementById('hdrLeft').value}</div></div>`:'';
             std=document.getElementById('enableStudentBox').value==='yes'?`<div class="student-info-print"><div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div></div>`:'';
             cols=document.getElementById('columnsLayout').value==='2'?'two-columns-layout':'';
         }
-        return `<div class="pdf-page" style="background:${bgCSS};">${hdr}${modelBadge}${std}<div class="section-title-wrapper"><h2 class="section-title">${pageTitle}</h2></div><div class="${cols}">${contentHTML}</div></div>`;
+        return `<div class="pdf-page" style="background:${bgCSS};">${hdr}${modelBadge}${std}<div class="${cols}">${contentHTML}</div></div>`;
     }
 
     async function executeExport(printType) {
         applyUserSettings(); const pA = document.getElementById('wordPrintPreviewArea'); pA.innerHTML = ''; syncTextToDatabase();
-        let qC = questionsDatabase.length;
+        let qC = questionsDatabase.filter(q => q.type !== 'heading').length;
         if(printType==='bubble'&&qC===0){let m=prompt("عدد أسئلة البابل شيت الفارغ:","50");if(m&&!isNaN(m))qC=parseInt(m);else return showToast('تم إلغاء الأمر','error');}
         else if(printType!=='bubble'&&qC===0&&currentMode==='questions') return showToast('أدرج الأسئلة والمفردات الاختبارية أولاً','error');
 
-        if (currentMode==='text') { pA.className='print-mode-text'; pA.innerHTML=generatePageHTML(`<div class="content-card general-text-display">${document.getElementById('generalTextInput').innerHTML}</div>`,document.getElementById('textTitleInput').value,getBackgroundCSS()); } 
+        if (currentMode==='text') { 
+            pA.className='print-mode-text'; 
+            pA.innerHTML=generatePageHTML(`<div class="content-card general-text-display">${document.getElementById('generalTextInput').innerHTML}</div>`,getBackgroundCSS()); 
+        } 
         else {
             pA.className='print-mode-questions';
             if (printType==='bubble') {
@@ -1396,16 +1555,23 @@
                 else if(hs==='basic'){bH=`<div class="student-info-print" style="border:2px solid ${hb};background:${hbg};color:${hC};font-size:${hz};"><div>${document.getElementById('bHdrField1').value}</div><div>${document.getElementById('bHdrField2').value}</div><div>${document.getElementById('bHdrField3').value}</div></div>`;}
                 
                 let bHt=`<div class="bubble-container bubble-col-${cC}" style="color:${sC};">`;
+                let realQIdx = 0;
                 for(let i=1;i<=qC;i++){
-                    let ie=questionsDatabase[i-1]&&questionsDatabase[i-1].type==='essay';
+                    while(realQIdx < questionsDatabase.length && questionsDatabase[realQIdx].type === 'heading') { realQIdx++; }
+                    let ie=questionsDatabase[realQIdx]&&questionsDatabase[realQIdx].type==='essay';
+                    realQIdx++;
+                    
                     bHt+=`<div class="bubble-row ${pos==='above'?'spacing-above':''}"><div class="bubble-q-num">${i}.</div><div class="bubble-options-wrapper">`;
                     if(!ie){for(let o=0;o<oC;o++){let l=lA[o]||'';bHt+=`<div class="bubble-item pos-${pos}">${(pos==='above'||pos==='beside')?`<span class="bubble-label">${l}</span>`:''}<div class="bubble-shape shape-${sh}" style="width:${bS};height:${sh==='oval'?'auto':bS};border-color:${sC};font-size:${parseInt(bS)*0.45}px;">${pos==='inside'?l:''}</div></div>`;}}else{bHt+=`<div style="flex:1;border-bottom:1px dashed ${sC};height:20px;text-align:center;font-size:13px;opacity:0.6;">(سؤال مقالي)</div>`;}bHt+=`</div></div>`;
                 } bHt+=`</div>`;
-                pA.innerHTML=generatePageHTML(bH+bHt,"ورقة الإجابة الإلكترونية (Bubble Sheet)",getBackgroundCSS(),true);
+                pA.innerHTML=generatePageHTML(bH+bHt,getBackgroundCSS(),true);
             } else {
+                let qP = getRawPreamble('questionsInput'); if(qP) qP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${qP}</div>`;
+                let aP = getRawPreamble('answersInput'); if(aP) aP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${aP}</div>`;
+                
                 const hs=buildQAndA_HTML(questionsDatabase,document.getElementById('userPrimaryColor').value); let fH='';
-                if(printType==='student'||printType==='both')fH+=generatePageHTML(hs.noAns,document.getElementById('qTitleInput').value,getBackgroundCSS(),false);
-                if(printType==='teacher'||printType==='both')fH+=generatePageHTML(hs.withAns,document.getElementById('aTitleInput').value,getBackgroundCSS(),true);
+                if(printType==='student'||printType==='both')fH+=generatePageHTML(qP + hs.noAns,getBackgroundCSS(),false);
+                if(printType==='teacher'||printType==='both')fH+=generatePageHTML(aP + hs.withAns,getBackgroundCSS(),true);
                 pA.innerHTML=fH;
             }
         }
@@ -1418,6 +1584,9 @@
         syncTextToDatabase(); if(questionsDatabase.length===0) return showToast('يلزم إدراج الأسئلة أولاً','error');
         const pA=document.getElementById('wordPrintPreviewArea'); pA.innerHTML=''; pA.className='print-mode-questions'; let fH=''; 
         
+        let qP = getRawPreamble('questionsInput'); if(qP) qP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${qP}</div>`;
+        let aP = getRawPreamble('answersInput'); if(aP) aP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${aP}</div>`;
+
         const numType = document.getElementById('modelNumberType').value;
         const posType = document.getElementById('modelLabelPos').value;
         
@@ -1426,8 +1595,18 @@
         else if(numType === 'number') mods = ['1', '2', '3', '4'];
 
         for(let i=0; i<mods.length; i++) {
-            let m=mods[i]; let sDb=[...questionsDatabase].sort(()=>Math.random()-0.5); let hs=buildQAndA_HTML(sDb,document.getElementById('userPrimaryColor').value);
+            let m=mods[i]; 
             
+            let headings = questionsDatabase.filter(q => q.type === 'heading');
+            let questionsOnly = questionsDatabase.filter(q => q.type !== 'heading').sort(()=>Math.random()-0.5);
+            
+            let qIdx = 0;
+            let sDb = questionsDatabase.map(q => {
+                if (q.type === 'heading') return q;
+                return questionsOnly[qIdx++];
+            });
+            
+            let hs=buildQAndA_HTML(sDb,document.getElementById('userPrimaryColor').value);
             let bgCSS = getBackgroundCSS();
             let modelBadgeHtml = '';
 
@@ -1438,7 +1617,7 @@
                 modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 20px;"><span style="font-weight: 900; font-size: 22px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 5px 25px; border-radius: 8px; background: rgba(255,255,255,0.9);">نموذج الاختبار (${m})</span></div>`;
             }
 
-            fH+=generatePageHTML(hs.noAns,document.getElementById('qTitleInput').value,bgCSS,false,modelBadgeHtml) + generatePageHTML(hs.withAns,document.getElementById('aTitleInput').value,bgCSS,true,modelBadgeHtml);
+            fH+=generatePageHTML(qP + hs.noAns,bgCSS,false,modelBadgeHtml) + generatePageHTML(aP + hs.withAns,bgCSS,true,modelBadgeHtml);
         }
         pA.innerHTML=fH; if(window.MathJax) await MathJax.typesetPromise([pA]);
         document.getElementById('printBorderOverlay').style.display=document.getElementById('enableBorder').value==='yes'?'block':'none';
