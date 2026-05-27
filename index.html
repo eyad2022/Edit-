@@ -11,6 +11,10 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
@@ -45,7 +49,7 @@
         .setup-container h1 { text-align: center; flex: 1; margin: 0; color: var(--primary-color); font-weight: 900; font-size: 32px; letter-spacing: -0.5px; }
         .theme-toggle { background: var(--ui-border); border: none; font-size: 20px; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
         .theme-toggle:hover { background: var(--ui-text); color: var(--ui-bg); }
-        .setup-container p.subtitle { text-align: center; color: #7f8c8d; margin-top: 5px; margin-bottom: 35px; font-size: 16px; }
+        .setup-container p.subtitle { text-align: center; color: #7f8c8d; margin-top: 5px; margin-bottom: 25px; font-size: 16px; }
 
         .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; border-bottom: 2px solid var(--ui-border); padding-bottom: 20px; }
         .tab-btn { background: transparent; border: 2px solid transparent; padding: 12px 30px; font-size: 18px; font-family: inherit; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; color: var(--ui-text); }
@@ -57,7 +61,7 @@
         .btn-tool { background: var(--ui-container); border: 1px solid var(--ui-border); padding: 10px 18px; border-radius: 6px; font-family: inherit; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; color: var(--ui-text); display: flex; align-items: center; gap: 8px; }
         .btn-tool:hover { border-color: var(--primary-color); transform: translateY(-2px); }
         .btn-danger { background: #fee2e2; border-color: #f87171; color: #b91c1c !important; }
-        .btn-ai { background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: white !important; border: none; }
+        .btn-ai { background: linear-gradient(135deg, #FFD700, #F59E0B); color: #1e293b !important; border: none; }
 
         .input-section { display: none; animation: fadeIn 0.3s ease-in-out; }
         .input-section.active { display: block; }
@@ -66,9 +70,15 @@
         .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .form-group { display: flex; flex-direction: column; margin-bottom: 15px; width: 100%; }
         label { font-weight: 700; margin-bottom: 8px; color: var(--ui-text); font-size: 15px; }
-        input[type="text"], textarea, select, input[type="number"] { width: 100%; padding: 14px; border: 1px solid var(--ui-border); border-radius: 8px; font-family: inherit; font-size: 15px; transition: 0.3s; background-color: var(--ui-input-bg); color: var(--ui-text); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
-        textarea { height: 280px; resize: vertical; line-height: 1.8; }
-        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(74, 0, 224, 0.1); }
+        input[type="text"], textarea, select, input[type="number"], input[type="password"] { width: 100%; padding: 14px; border: 1px solid var(--ui-border); border-radius: 8px; font-family: inherit; font-size: 15px; transition: 0.3s; background-color: var(--ui-input-bg); color: var(--ui-text); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        input[type="text"]:focus, select:focus, input[type="password"]:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(74, 0, 224, 0.1); }
+
+        /* تعديلات محرر الأسئلة ليدعم الصور */
+        .rich-textarea { width: 100%; height: 280px; padding: 14px; border: 1px solid var(--ui-border); border-radius: 8px; font-family: inherit; font-size: 15px; background-color: var(--ui-input-bg); color: var(--ui-text); overflow-y: auto; outline: none; transition: 0.3s; line-height: 1.8; }
+        .rich-textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(74, 0, 224, 0.1); }
+        .rich-textarea[placeholder]:empty:before { content: attr(placeholder); color: #94a3b8; pointer-events: none; display: block; }
+        .rich-textarea img { max-width: 100%; cursor: pointer; transition: 0.2s; border-radius: 6px; border: 2px solid transparent; }
+        .rich-textarea img:hover { border-color: var(--primary-color); }
 
         .editor-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; background-color: #f1f5f9; border: 1px solid var(--ui-border); border-bottom: none; border-radius: 8px 8px 0 0; align-items: center; }
         .editor-toolbar button, .editor-toolbar select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff; color: #334155; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; display: flex; align-items: center; justify-content: center; }
@@ -77,9 +87,16 @@
         
         .editor-area-wrapper { background-color: #e2e8f0; padding: 40px 20px; border: 1px solid var(--ui-border); border-radius: 0 0 8px 8px; overflow-y: auto; height: 800px; display: flex; justify-content: center; }
         .editor-area { background: #ffffff; color: #000000; width: 210mm; min-height: 297mm; padding: 25mm 20mm; box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05); font-size: 18px; line-height: 1.8; outline: none; word-wrap: break-word; }
-        .editor-area img { max-width: 100%; border-radius: 4px; margin: 15px 0; border: 1px solid #cbd5e1; }
+        .editor-area img { max-width: 100%; border-radius: 4px; margin: 15px 0; border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+        .editor-area img:hover { border-color: var(--primary-color); }
         .editor-area table { width: 100%; border-collapse: collapse; margin: 20px 0; }
         .editor-area td, .editor-area th { border: 1px solid #94a3b8; padding: 12px; }
+
+        /* شريط أدوات الصور المطور */
+        .image-toolbar { position: absolute; background: white; border: 1px solid var(--ui-border); padding: 10px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); z-index: 10000; display: none; gap: 8px; flex-direction: column; width: 220px; text-align: center; }
+        .image-toolbar .toolbar-row { display: flex; gap: 6px; justify-content: center; }
+        .image-toolbar button { flex: 1; background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 5px; border-radius: 6px; cursor: pointer; font-weight: bold; color: #1e293b; font-size: 13px; font-family: inherit; transition: 0.2s; }
+        .image-toolbar button:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
         .settings-panel { background: var(--ui-container); border: 1px solid var(--ui-border); border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .settings-panel h3 { margin-top: 0; color: var(--ui-text); border-bottom: 2px solid var(--ui-border); padding-bottom: 15px; font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 10px; }
@@ -128,7 +145,6 @@
         .pdf-page { padding: 35px 25px; min-height: 100vh; position: relative; background-color: var(--page-bg-color); border: var(--page-border); box-sizing: border-box; overflow: hidden; max-width: 100%; margin: 0 auto; }
         .print-border-overlay { display: none; }
 
-        /* Bubble Sheet Perfected Styles (Fixed 4-Columns Issue) */
         .bubble-container { display: grid; gap: 12px; direction: rtl; width: 100%; box-sizing: border-box; }
         .bubble-col-1 { grid-template-columns: 1fr; }
         .bubble-col-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; }
@@ -228,7 +244,7 @@
         @media print {
             @page { margin: 0; size: A4 portrait; } 
             body { background-color: white !important; color: black !important; margin: 0; padding: 0; }
-            .setup-container, #toastContainer, .custom-modal, .word-sidebar { display: none !important; }
+            .setup-container, #toastContainer, .custom-modal, .word-sidebar, #imageToolbar { display: none !important; }
             
             #wordPrintModal { display: block !important; position: static !important; background: transparent !important; width: 100% !important; height: auto !important; overflow: visible !important; }
             .word-preview-area { padding: 0 !important; background: transparent !important; display: block !important; overflow: visible !important; }
@@ -265,6 +281,20 @@
 
 <div id="printBorderOverlay" class="print-border-overlay"></div>
 
+<div id="imageToolbar" class="image-toolbar">
+    <div style="font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 2px;">تنسيق وحجم الصورة</div>
+    <div class="toolbar-row">
+        <button type="button" onclick="alignImage('right')" title="محاذاة لليمين">➡️ يمين</button>
+        <button type="button" onclick="alignImage('center')" title="توسيط الصورة">↔️ وسط</button>
+        <button type="button" onclick="alignImage('left')" title="محاذاة لليسار">⬅️ يسار</button>
+    </div>
+    <div class="toolbar-row">
+        <button type="button" onclick="resizeImage('30%')" title="حجم صغير جداً">S</button>
+        <button type="button" onclick="resizeImage('60%')" title="حجم متوسط">M</button>
+        <button type="button" onclick="resizeImage('100%')" title="حجم كامل">L</button>
+    </div>
+</div>
+
 <div id="wordPrintModal" class="word-print-modal">
     <div class="word-sidebar">
         <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
@@ -291,9 +321,14 @@
     </div>
     <p class="subtitle">بيئة عمل متكاملة لإنشاء وتنسيق الملازم والامتحانات الاحترافية بلمسة واحدة</p>
 
+    <div style="text-align: center; margin-top: 15px; margin-bottom: 25px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+        <span style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;">إعلان ممول</span>
+        <script type="text/javascript" src="//www.topcreativeformat.com/xxxxxxxxxxx/invoke.js"></script>
+    </div>
+
     <div class="tabs">
         <button id="btnTabQuestions" class="tab-btn active" onclick="switchTab('questions', this)">📝 بنك الأسئلة الشامل</button>
-        <button id="btnTabText" class="tab-btn" onclick="switchTab('text', this)">📄 محرر النصوص والمستندات</button>
+        <button id="btnTabText" class="tab-btn" onclick="switchTab('text', this)">📄 محرر النصوص والمستندات (مجاني)</button>
     </div>
 
     <div class="smart-tools-bar">
@@ -303,7 +338,42 @@
             <button class="btn-tool" onclick="execRedo()" title="تقدم خطوة للأمام">↪️ عودة (Redo)</button>
         </div>
         <div class="smart-tools-group" style="justify-content: flex-end;">
-            <button class="btn-tool btn-ai" onclick="document.getElementById('aiModal').style.display='flex'">🤖 مساعد التوليد الذكي (AI)</button>
+            <button class="btn-tool" onclick="openVIPModalManual()" style="background: #10b981; color: white; border: none; font-weight: bold; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">💎 ترقية الحساب (VIP)</button>
+            <button class="btn-tool btn-ai" onclick="requireVIP('ai', null)">👑 مساعد التوليد الذكي (VIP)</button>
+        </div>
+    </div>
+
+    <div class="settings-panel" id="accountHistoryPanel">
+        <h3>🔐 نظام الحسابات السحابي (Firebase) وسجل المستندات الكلي</h3>
+        
+        <div id="authSection">
+            <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">قم بتسجيل الدخول لحفظ بياناتك في السحابة ومزامنة تراخيص الـ VIP الخاصة بك بين أجهزتك (الحد الأقصى 3 أجهزة).</p>
+            <div class="settings-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="emailInput" placeholder="أدخل البريد الإلكتروني"></div>
+                <div class="form-group"><label>كلمة المرور</label><input type="password" id="passwordInput" placeholder="******"></div>
+                <div class="form-group" style="justify-content: flex-end; flex-direction: row; gap: 10px; padding-top: 25px;">
+                    <button class="btn-tool" onclick="handleLoginCloud()" style="border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; width: 100%; justify-content: center;">تسجيل الدخول</button>
+                    <button class="btn-tool" onclick="handleSignupCloud()" style="width: 100%; justify-content: center;">إنشاء حساب</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="userProfileSection" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--ui-border); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <span style="font-weight: 900; color: var(--primary-color); font-size: 16px;">مرحباً بك: <span id="currentLoggedInUser"></span> 🟢</span>
+                    <span style="font-size: 13px; color: #64748b; margin-right: 15px; font-weight: bold;">(الأجهزة النشطة: <span id="activeDevicesCount">0</span> / 3)</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="adminPanelBtn" class="btn-tool" onclick="document.getElementById('adminModal').style.display='flex'" style="display: none; padding: 8px 15px; border-color: #ef4444; color: #ef4444; font-weight: 900;">⚙️ لوحة الإدارة السحابية</button>
+                    <button class="btn-tool btn-danger" onclick="handleLogoutCloud()" style="padding: 8px 15px;">🚪 تسجيل خروج</button>
+                </div>
+            </div>
+            
+            <h4 style="margin: 10px 0; font-weight: 900; color: var(--ui-text);">🗂️ سجل المستندات السحابي المكتمل:</h4>
+            <div id="historyListContainer" style="max-height: 220px; overflow-y: auto; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border);">
+                <p style="color: #64748b; font-size: 13px; text-align: center; margin: 10px 0;">السجل فارغ حالياً، سيتم مزامنة مشروعك تلقائياً للسحابة بمجرد كتابته.</p>
+            </div>
         </div>
     </div>
 
@@ -314,7 +384,7 @@
                 <button class="btn-tool" onclick="insertQuestionTemplate('mcq')" style="border-color: #10b981; color: #10b981;">➕ سؤال اختياري</button>
                 <button class="btn-tool" onclick="insertQuestionTemplate('tf')" style="border-color: #f59e0b; color: #d97706;">➕ سؤال صح/خطأ</button>
                 <button class="btn-tool" onclick="insertQuestionTemplate('essay')" style="border-color: #8b5cf6; color: #8b5cf6;">➕ سؤال مقالي</button>
-                <button class="btn-tool" onclick="document.getElementById('qImageUpload').click()" style="border-color: #3b82f6; color: #3b82f6;">🖼️ صورة</button>
+                <button class="btn-tool" onclick="document.getElementById('qImageUpload').click()" style="border-color: #3b82f6; color: #3b82f6;">🖼️ إدراج صورة</button>
                 <input type="file" id="qImageUpload" accept="image/*" style="display:none" onchange="insertImageToQuestion(event)">
             </div>
             
@@ -331,16 +401,13 @@
         </div>
         <div class="grid-layout">
             <div class="form-group">
-                <label>1. محرر الأسئلة: (الصق أو اكتب الأسئلة هنا)</label>
-                <textarea id="questionsInput" placeholder="1. اكتب سؤالك هنا
-أ) الخيار الأول
-ب) الخيار الثاني [✓]
-ج) الخيار الثالث
-د) الخيار الرابع"></textarea>
+                <label>1. محرر الأسئلة: (الصق أو اكتب الأسئلة هنا - يدعم الصور بجميع أحجامها)</label>
+                <div id="questionsInput" contenteditable="true" class="rich-textarea" placeholder="1. اكتب سؤالك هنا...&#10;أ) الخيار الأول&#10;ب) الخيار الثاني [✓]&#10;ج) الخيار الثالث&#10;د) الخيار الرابع"></div>
             </div>
-            <div class="form-group"><label>2. مفتاح الإجابات: (يتم التوليد تلقائياً أو الصق يدوياً)</label><textarea id="answersInput" placeholder="إذا لم تضع الإجابة بجوار الخيار، اكتبها هنا:
-1- ب
-2- صح"></textarea></div>
+            <div class="form-group">
+                <label>2. مفتاح الإجابات: (يتم التوليد تلقائياً أو الصق يدوياً)</label>
+                <div id="answersInput" contenteditable="true" class="rich-textarea" placeholder="إذا لم تضع الإجابة بجوار الخيار، اكتبها هنا:&#10;1- ب&#10;2- صح"></div>
+            </div>
         </div>
     </div>
 
@@ -377,6 +444,29 @@
             </div>
             <div class="editor-area-wrapper">
                 <div id="generalTextInput" contenteditable="true" class="editor-area">اكتب محتوى المستند الخاص بك هنا...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-panel" id="multiModelSettingsPanel">
+        <h3>🔀 إعدادات هندسة وتوليد النماذج المتعددة (A, B, C)</h3>
+        <div class="settings-grid">
+            <div class="form-group">
+                <label>تنسيق اسم الترقيم للنموذج</label>
+                <select id="modelNumberType">
+                    <option value="arabic">حروف عربية (أ, ب, ج, د)</option>
+                    <option value="english" selected>حروف إنجليزية (A, B, C, D)</option>
+                    <option value="number">أرقام تسلسلية (1, 2, 3, 4)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>مكان ظهور اسم النموذج في الورقة</label>
+                <select id="modelLabelPos">
+                    <option value="watermark">كعلامة مائية شفافة في الخلفية</option>
+                    <option value="header_right">تحت الترويسة العلوية - يمين</option>
+                    <option value="header_center" selected>تحت الترويسة العلوية - منتصف (أعلى اسم الطالب)</option>
+                    <option value="header_left">تحت الترويسة العلوية - يسار</option>
+                </select>
             </div>
         </div>
     </div>
@@ -425,42 +515,34 @@
     </div>
 
     <div class="settings-panel" id="bubbleHeaderSettingsPanel">
-        <h3>📋 تخصيص ترويسة البابل شيت (Header Customization)</h3>
+        <h3>📋 تخصيص ترويسة البابل شيت</h3>
         <div class="settings-grid">
-            <div class="form-group">
-                <label>تفعيل وإخفاء الترويسة</label>
-                <select id="bHdrStyle">
-                    <option value="advanced">متقدمة (مع شبكة التظليل)</option>
-                    <option value="basic">بسيطة (نصوص فقط)</option>
-                    <option value="none">بدون ترويسة (إخفاء)</option>
-                </select>
-            </div>
+            <div class="form-group"><label>تفعيل وإخفاء الترويسة</label><select id="bHdrStyle"><option value="advanced">متقدمة (مع شبكة التظليل)</option><option value="basic">بسيطة</option><option value="none">بدون ترويسة</option></select></div>
             <div class="form-group"><label>نص الحقل الأول</label><input type="text" id="bHdrField1" value="اسم الطالب: ..........................................................."></div>
             <div class="form-group"><label>نص الحقل الثاني</label><input type="text" id="bHdrField2" value="المادة: ........................................."></div>
             <div class="form-group"><label>نص الحقل الثالث</label><input type="text" id="bHdrField3" value="الفرقة/الصف: ........................."></div>
             <div class="form-group"><label>عنوان شبكة التظليل</label><input type="text" id="bHdrIdTitle" value="رقم الجلوس"></div>
-            <div class="form-group"><label>نص الملاحظات التحذيرية</label><input type="text" id="bHdrNote" value="* التظليل يكون بالقلم الرصاص أو الجاف (أزرق/أسود). قم بتظليل الشكل بالكامل."></div>
-            
-            <div class="form-group"><label>حجم خط الترويسة (px)</label><input type="number" id="bHdrSize" value="16" min="10" max="35"></div>
+            <div class="form-group"><label>ملاحظات</label><input type="text" id="bHdrNote" value="* التظليل بالقلم الرصاص أو الجاف بالكامل."></div>
+            <div class="form-group"><label>حجم خط الترويسة</label><input type="number" id="bHdrSize" value="16"></div>
             <div class="form-group"><label>لون النصوص</label><input type="color" id="bHdrColor" value="#1e293b"></div>
-            <div class="form-group"><label>لون الإطار (البرواز)</label><input type="color" id="bHdrBorderColor" value="#4A00E0"></div>
+            <div class="form-group"><label>لون الإطار</label><input type="color" id="bHdrBorderColor" value="#4A00E0"></div>
             <div class="form-group"><label>لون الخلفية</label><input type="color" id="bHdrBgColor" value="#f8fafc"></div>
         </div>
     </div>
 
     <div class="settings-panel" id="examSettingsPanel">
-        <h3>🏛️ هندسة الترويسة العلوية للامتحان (العادي)</h3>
+        <h3>🏛️ هندسة الترويسة العلوية للامتحان</h3>
         <div class="settings-grid">
-            <div class="form-group"><label>حالة الترويسة</label><select id="enableHdr"><option value="yes">مفعلة</option><option value="no">مخفية</option></select></div>
+            <div class="form-group"><label>الترويسة</label><select id="enableHdr"><option value="yes">مفعلة</option><option value="no">مخفية</option></select></div>
             <div class="form-group"><label>النص الأيمن</label><input type="text" id="hdrRight" value="وزارة التربية والتعليم"></div>
             <div class="form-group"><label>النص الأوسط</label><input type="text" id="hdrCenter" value="امتحان دوري شامل"></div>
             <div class="form-group"><label>النص الأيسر</label><input type="text" id="hdrLeft" value="الزمن: ساعتان"></div>
-            <div class="form-group"><label>حجم الخط (px)</label><input type="number" id="hdrSize" value="16" min="10" max="50"></div>
+            <div class="form-group"><label>حجم الخط</label><input type="number" id="hdrSize" value="16"></div>
             <div class="form-group"><label>لون النص</label><input type="color" id="hdrTextColor" value="#1a237e"></div>
             <div class="form-group"><label>لون الخلفية</label><input type="color" id="hdrBgColor" value="#ffffff"></div>
-            <div class="form-group"><label>تصميم الإطار</label><select id="hdrBorderType"><option value="bottom">خط سفلي أنيق</option><option value="box">مربع كامل</option><option value="none">بدون إطار</option></select></div>
-            <div class="form-group"><label>انحناء الزوايا (px)</label><input type="number" id="hdrRadius" value="0" min="0" max="50"></div>
-            <div class="form-group"><label>مربع بيانات الطالب 🧑‍🎓</label><select id="enableStudentBox"><option value="yes">إظهار</option><option value="no">إخفاء</option></select></div>
+            <div class="form-group"><label>مربع بيانات الطالب</label><select id="enableStudentBox"><option value="yes">إظهار</option><option value="no">إخفاء</option></select></div>
+            <div class="form-group"><label>تصميم الإطار</label><select id="hdrBorderType"><option value="bottom">خط سفلي</option><option value="box">مربع كامل</option><option value="none">بدون</option></select></div>
+            <div class="form-group"><label>الزوايا</label><input type="number" id="hdrRadius" value="0"></div>
         </div>
     </div>
 
@@ -468,64 +550,55 @@
         <h3>🏷️ تخطيط العناوين الرئيسية</h3>
         <div class="settings-grid">
             <div class="form-group"><label>المحاذاة</label><select id="titleAlign"><option value="center">منتصف</option><option value="right">يمين</option><option value="left">يسار</option></select></div>
-            <div class="form-group"><label>نمط الخلفية</label><select id="titleHasBg"><option value="yes">ملونة (بارزة)</option><option value="no">نصية (كلاسيكية)</option></select></div>
-            <div class="form-group"><label>حجم الخط (px)</label><input type="number" id="titleSize" value="26" min="10" max="100"></div>
-            <div class="form-group"><label>شكل الإطار</label><select id="titleShape"><option value="50px">بيضاوي متناسق</option><option value="8px">مستطيل بحواف ناعمة</option><option value="0px">مستطيل حاد</option></select></div>
+            <div class="form-group"><label>نمط الخلفية</label><select id="titleHasBg"><option value="yes">ملونة</option><option value="no">نصية</option></select></div>
+            <div class="form-group"><label>حجم الخط</label><input type="number" id="titleSize" value="26"></div>
+            <div class="form-group"><label>الإطار</label><select id="titleShape"><option value="50px">بيضاوي</option><option value="8px">مستطيل ناعم</option><option value="0px">مستطيل حاد</option></select></div>
             <div class="form-group"><label>لون الخلفية</label><input type="color" id="titleBg" value="#4A00E0"></div>
             <div class="form-group"><label>لون النص</label><input type="color" id="titleColor" value="#ffffff"></div>
         </div>
     </div>
 
     <div class="settings-panel" id="questionSettingsPanel">
-        <h3>📝 التحكم الدقيق في بنية الأسئلة</h3>
+        <h3>📝 التحكم في بنيوية الأسئلة</h3>
         <div class="settings-grid">
-            <div class="form-group"><label>نمط العرض</label><select id="qDisplayMode"><option value="card">كروت (حديث)</option><option value="text">نص حر (كلاسيكي)</option></select></div>
-            <div class="form-group"><label>توزيع الخيارات</label><select id="optionsLayout"><option value="row">أفقي متصل</option><option value="grid">شبكة (عمودين)</option><option value="col">عمودي متسلسل</option></select></div>
-            <div class="form-group"><label>حجم خط السؤال</label><input type="number" id="qFontSize" value="20" min="10" max="50"></div>
-            <div class="form-group"><label>لون خط السؤال</label><input type="color" id="qColor" value="#1e293b"></div>
-            <div class="form-group"><label>حجم خط الخيارات</label><input type="number" id="optFontSize" value="16" min="10" max="50"></div>
-            <div class="form-group"><label>لون خط الخيارات</label><input type="color" id="optColor" value="#334155"></div>
-            <div class="form-group"><label>لون الإجابة النموذجية</label><input type="color" id="correctColor" value="#10b981"></div>
-            <div class="form-group"><label>تخطيط الصفحة 📄</label><select id="columnsLayout"><option value="1">عمود واحد</option><option value="2">عمودين (مجلة)</option></select></div>
+            <div class="form-group"><label>النمط</label><select id="qDisplayMode"><option value="card">كروت</option><option value="text">نص حر</option></select></div>
+            <div class="form-group"><label>الخيارات</label><select id="optionsLayout"><option value="row">أفقي</option><option value="grid">شبكة</option><option value="col">عمودي</option></select></div>
+            <div class="form-group"><label>حجم السؤال</label><input type="number" id="qFontSize" value="20"></div>
+            <div class="form-group"><label>لون السؤال</label><input type="color" id="qColor" value="#1e293b"></div>
+            <div class="form-group"><label>حجم الخيارات</label><input type="number" id="optFontSize" value="16"></div>
+            <div class="form-group"><label>لون الخيارات</label><input type="color" id="optColor" value="#334155"></div>
+            <div class="form-group"><label>لون الإجابة</label><input type="color" id="correctColor" value="#10b981"></div>
+            <div class="form-group"><label>الأعمدة</label><select id="columnsLayout"><option value="1">1</option><option value="2">2</option></select></div>
         </div>
     </div>
 
     <div class="settings-panel" id="generalSettingsPanel">
-        <h3>🎨 إعدادات التنسيق والطباعة العامة</h3>
+        <h3>🎨 التنسيق العام والطباعة للورقة</h3>
         <div class="settings-grid">
-            <div class="form-group"><label>برواز الصفحة الخارجي 🔲</label><select id="enableBorder"><option value="yes">تفعيل</option><option value="no">إلغاء</option></select></div>
-            <div class="form-group"><label>نمط البرواز</label><select id="borderStyle"><option value="solid">متصل (Solid)</option><option value="double">مزدوج (Double)</option><option value="dashed">متقطع (Dashed)</option></select></div>
-            <div class="form-group"><label>سُمك البرواز (px)</label><input type="number" id="borderWidth" value="8" min="1" max="50"></div>
-            <div class="form-group"><label>لون البرواز</label><input type="color" id="borderColor" value="#4A00E0"></div>
-            <div class="form-group"><label>لون خلفية الورقة</label><input type="color" id="pageBgColor" value="#ffffff"></div>
-            
-            <div class="form-group"><label>الخط العائلي الأساسي</label>
-                <select id="userFont">
-                    <option value="'Cairo', sans-serif">Cairo</option><option value="'Tajawal', sans-serif">Tajawal</option>
-                    <option value="'Almarai', sans-serif">Almarai</option><option value="'Readex Pro', sans-serif">Readex Pro</option>
-                </select>
-            </div>
-            
-            <div class="form-group"><label>المحاذاة العامة للورقة</label><select id="textAlign"><option value="right">يمين</option><option value="center">وسط</option><option value="left">يسار</option></select></div>
-            <div class="form-group"><label>لون النصوص العام</label><input type="color" id="textColor" value="#1e293b"></div>
-            <div class="form-group"><label>اللون الرئيسي للهوية (Brand)</label><input type="color" id="userPrimaryColor" value="#4A00E0"></div>
-            
-            <div class="form-group"><label>خلفية الكروت</label><select id="textBgToggle"><option value="color">تلوين صلب</option><option value="transparent">شفافة</option></select></div>
+            <div class="form-group"><label>البرواز</label><select id="enableBorder"><option value="yes">تفعيل</option><option value="no">إلغاء</option></select></div>
+            <div class="form-group"><label>النمط</label><select id="borderStyle"><option value="solid">متصل</option><option value="double">مزدوج</option><option value="dashed">متقطع</option></select></div>
+            <div class="form-group"><label>سُمك</label><input type="number" id="borderWidth" value="8"></div>
+            <div class="form-group"><label>اللون</label><input type="color" id="borderColor" value="#4A00E0"></div>
+            <div class="form-group"><label>خلفية الورقة</label><input type="color" id="pageBgColor" value="#ffffff"></div>
+            <div class="form-group"><label>الخط</label><select id="userFont"><option value="'Cairo', sans-serif">Cairo</option><option value="'Tajawal', sans-serif">Tajawal</option><option value="'Almarai', sans-serif">Almarai</option><option value="'Readex Pro', sans-serif">Readex Pro</option></select></div>
+            <div class="form-group"><label>المحاذاة</label><select id="textAlign"><option value="right">يمين</option><option value="center">وسط</option><option value="left">يسار</option></select></div>
+            <div class="form-group"><label>لون النصوص</label><input type="color" id="textColor" value="#1e293b"></div>
+            <div class="form-group"><label>الالون الرئيسي</label><input type="color" id="userPrimaryColor" value="#4A00E0"></div>
+            <div class="form-group"><label>خلفية الكروت</label><select id="textBgToggle"><option value="color">تلوين</option><option value="transparent">شفافة</option></select></div>
             <div class="form-group"><label>لون الكروت</label><input type="color" id="textBgColor" value="#ffffff"></div>
-            <div class="form-group"><label>انحناء الكروت (px)</label><input type="number" id="cardRadius" value="8"></div>
-
-            <div class="form-group"><label>العلامة المائية الثابتة ✍️</label><input type="text" id="wmText" value="EL-ALFEY"></div>
+            <div class="form-group"><label>انحناء الكروت</label><input type="number" id="cardRadius" value="8"></div>
+            <div class="form-group"><label>المائية</label><input type="text" id="wmText" value="EL-ALFEY"></div>
             <div class="form-group"><label>لون المائية</label><input type="color" id="wmColor" value="#4a00e0"></div>
-            <div class="form-group"><label>نمط التوزيع</label><select id="wmType"><option value="repeat">تكرار شبكي</option><option value="single">مركزية عملاقة</option></select></div>
+            <div class="form-group"><label>نوع المائية</label><select id="wmType"><option value="repeat">تكرار</option><option value="single">مركزية</option></select></div>
         </div>
     </div>
 
     <div class="action-buttons" id="questionActionButtons">
-        <button class="action-btn btn-pdf-student" onclick="executeExport('student')"><i>🧑‍🎓</i> طباعة نسخة الطالب</button>
-        <button class="action-btn btn-pdf-teacher" onclick="executeExport('teacher')"><i>👨‍🏫</i> طباعة نموذج الإجابة</button>
-        <button class="action-btn btn-pdf-bubble" onclick="executeExport('bubble')"><i>⭕</i> إنشاء بابل شيت احترافي</button>
-        <button class="action-btn btn-pdf-both" onclick="executeExport('both')"><i>📑</i> تصدير المستند كاملاً</button>
-        <button class="action-btn btn-pdf-multi" onclick="generateMultiModels()"><i>🔀</i> توليد نماذج متعددة (A, B, C, D)</button>
+        <button class="action-btn btn-pdf-student" onclick="requireVIP('export', 'student')"><i>🧑‍🎓</i> طباعة نسخة الطالب</button>
+        <button class="action-btn btn-pdf-teacher" onclick="requireVIP('export', 'teacher')"><i>👨‍🏫</i> طباعة نموذج الإجابة</button>
+        <button class="action-btn btn-pdf-bubble" onclick="requireVIP('export', 'bubble')"><i>⭕</i> إنشاء بابل شيت احترافي</button>
+        <button class="action-btn btn-pdf-both" onclick="requireVIP('export', 'both')"><i>📑</i> تصدير المستند كاملاً</button>
+        <button class="action-btn btn-pdf-multi" onclick="requireVIP('multi', null)"><i>🔀</i> توليد نماذج متعددة</button>
     </div>
 
     <div class="action-buttons" id="textActionButtons" style="display: none;">
@@ -535,6 +608,49 @@
 
 <div id="toastContainer"></div>
 
+<div id="vipModal" class="custom-modal">
+    <div class="modal-content" style="border-top: 5px solid #F59E0B;">
+        <h3 style="color: #F59E0B; margin-top: 0;">👑 تفعيل النسخة الاحترافية (VIP)</h3>
+        <p id="vipModalText" style="color: var(--ui-text); margin-bottom: 20px; line-height: 1.6;">يرجى إدخال كود التفعيل الفريد للاستمرار.</p>
+        <input type="text" id="vipCodeInput" placeholder="أدخل كود التفعيل هنا..." style="text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase;">
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button onclick="verifyVIPCode()" style="background: #10b981; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer;">تفعيل الكود ✓</button>
+            <button onclick="document.getElementById('vipModal').style.display='none'" style="background: #e2e8f0; color: #1e293b; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer;">إلغاء</button>
+        </div>
+        <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--ui-border); font-size: 14px; color: #64748b;">
+            للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر واتساب:<br>
+            <strong style="color: #10b981; font-size: 18px; display: block; margin-top: 5px;">01155324374</strong>
+        </div>
+    </div>
+</div>
+
+<div id="adminModal" class="custom-modal">
+    <div class="modal-content" style="border-top: 5px solid #ef4444; text-align: right;">
+        <h3 style="color: #ef4444; margin-top: 0; font-weight: 900;">⚙️ مصنع الأكواد السحابي (إدارة التطبيق)</h3>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">قم باختيار نوع الباقة الزمنية وعدد الأكواد المطلوبة لتوليدها فوراً وحفظها في قاعدة بيانات Firebase بشكل مشفر غير قابل للتكرار أو المشاركة.</p>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div class="form-group" style="flex:1;">
+                <label>نوع الباقة المخصصة</label>
+                <select id="adminCodeType">
+                    <option value="7">أسبوع (7 أيام) - بادئة W</option>
+                    <option value="30">شهر (30 يوماً) - بادئة M</option>
+                    <option value="365">سنة (365 يوماً) - بادئة Y</option>
+                    <option value="9999">مدى الحياة - بادئة L</option>
+                </select>
+            </div>
+            <div class="form-group" style="width: 100px;">
+                <label>العدد</label>
+                <input type="number" id="adminCodeCount" value="5" min="1" max="100">
+            </div>
+        </div>
+        <button onclick="generateDynamicCodes()" style="background:#ef4444; color:white; width:100%; padding:14px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">🔥 توليد الأكواد وحفظها في السحابة</button>
+        <textarea id="generatedCodesOutput" rows="6" style="width:100%; margin-top:15px; padding:10px; direction:ltr; text-align:left; border-radius:8px; border:1px solid #cbd5e1; font-family: monospace; font-size: 14px;" placeholder="الأكواد السحابية الجديدة ستظهر هنا لنسخها وإرسالها للعملاء..." readonly></textarea>
+        <div style="text-align: center; margin-top: 15px;">
+            <button onclick="document.getElementById('adminModal').style.display='none'" style="background: #e2e8f0; border: none; padding: 10px 40px; border-radius: 8px; cursor: pointer; font-weight:bold; color: #1e293b;">إغلاق لوحة الإدارة</button>
+        </div>
+    </div>
+</div>
+
 <div id="analyticsModal" class="custom-modal">
     <div class="modal-content" style="text-align: right;">
         <h3 style="color: var(--primary-color); margin-top: 0; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;">📊 التقرير التحليلي للأسئلة</h3>
@@ -542,37 +658,34 @@
         <div style="margin-bottom: 20px;"><div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;"><span>اختيار من متعدد (MCQ)</span><span id="statMcqCount">0</span></div><div class="progress-bar-bg"><div class="progress-bar-fill" id="statMcqBar" style="width: 0%; background: var(--primary-color);"></div></div></div>
         <div style="margin-bottom: 20px;"><div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;"><span>صواب وخطأ (T/F)</span><span id="statTfCount">0</span></div><div class="progress-bar-bg"><div class="progress-bar-fill" id="statTfBar" style="width: 0%; background: #f59e0b;"></div></div></div>
         <div style="margin-bottom: 20px;"><div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;"><span>أسئلة مقالية (Essay)</span><span id="statEssayCount">0</span></div><div class="progress-bar-bg"><div class="progress-bar-fill" id="statEssayBar" style="width: 0%; background: #8b5cf6;"></div></div></div>
-        <div style="text-align: center; margin-top: 30px;"><button onclick="document.getElementById('analyticsModal').style.display='none'" style="background: #e2e8f0; color: #1e293b; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold;">إغلاق النافذة</button></div>
+        <div style="text-align: center; margin-top: 30px;"><button onclick="document.getElementById('analyticsModal').style.display='none'" style="background: #e2e8f0; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold;">إغلاق</button></div>
     </div>
 </div>
 
 <div id="aiModal" class="custom-modal">
     <div class="modal-content" style="text-align: right;">
-        <h3 style="color: #8b5cf6; margin-top: 0; border-bottom: 2px solid #8b5cf6; padding-bottom: 10px;">🤖 مساعد التوليد المعرفي</h3>
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">قم بتغذية المحرك بالنص أو المرفقات ليقوم بتحليلها وصياغة أسئلة دقيقة تلقائياً.</p>
-        
-        <textarea id="aiTextInput" placeholder="أدخل المادة العلمية أو الفقرة هنا..." style="height: 140px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; width: 100%; font-family: inherit; font-size: 15px;"></textarea>
-        
-        <div style="background: #f8fafc; border: 2px dashed #8b5cf6; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; transition: 0.3s;">
-            <input type="file" id="aiFileInput" accept="image/*,.pdf,.txt" style="display: none;" onchange="document.getElementById('aiFileName').innerText = this.files[0] ? this.files[0].name : 'لم يتم تحديد ملف';">
-            <button onclick="document.getElementById('aiFileInput').click()" style="background: white; border: 1px solid #8b5cf6; color: #8b5cf6; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: inherit;">📂 إرفاق ملف للتحليل (PDF, TXT, صور)</button>
-            <div id="aiFileName" style="margin-top: 12px; font-size: 13px; color: #64748b; font-weight: bold;">لم يتم تحديد ملف</div>
+        <h3 style="color: #8b5cf6; margin-top: 0; border-bottom: 2px solid #8b5cf6; padding-bottom: 10px;">🤖 مساعد التوليد المعرفي الذكي</h3>
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">قم بتغذية المحرك بالنص أو المرفقات ليقوم بإنشاء أسئلة تلقائياً.</p>
+        <textarea id="aiTextInput" placeholder="أدخل المادة العلمية..." style="height: 140px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; width: 100%;"></textarea>
+        <div style="background: #f8fafc; border: 2px dashed #8b5cf6; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px;">
+            <input type="file" id="aiFileInput" accept="image/*,.pdf,.txt" style="display: none;" onchange="document.getElementById('aiFileName').innerText = this.files[0] ? this.files[0].name : 'لم يتم التحديد';">
+            <button onclick="document.getElementById('aiFileInput').click()" style="background: white; border: 1px solid #8b5cf6; color: #8b5cf6; padding: 10px 20px; border-radius: 6px; cursor: pointer;">📂 إرفاق ملف للتحليل</button>
+            <div id="aiFileName" style="margin-top: 12px; font-size: 13px; color: #64748b;">لم يتم تحديد ملف</div>
         </div>
-
         <div style="display: flex; gap: 15px; justify-content: center;">
-            <button onclick="generateAIQuestions()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">✨ بدء التحليل والتوليد</button>
-            <button onclick="document.getElementById('aiModal').style.display='none'" style="background: #e2e8f0; color: #1e293b; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">تراجع</button>
+            <button onclick="generateAIQuestions()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer;">✨ بدء التوليد</button>
+            <button onclick="document.getElementById('aiModal').style.display='none'" style="background: #e2e8f0; border: none; padding: 12px 30px; border-radius: 8px;">تراجع</button>
         </div>
     </div>
 </div>
 
 <div id="confirmModal" class="custom-modal">
     <div class="modal-content">
-        <h3 style="color: #ef4444; margin-top: 0; font-size: 24px;">⚠️ تأكيد الإجراء</h3>
-        <p style="font-size: 16px; color: #334155;">هل أنت متأكد من رغبتك في مسح كافة البيانات والبدء بمشروع جديد؟ (هذا الإجراء لا يمكن التراجع عنه).</p>
+        <h3 style="color: #ef4444; margin-top: 0;">⚠️ تأكيد الإجراء</h3>
+        <p>هل أنت متأكد من مسح البيانات والبدء بمشروع جديد؟</p>
         <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
-            <button onclick="executeClearData()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold;">تأكيد المسح</button>
-            <button onclick="document.getElementById('confirmModal').style.display='none'" style="background: #e2e8f0; color: #1e293b; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold;">إلغاء الأمر</button>
+            <button onclick="executeClearData()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 8px;">تأكيد المسح</button>
+            <button onclick="document.getElementById('confirmModal').style.display='none'" style="background: #e2e8f0; border: none; padding: 12px 30px; border-radius: 8px;">إلغاء</button>
         </div>
     </div>
 </div>
@@ -580,105 +693,440 @@
 <div id="printArea"></div>
 
 <script>
+    // -------------------------------------------------------------
+    // إعدادات ومفاتيح Firebase السحابية لمشروعك المعرّف
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "AIzaSyDAbNo9AHi73rTNogXHpKk9MDp8HpY16Mw",
+        authDomain: "elalfey-app.firebaseapp.com",
+        projectId: "elalfey-app",
+        storageBucket: "elalfey-app.firebasestorage.app",
+        messagingSenderId: "676659616653",
+        appId: "1:676659616653:web:6a6e3ef338cc9a0e8bfbc4",
+        measurementId: "G-8S7X0YJGFZ"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // مُعرّف بصمة فريد لجهاز العميل الحالي للتحقق من قاعدة الـ 3 أجهزة
+    let localDeviceId = localStorage.getItem('elalfey_device_id') || Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('elalfey_device_id', localDeviceId);
+
     let currentMode = 'questions';
     let questionsDatabase = [];
-    
     let appHistory = [];
     let appHistoryIndex = -1;
     let historyTimeout;
+    let pendingAction = null;
+    let pendingActionParam = null;
+    let historySaveTimeout;
+    
+    // -------------------------------------------------------------
+    // نظام تحجيم ومحاذاة الصور الذكي (مضاف حديثاً)
+    // -------------------------------------------------------------
+    let activeImage = null;
 
-    const inputIdsToSave = [
-        'questionsInput', 'answersInput', 'qTitleInput', 'aTitleInput', 'textTitleInput', 
-        'enableBorder', 'borderStyle', 'borderWidth', 'borderColor', 'pageBgColor', 
-        'wmText', 'wmColor', 'wmType', 'userFont', 'textAlign', 'textColor', 'textBgToggle', 'textBgColor', 
-        'cardRadius', 'userPrimaryColor', 'hdrRight', 'hdrCenter', 'hdrLeft', 'enableHdr', 'enableStudentBox', 
-        'columnsLayout', 'titleAlign', 'titleSize', 'titleShape', 'titleBg', 'titleColor', 
-        'titleHasBg', 'qDisplayMode', 'optionsLayout', 'qFontSize', 'optFontSize', 
-        'qColor', 'optColor', 'correctColor', 'hdrSize', 'hdrTextColor', 'hdrBgColor', 'hdrBorderType', 'hdrRadius',
-        'bubbleShape', 'bubbleTextPosition', 'bubbleLettersType', 'bubbleOptionsCount', 'bubbleColumns', 'bubbleSize', 'bubbleStrokeColor',
-        'bHdrStyle', 'bHdrField1', 'bHdrField2', 'bHdrField3', 'bHdrIdTitle', 'bHdrNote', 'bHdrColor', 'bHdrBgColor', 'bHdrBorderColor', 'bHdrSize'
-    ];
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName === 'IMG' && e.target.closest('[contenteditable="true"]')) {
+            activeImage = e.target;
+            const t = document.getElementById('imageToolbar');
+            const rect = activeImage.getBoundingClientRect();
+            t.style.top = (rect.top + window.scrollY - 90) + 'px';
+            t.style.left = (rect.left + window.scrollX + (rect.width/2) - 110) + 'px'; // توسيط القائمة فوق الصورة
+            t.style.display = 'flex';
+        } else if (!e.target.closest('#imageToolbar')) {
+            const t = document.getElementById('imageToolbar');
+            if (t) t.style.display = 'none';
+            activeImage = null;
+        }
+    });
 
+    function alignImage(pos) {
+        if(!activeImage) return;
+        activeImage.style.display = 'block';
+        if (pos === 'center') {
+            activeImage.style.margin = '15px auto';
+        } else if (pos === 'right') {
+            activeImage.style.margin = '15px 0 15px auto';
+        } else {
+            activeImage.style.margin = '15px auto 15px 0';
+        }
+        autoSaveData(); syncTextToDatabase();
+    }
+
+    function resizeImage(size) {
+        if(!activeImage) return;
+        activeImage.style.width = size;
+        activeImage.style.height = 'auto';
+        autoSaveData(); syncTextToDatabase();
+    }
+
+    // استخراج النصوص بشكل آمن من المحرر الذكي مع الحفاظ على الصور
+    function getEditorText(id) {
+        const el = document.getElementById(id);
+        if (!el) return '';
+        
+        const clone = el.cloneNode(true);
+        // تحويل الفواصل البصرية لـ \n
+        clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+        clone.querySelectorAll('div, p').forEach(div => div.replaceWith('\n' + div.innerHTML + '\n'));
+        
+        let temp = document.createElement('div');
+        temp.innerHTML = clone.innerHTML;
+        
+        let finalStr = '';
+        function traverse(node) {
+            if (node.nodeType === 3) finalStr += node.nodeValue;
+            else if (node.nodeName === 'IMG') finalStr += '\n' + node.outerHTML + '\n';
+            else node.childNodes.forEach(traverse);
+        }
+        traverse(temp);
+        
+        return finalStr.replace(/\n\n+/g, '\n').trim();
+    }
+
+    // -------------------------------------------------------------
+    // مراقبة حالة اتصال المستندات والأجهزة بـ Firebase
+    // -------------------------------------------------------------
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            const docRef = db.collection('users').doc(user.uid);
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                let data = docSnap.data();
+                let devices = data.devices || [];
+                
+                // تطبيق فحص التزامن للأجهزة الثلاثة
+                if (!devices.includes(localDeviceId)) {
+                    if (devices.length >= 3) {
+                        alert("يجب تسجيل الخروج من أحد الأجهزة الثلاثة لتتمكن من تسجيل الدخول هنا");
+                        auth.signOut();
+                        return;
+                    } else {
+                        devices.push(localDeviceId);
+                        await docRef.update({ devices: devices });
+                    }
+                }
+                
+                document.getElementById('currentLoggedInUser').innerText = user.email;
+                document.getElementById('activeDevicesCount').innerText = devices.length;
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('userProfileSection').style.display = 'block';
+                
+                // التحقق من حساب المدير المعتمد
+                if (user.email === 'ayadmsd68@gmail.com') {
+                    document.getElementById('adminPanelBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('adminPanelBtn').style.display = 'none';
+                }
+                
+                if (data.history) loadHistoryUI(data.history);
+                if (data.vipExpiry) localStorage.setItem('elalfey_vip_expiry', data.vipExpiry);
+                if (data.trialStart) localStorage.setItem('elalfey_trial_start', data.trialStart);
+            }
+        } else {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('userProfileSection').style.display = 'none';
+            document.getElementById('adminPanelBtn').style.display = 'none';
+        }
+    });
+
+    async function handleSignupCloud() {
+        const email = document.getElementById('emailInput').value.trim();
+        const pass = document.getElementById('passwordInput').value.trim();
+        if(!email || !pass) return showToast('يرجى ملء البيانات أولاً', 'error');
+        try {
+            const cred = await auth.createUserWithEmailAndPassword(email, pass);
+            await db.collection('users').doc(cred.user.uid).set({
+                email: email,
+                devices: [localDeviceId],
+                history: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('تم إنشاء الحساب السحابي بنجاح!', 'success');
+            document.getElementById('passwordInput').value = '';
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function handleLoginCloud() {
+        const email = document.getElementById('emailInput').value.trim();
+        const pass = document.getElementById('passwordInput').value.trim();
+        if(!email || !pass) return showToast('يرجى ملء الحقول المطلوبة', 'error');
+        try {
+            await auth.signInWithEmailAndPassword(email, pass);
+            showToast('تم تسجيل الدخول والمزامنة بنجاح!', 'success');
+        } catch (e) { showToast('بيانات الدخول غير صحيحة وعملية التحقق فشلت', 'error'); }
+    }
+
+    async function handleLogoutCloud() {
+        const user = auth.currentUser;
+        if (user) {
+            const docRef = db.collection('users').doc(user.uid);
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                let devices = docSnap.data().devices || [];
+                devices = devices.filter(d => d !== localDeviceId);
+                await docRef.update({ devices: devices });
+            }
+            await auth.signOut();
+            localStorage.removeItem('elalfey_vip_expiry');
+            showToast('تم تسجيل الخروج بأمان', 'info');
+        }
+    }
+
+    function syncCurrentToHistory() {
+        const user = auth.currentUser;
+        if(!user) return; 
+        
+        clearTimeout(historySaveTimeout);
+        historySaveTimeout = setTimeout(async () => {
+            const docRef = db.collection('users').doc(user.uid);
+            const docSnap = await docRef.get();
+            if(!docSnap.exists) return;
+            
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            const qInput = qEl ? qEl.innerHTML : '';
+            const aInput = aEl ? aEl.innerHTML : '';
+            const gText = document.getElementById('generalTextInput').innerHTML;
+            const title = currentMode === 'questions' ? document.getElementById('qTitleInput').value : document.getElementById('textTitleInput').value;
+            
+            if(!qInput.trim() && !aInput.trim() && gText === 'اكتب محتوى المستند الخاص بك هنا...') return;
+            
+            let hist = docSnap.data().history || [];
+            if(hist.length > 0 && hist[0].q === qInput && hist[0].a === aInput && hist[0].g === gText) return;
+            
+            hist.unshift({
+                title: title || "مشروع غير معنون",
+                time: new Date().toLocaleTimeString('ar-EG') + ' - ' + new Date().toLocaleDateString('ar-EG'),
+                q: qInput, a: aInput, g: gText, mode: currentMode
+            });
+            
+            if(hist.length > 30) hist.pop();
+            await docRef.update({ history: hist });
+            loadHistoryUI(hist);
+        }, 1500);
+    }
+
+    function loadHistoryUI(hist) {
+        const container = document.getElementById('historyListContainer');
+        if(!hist || hist.length === 0) {
+            container.innerHTML = `<p style="color:#64748b; font-size:13px; text-align:center;">السجل فارغ حالياً.</p>`; return;
+        }
+        let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+        window.tempCloudHistory = hist;
+        hist.forEach((item, idx) => {
+            html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--ui-container); padding:10px; border-radius:6px; border:1px solid var(--ui-border); gap:10px;">
+                <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    <strong style="color:var(--primary-color); font-size:14px;">${item.title}</strong>
+                    <span style="font-size:11px; color:#64748b; margin-right:10px;">(${item.time})</span>
+                </div>
+                <button class="btn-tool" onclick="restoreFromCloudHistory(${idx})" style="padding:4px 10px; font-size:12px; border-color:#10b981; color:#10b981;">استعادة 📂</button>
+            </div>`;
+        });
+        html += '</div>'; container.innerHTML = html;
+    }
+
+    function restoreFromCloudHistory(idx) {
+        if(!window.tempCloudHistory) return;
+        const item = window.tempCloudHistory[idx];
+        document.getElementById('questionsInput').innerHTML = item.q;
+        document.getElementById('answersInput').innerHTML = item.a;
+        document.getElementById('generalTextInput').innerHTML = item.g;
+        if(item.mode === 'questions') document.getElementById('qTitleInput').value = item.title;
+        else document.getElementById('textTitleInput').value = item.title;
+        switchTab(item.mode, document.getElementById(item.mode === 'questions' ? 'btnTabQuestions' : 'btnTabText'));
+        syncTextToDatabase(); autoSaveData(); showToast('تم استعادة المشروع المختار بنجاح', 'success');
+    }
+
+    // -------------------------------------------------------------
+    // نظام الـ VIP المتطور (4 باقات ديناميكية) وفترة التجربة
+    // -------------------------------------------------------------
+    function requireVIP(actionType, param) {
+        let expiry = localStorage.getItem('elalfey_vip_expiry');
+        let isVIP = false;
+        
+        if (expiry === 'lifetime') isVIP = true;
+        else if (expiry && parseInt(expiry) > Date.now()) isVIP = true;
+
+        if (isVIP) {
+            proceedWithAction(actionType, param); return;
+        }
+
+        let trialStart = localStorage.getItem('elalfey_trial_start');
+        if (!trialStart) {
+            trialStart = Date.now();
+            localStorage.setItem('elalfey_trial_start', trialStart);
+            const user = auth.currentUser;
+            if (user) db.collection('users').doc(user.uid).update({ trialStart: trialStart });
+        }
+
+        const daysElapsed = (Date.now() - parseInt(trialStart)) / (1000 * 60 * 60 * 24);
+        const daysLeft = Math.ceil(7 - daysElapsed);
+
+        if (daysLeft > 0) {
+            showToast(`أنت تستخدم الفترة التجريبية المفتوحة (متبقي ${daysLeft} أيام)`, 'info');
+            proceedWithAction(actionType, param);
+        } else {
+            pendingAction = actionType; pendingActionParam = param;
+            document.getElementById('vipModalText').innerText = "لقد انتهت فترة الـ 7 أيام التجريبية المجانية لإنشاء وتصدير الأسئلة. يرجى إدخال كود التفعيل المخصص لترقية حسابك الآن.";
+            document.getElementById('vipModal').style.display = 'flex';
+        }
+    }
+
+    function openVIPModalManual() {
+        let expiry = localStorage.getItem('elalfey_vip_expiry');
+        if (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now())) {
+            showToast('حسابك مفعل بالفعل بالنسخة الاحترافية الشاملة! 🎉', 'info'); return;
+        }
+        document.getElementById('vipModalText').innerText = "للاستمتاع بخصائص الذكاء الاصطناعي، تصدير النماذج المتعددة، والبابل شيت بدون توقف، أدخل كود التفعيل:";
+        document.getElementById('vipModal').style.display = 'flex';
+        pendingAction = null; pendingActionParam = null;
+    }
+
+    async function verifyVIPCode() {
+        const code = document.getElementById('vipCodeInput').value.trim().toUpperCase();
+        if (!code) return showToast('يرجى إدخال الكود أولاً!', 'error');
+
+        const user = auth.currentUser;
+        if (!user) return showToast('يجب إنشاء حساب وتسجيل الدخول لتفعيل الأكواد!', 'error');
+
+        try {
+            showToast('جاري التحقق سحابياً...', 'info');
+            const codeRef = db.collection('vip_codes').doc(code);
+            const codeDoc = await codeRef.get();
+
+            if (!codeDoc.exists) return showToast('كود التفعيل هذا غير صحيح أو غير مدرج بالنظام!', 'error');
+
+            const codeData = codeDoc.data();
+            if (codeData.used) return showToast('عذراً، هذا الكود تم استخدامه وحرقه مسبقاً لحساب آخر!', 'error');
+
+            let addDays = codeData.days;
+            let newExpiry = 'lifetime';
+
+            if (addDays !== 9999) {
+                let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || Date.now();
+                if (current < Date.now()) current = Date.now();
+                newExpiry = current + (addDays * 24 * 60 * 60 * 1000);
+            }
+
+            const batch = db.batch();
+            batch.update(db.collection('users').doc(user.uid), { vipExpiry: newExpiry });
+            batch.update(codeRef, { used: true, usedBy: user.email, usedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await batch.commit();
+
+            localStorage.setItem('elalfey_vip_expiry', newExpiry);
+            document.getElementById('vipModal').style.display = 'none';
+            showToast('تم ترقية حسابك بنجاح للنسخة البرو المكتملة! 🎉', 'success');
+            if(pendingAction) proceedWithAction(pendingAction, pendingActionParam);
+
+        } catch (e) { showToast('فشل التفعيل السحابي، تأكد من اتصال الإنترنت وقواعد Firestore', 'error'); }
+    }
+
+    async function generateDynamicCodes() {
+        const days = parseInt(document.getElementById('adminCodeType').value);
+        const count = parseInt(document.getElementById('adminCodeCount').value);
+        let prefix = days === 7 ? 'W-' : days === 30 ? 'M-' : days === 365 ? 'Y-' : 'L-';
+        let generated = [];
+
+        document.getElementById('generatedCodesOutput').value = 'جاري توليد الأكواد وحفظها سحابياً...';
+
+        try {
+            const batch = db.batch();
+            for (let i = 0; i < count; i++) {
+                let rStr = Math.random().toString(36).substring(2, 7).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+                let newCode = prefix + rStr;
+                let codeRef = db.collection('vip_codes').doc(newCode);
+                
+                batch.set(codeRef, {
+                    days: days,
+                    used: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                generated.push(newCode);
+            }
+            await batch.commit();
+            document.getElementById('generatedCodesOutput').value = generated.join('\n');
+            showToast(`تم إنتاج ${count} كود فريد وحفظهم بنجاح على Firestore`, 'success');
+        } catch (e) { document.getElementById('generatedCodesOutput').value = 'خطأ سحابي: ' + e.message; }
+    }
+
+    function proceedWithAction(actionType, param) {
+        if (actionType === 'export') executeExport(param);
+        else if (actionType === 'multi') generateMultiModels();
+        else if (actionType === 'ai') document.getElementById('aiModal').style.display = 'flex';
+    }
+
+    // -------------------------------------------------------------
+    // دوال المحرك ومزامنة البيانات وتوزيع التنسيقات
+    // -------------------------------------------------------------
     window.addEventListener('DOMContentLoaded', async () => { 
         await loadSavedData(); 
         document.querySelectorAll('input, select').forEach(el => { el.addEventListener('input', autoSaveData); }); 
-        const qInput = document.getElementById('questionsInput');
-        const aInput = document.getElementById('answersInput');
+        const qInp = document.getElementById('questionsInput'); const aInp = document.getElementById('answersInput'); const gText = document.getElementById('generalTextInput');
+        if(qInp) qInp.addEventListener('input', () => { syncTextToDatabase(); autoSaveData(); recordHistory(); syncCurrentToHistory(); });
+        if(aInp) aInp.addEventListener('input', () => { syncTextToDatabase(); autoSaveData(); recordHistory(); syncCurrentToHistory(); });
+        if(gText) gText.addEventListener('input', () => { autoSaveData(); syncCurrentToHistory(); }); 
+        syncTextToDatabase(); recordHistory();
         
-        if(qInput) qInput.addEventListener('input', () => { syncTextToDatabase(); autoSaveData(); recordHistory(); });
-        if(aInput) aInput.addEventListener('input', () => { syncTextToDatabase(); autoSaveData(); recordHistory(); });
-        
-        const gText = document.getElementById('generalTextInput'); 
-        if(gText) gText.addEventListener('input', autoSaveData); 
-        syncTextToDatabase();
-        recordHistory();
+        // مسح السجل المبدئي الخاطئ
+        appHistory = [{q: qInp ? qInp.innerHTML : '', a: aInp ? aInp.innerHTML : ''}];
+        appHistoryIndex = 0;
     });
 
     function recordHistory() {
         clearTimeout(historyTimeout);
+        // تم تصحيح خطأ الـ historyTimeout هنا لتعمل أزرار العودة والرجوع
         historyTimeout = setTimeout(() => {
-            const qVal = document.getElementById('questionsInput') ? document.getElementById('questionsInput').value : '';
-            const aVal = document.getElementById('answersInput') ? document.getElementById('answersInput').value : '';
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            const qVal = qEl ? qEl.innerHTML : '';
+            const aVal = aEl ? aEl.innerHTML : '';
             
-            if(appHistoryIndex >= 0 && appHistory[appHistoryIndex].q === qVal && appHistory[appHistoryIndex].a === aVal) return;
+            if(appHistoryIndex >= 0 && appHistory[appHistoryIndex] && appHistory[appHistoryIndex].q === qVal && appHistory[appHistoryIndex].a === aVal) return;
             
-            if(appHistoryIndex < appHistory.length - 1) {
-                appHistory = appHistory.slice(0, appHistoryIndex + 1);
-            }
+            if(appHistoryIndex < appHistory.length - 1) appHistory = appHistory.slice(0, appHistoryIndex + 1);
             appHistory.push({q: qVal, a: aVal});
-            if(appHistory.length > 50) {
-                appHistory.shift();
-            } else {
-                appHistoryIndex++;
-            }
+            if(appHistory.length > 50) appHistory.shift(); else appHistoryIndex++;
         }, 300);
     }
-
-    function execUndo() {
-        if(appHistoryIndex > 0) {
-            appHistoryIndex--;
-            document.getElementById('questionsInput').value = appHistory[appHistoryIndex].q;
-            document.getElementById('answersInput').value = appHistory[appHistoryIndex].a;
-            syncTextToDatabase();
-            autoSaveData();
-            showToast('تم التراجع خطوة للخلف', 'info');
-        } else {
-            showToast('لا يوجد خطوات سابقة للتراجع', 'error');
-        }
+    
+    function execUndo() { 
+        if(appHistoryIndex > 0) { 
+            appHistoryIndex--; 
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            if(qEl) qEl.innerHTML = appHistory[appHistoryIndex].q;
+            if(aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
+            syncTextToDatabase(); autoSaveData(); showToast('تم التراجع عن الإجراء', 'info');
+        } else { showToast('لا توجد خطوات سابقة', 'error'); }
     }
-
-    function execRedo() {
-        if(appHistoryIndex < appHistory.length - 1) {
-            appHistoryIndex++;
-            document.getElementById('questionsInput').value = appHistory[appHistoryIndex].q;
-            document.getElementById('answersInput').value = appHistory[appHistoryIndex].a;
-            syncTextToDatabase();
-            autoSaveData();
-            showToast('تمت العودة للخطوة التالية', 'info');
-        } else {
-            showToast('أنت في أحدث خطوة', 'error');
-        }
+    
+    function execRedo() { 
+        if(appHistoryIndex < appHistory.length - 1) { 
+            appHistoryIndex++; 
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            if(qEl) qEl.innerHTML = appHistory[appHistoryIndex].q;
+            if(aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
+            syncTextToDatabase(); autoSaveData(); showToast('تم إعادة الإجراء', 'info');
+        } else { showToast('أنت في الخطوة الأحدث', 'error'); }
     }
 
     function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.style.padding = '14px 24px'; toast.style.borderRadius = '8px'; toast.style.color = 'white'; toast.style.fontWeight = 'bold'; toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)'; toast.style.opacity = '0'; toast.style.transform = 'translateY(20px)'; toast.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'; toast.style.display = 'flex'; toast.style.alignItems = 'center'; toast.style.gap = '12px'; toast.style.zIndex = '999999';
-        let icon = '✅';
-        if(type === 'success') toast.style.background = '#10b981';
-        else if(type === 'error') { toast.style.background = '#ef4444'; icon = '❌'; }
-        else if(type === 'info') { toast.style.background = '#3b82f6'; icon = 'ℹ️'; }
-        toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-        document.getElementById('toastContainer').appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; }, 10);
-        setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(20px)'; setTimeout(() => toast.remove(), 400); }, 3500);
+        const t = document.createElement('div');
+        t.style.padding = '14px 24px'; t.style.borderRadius = '8px'; t.style.color = 'white'; t.style.fontWeight = 'bold'; t.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)'; t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; t.style.transition = '0.3s'; t.style.display = 'flex'; t.style.alignItems = 'center'; t.style.gap = '12px'; t.style.zIndex = '999999';
+        t.style.background = type==='success'?'#10b981':type==='error'?'#ef4444':'#3b82f6';
+        t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> <span>${message}</span>`;
+        document.getElementById('toastContainer').appendChild(t);
+        setTimeout(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; }, 10);
+        setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; setTimeout(()=>t.remove(),400); }, 3500);
     }
 
-    function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        localforage.setItem('elalfey_theme', isDark ? 'dark' : 'light');
-        document.querySelector('.theme-toggle').innerText = isDark ? '☀️' : '🌙';
-    }
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); localforage.setItem('elalfey_theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); }
 
     function switchTab(mode, btnElement) {
         currentMode = mode;
@@ -688,599 +1136,316 @@
         document.getElementById(mode + 'Tab').classList.add('active');
         document.getElementById('questionActionButtons').style.display = (mode === 'questions') ? 'flex' : 'none';
         document.getElementById('textActionButtons').style.display = (mode === 'text') ? 'flex' : 'none';
-        
-        document.getElementById('examSettingsPanel').style.display = (mode === 'questions') ? 'block' : 'none';
-        document.getElementById('questionSettingsPanel').style.display = (mode === 'questions') ? 'block' : 'none';
-        document.getElementById('bubbleSettingsPanel').style.display = (mode === 'questions') ? 'block' : 'none';
-        document.getElementById('bubbleHeaderSettingsPanel').style.display = (mode === 'questions') ? 'block' : 'none';
+        ['examSettingsPanel', 'questionSettingsPanel', 'bubbleSettingsPanel', 'bubbleHeaderSettingsPanel', 'multiModelSettingsPanel'].forEach(id => document.getElementById(id).style.display = (mode === 'questions') ? 'block' : 'none');
     }
 
+    const inputIdsToSave = [
+        'qTitleInput', 'aTitleInput', 'textTitleInput', 
+        'enableBorder', 'borderStyle', 'borderWidth', 'borderColor', 'pageBgColor', 
+        'wmText', 'wmColor', 'wmType', 'userFont', 'textAlign', 'textColor', 'textBgToggle', 'textBgColor', 
+        'cardRadius', 'userPrimaryColor', 'hdrRight', 'hdrCenter', 'hdrLeft', 'enableHdr', 'enableStudentBox', 
+        'columnsLayout', 'titleAlign', 'titleSize', 'titleShape', 'titleBg', 'titleColor', 
+        'titleHasBg', 'qDisplayMode', 'optionsLayout', 'qFontSize', 'optFontSize', 
+        'qColor', 'optColor', 'correctColor', 'hdrSize', 'hdrTextColor', 'hdrBgColor', 'hdrBorderType', 'hdrRadius',
+        'bubbleShape', 'bubbleTextPosition', 'bubbleLettersType', 'bubbleOptionsCount', 'bubbleColumns', 'bubbleSize', 'bubbleStrokeColor',
+        'bHdrStyle', 'bHdrField1', 'bHdrField2', 'bHdrField3', 'bHdrIdTitle', 'bHdrNote', 'bHdrColor', 'bHdrBgColor', 'bHdrBorderColor', 'bHdrSize',
+        'modelNumberType', 'modelLabelPos', 'questionsInput', 'answersInput'
+    ];
+
     async function autoSaveData() { 
-        try {
-            for (let id of inputIdsToSave) {
-                let el = document.getElementById(id);
-                if(el) await localforage.setItem(`elalfey_${id}`, el.value);
-            }
-            if(document.getElementById('generalTextInput')) await localforage.setItem('elalfey_general_text', document.getElementById('generalTextInput').innerHTML);
-        } catch(e) {}
+        try { 
+            for (let id of inputIdsToSave) { 
+                let el = document.getElementById(id); 
+                if(el) {
+                    let val = (el.tagName === 'DIV') ? el.innerHTML : el.value;
+                    await localforage.setItem(`elalfey_${id}`, val); 
+                }
+            } 
+            if(document.getElementById('generalTextInput')) await localforage.setItem('elalfey_general_text', document.getElementById('generalTextInput').innerHTML); 
+        } catch(e) {} 
     }
     
     async function loadSavedData() { 
-        try {
-            for (let id of inputIdsToSave) {
-                let val = await localforage.getItem(`elalfey_${id}`);
-                if(val !== null && document.getElementById(id)) document.getElementById(id).value = val;
-            }
-            let editorData = await localforage.getItem('elalfey_general_text');
-            if(editorData && document.getElementById('generalTextInput')) document.getElementById('generalTextInput').innerHTML = editorData;
-            let theme = await localforage.getItem('elalfey_theme');
-            if(theme === 'dark') { document.body.classList.add('dark-mode'); const themeBtn = document.querySelector('.theme-toggle'); if(themeBtn) themeBtn.innerText = '☀️'; } 
-        } catch (e) {}
+        try { 
+            for (let id of inputIdsToSave) { 
+                let val = await localforage.getItem(`elalfey_${id}`); 
+                if(val !== null) {
+                    let el = document.getElementById(id);
+                    if(el) {
+                        if (el.tagName === 'DIV') el.innerHTML = val;
+                        else el.value = val;
+                    }
+                }
+            } 
+            let eData = await localforage.getItem('elalfey_general_text'); if(eData && document.getElementById('generalTextInput')) document.getElementById('generalTextInput').innerHTML = eData; 
+            let thm = await localforage.getItem('elalfey_theme'); if(thm === 'dark') document.body.classList.add('dark-mode'); 
+        } catch (e) {} 
     }
     
     async function executeClearData() { 
         await localforage.clear(); 
-        document.getElementById('questionsInput').value = ''; document.getElementById('answersInput').value = ''; document.getElementById('generalTextInput').innerHTML = 'اكتب محتوى المستند الخاص بك هنا...'; 
-        questionsDatabase = []; document.getElementById('confirmModal').style.display = 'none'; showToast('تم بدء مسودة جديدة بنجاح.', 'success'); 
-        recordHistory();
+        document.getElementById('questionsInput').innerHTML = ''; 
+        document.getElementById('answersInput').innerHTML = ''; 
+        document.getElementById('generalTextInput').innerHTML = 'اكتب محتوى المستند الخاص بك هنا...'; 
+        questionsDatabase = []; document.getElementById('confirmModal').style.display = 'none'; recordHistory(); showToast('تم تهيئة مسودة جديدة فارغة للموقع', 'success'); 
     }
 
     function syncTextToDatabase() {
-        const qText = document.getElementById('questionsInput').value;
-        const aText = document.getElementById('answersInput').value;
-        
+        const qText = getEditorText('questionsInput'); 
+        const aText = getEditorText('answersInput');
         if (!qText.trim()) { questionsDatabase = []; return; }
-
         const ansMap = {};
-        if (aText.trim()) {
-            const aLines = aText.split('\n');
-            let currentAnsNum = null;
-            
-            // نظام التقاط الإجابات المطور ليدعم الإجابات الطويلة للأسئلة المقالية
-            aLines.forEach(line => {
-                let m = line.match(/^(\d+)\s*[\.\-\)]\s*(.+)/);
-                if (m) {
-                    currentAnsNum = m[1];
-                    ansMap[currentAnsNum] = m[2].trim();
-                } else if (currentAnsNum && line.trim()) {
-                    ansMap[currentAnsNum] += '\n' + line.trim();
-                }
-            });
-        }
+        if (aText.trim()) { aText.split('\n').forEach(line => { let m = line.match(/^(\d+)\s*[\.\-\)]\s*(.+)/); if (m) ansMap[m[1]] = m[2].trim(); }); }
 
-        let textToParse = '\n' + qText.replace(/\r/g, '');
-        let qBlocks = textToParse.split(/\n(?=\s*\**\d+\s*[\.\-\)]\s*)/);
+        let qBlocks = ('\n' + qText).split(/\n(?=\s*\**\d+\s*[\.\-\)]\s*)/);
         const parsed = [];
         
         qBlocks.forEach(block => {
             if(!block.trim()) return;
-
             let match = block.match(/^\s*\**(\d+)\s*[\.\-\)]\s*\**([\s\S]*)/);
             if(!match) return;
-            let num = match[1]; 
-            let rawBody = match[2].trim();
-
+            let num = match[1]; let rawBody = match[2].trim();
             let tags = rawBody.match(/#[\w\u0600-\u06FF]+/g) || [];
             let bodyNoTags = rawBody.replace(/#[\w\u0600-\u06FF]+/g, '').trim();
 
-            // التقاط الإجابات المقالية المكتوبة داخل مربع الأسئلة نفسه
             let explicitAnsMatch = bodyNoTags.match(/\n\s*(?:الإجابة|الجواب|الحل)[\s\:\-]*([\s\S]+)$/i);
-            if (explicitAnsMatch) {
-                ansMap[num] = ansMap[num] || explicitAnsMatch[1].trim(); 
-                bodyNoTags = bodyNoTags.replace(explicitAnsMatch[0], ''); 
-            }
+            if (explicitAnsMatch) { ansMap[num] = ansMap[num] || explicitAnsMatch[1].trim(); bodyNoTags = bodyNoTags.replace(explicitAnsMatch[0], ''); }
 
-            let lines = bodyNoTags.split('\n');
-            let questionText = "";
-            let options = [];
-            let currentOptLetter = null;
-            let currentOptText = "";
-            let isOptionsPhase = false;
-
-            // تحديث المحلل ليدعم الحروف الأجنبية (A-Z) والأرقام بالإضافة للعربية
-            const optRegex = /^[\s\*\-]*\[?\(?\s*([أ-يa-zA-Z0-9])\s*\)?\]?[\.\-\)]\s*(.+)/;
-            const bulletRegex = /^[\s]*[\*\-]\s+(.+)/;
-            const lettersList = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+            let lines = bodyNoTags.split('\n'); let qTxt = ""; let opts = []; let curL = null; let curT = ""; let isOpt = false;
+            const oReg = /^[\s\*\-]*\[?\(?\s*([أ-يa-zA-Z0-9])\s*\)?\]?[\.\-\)]\s*(.+)/; const bReg = /^[\s]*[\*\-]\s+(.+)/; const lets = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
 
             for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line) continue;
-
-                let oMatch = line.match(optRegex);
-                let bMatch = line.match(bulletRegex);
-
-                if (oMatch) {
-                    isOptionsPhase = true;
-                    if (currentOptLetter) options.push({l: currentOptLetter, t: currentOptText});
-                    currentOptLetter = oMatch[1];
-                    currentOptText = oMatch[2];
-                } else if (bMatch && (isOptionsPhase || i > 0)) {
-                    isOptionsPhase = true;
-                    if (currentOptLetter) options.push({l: currentOptLetter, t: currentOptText});
-                    currentOptLetter = lettersList[options.length] || String.fromCharCode(97 + options.length);
-                    currentOptText = bMatch[1];
-                } else {
-                    if (isOptionsPhase) {
-                        currentOptText += " " + line; 
-                    } else {
-                        questionText += (questionText ? "\n" : "") + line; 
-                    }
-                }
+                let line = lines[i].trim(); if (!line) continue;
+                let oM = line.match(oReg); let bM = line.match(bReg);
+                if (oM) { isOpt = true; if (curL) opts.push({l: curL, t: curT}); curL = oM[1]; curT = oM[2]; } 
+                else if (bM && (isOpt || i > 0)) { isOpt = true; if (curL) opts.push({l: curL, t: curT}); curL = lets[opts.length] || String.fromCharCode(97 + opts.length); curT = bM[1]; } 
+                else { if (isOpt) curT += " " + line; else qTxt += (qTxt ? "\n" : "") + line; }
             }
-            if (currentOptLetter) options.push({l: currentOptLetter, t: currentOptText});
+            if (curL) opts.push({l: curL, t: curT});
 
-            options.forEach(opt => {
-                if (opt.t.match(/[✓✔]/)) {
-                    ansMap[num] = ansMap[num] || opt.l;
-                }
-                opt.t = opt.t.replace(/[✓✔\[\]\(\)]/g, '').replace(/\*\*/g, '').trim();
-            });
-
-            questionText = questionText.replace(/\*\*/g, '').trim();
-
-            let type = 'mcq';
-            if (options.length === 0) {
-                // التعرف على سؤال الصح والخطأ إذا كان يحتوي على أقواس فارغة، وإلا فهو مقالي
-                if (questionText.match(/\(\s*\)/)) {
-                    type = 'tf_inline';
-                } else {
-                    type = 'essay';
-                }
-            }
-            
-            parsed.push({ 
-                num: num, 
-                text: questionText || "سؤال يتطلب المراجعة", 
-                tags: tags, 
-                type: type, 
-                options: options, 
-                ans: ansMap[num] || "" 
-            });
+            opts.forEach(o => { if (o.t.match(/[✓✔]/)) ansMap[num] = ansMap[num] || o.l; o.t = o.t.replace(/[✓✔\[\]\(\)]/g, '').replace(/\*\*/g, '').trim(); });
+            qTxt = qTxt.replace(/\*\*/g, '').trim();
+            let type = opts.length === 0 ? (qTxt.match(/\(\s*\)/) ? 'tf_inline' : 'essay') : 'mcq';
+            parsed.push({ num: num, text: qTxt || "سؤال للمراجعة", tags: tags, type: type, options: opts, ans: ansMap[num] || "" });
         });
-        
         questionsDatabase = parsed;
     }
 
-    function insertAtCursor(textAreaId, textToInsert) {
-        const textArea = document.getElementById(textAreaId);
-        const startPos = textArea.selectionStart; const endPos = textArea.selectionEnd;
-        textArea.value = textArea.value.substring(0, startPos) + textToInsert + textArea.value.substring(endPos, textArea.value.length);
-        textArea.focus(); textArea.selectionStart = startPos + textToInsert.length; textArea.selectionEnd = startPos + textToInsert.length;
-        syncTextToDatabase(); autoSaveData(); recordHistory();
+    function insertQuestionTemplate(t) { 
+        let html = t==='mcq'?"<br>1. اكتب السؤال هنا:<br>أ) الخيار الأول<br>ب) الخيار الثاني<br>ج) الخيار الثالث<br>د) الخيار الرابع<br>" : t==='tf'?"<br>1. العبارة هنا (   )<br>":"<br>1. السؤال المقالي:<br><br>";
+        document.getElementById('questionsInput').focus();
+        document.execCommand('insertHTML', false, html);
     }
-
-    // إضافة القوالب الجديدة للصح والخطأ والمقالي
-    function insertQuestionTemplate(type) {
-        let template = "";
-        if (type === 'mcq') template = "\n1. اكتب السؤال هنا:\nأ) الخيار الأول\nب) الخيار الثاني\nج) الخيار الثالث\nد) الخيار الرابع\n";
-        else if (type === 'tf') template = "\n1. اكتب العبارة هنا (   )\n";
-        else if (type === 'essay') template = "\n1. اكتب السؤال المقالي هنا:\n\n";
-        
-        insertAtCursor('questionsInput', template);
+    
+    function smartFormatAndClean() { 
+        syncTextToDatabase(); let qT = ""; let aT = ""; 
+        questionsDatabase.forEach((q, i) => { 
+            let n = i+1; let tg = q.tags.length>0?" "+q.tags.join(" "):""; 
+            qT+=`${n}. ${q.text}${tg}<br>`; 
+            q.options.forEach(o=>qT+=` ${o.l}) ${o.t}<br>`); 
+            qT+="<br>"; 
+            if(q.ans) aT+=`${n}- ${q.ans}<br>`; 
+        }); 
+        document.getElementById('questionsInput').innerHTML = qT; 
+        document.getElementById('answersInput').innerHTML = aT; 
+        showToast('تم التنسيق الذكي للأسئلة'); 
     }
-
-    function smartFormatAndClean() {
-        syncTextToDatabase();
-        let qText = ""; let aText = "";
-        questionsDatabase.forEach((q, index) => {
-            let n = index + 1; let tagsStr = q.tags.length > 0 ? " " + q.tags.join(" ") : "";
-            qText += `${n}. ${q.text}${tagsStr}\n`;
-            q.options.forEach(opt => qText += ` ${opt.l}) ${opt.t}\n`);
-            qText += "\n";
-            if(q.ans) aText += `${n}- ${q.ans}\n`; 
-        });
-        document.getElementById('questionsInput').value = qText.trim(); document.getElementById('answersInput').value = aText.trim();
-        autoSaveData(); recordHistory(); showToast('تم تنظيم التنسيقات.', 'success');
-    }
-
-    function shuffleQuestions() {
-        if(!confirm('سيتم إنشاء تسلسل جديد للأسئلة والخيارات، هل تود المتابعة؟')) return;
-        syncTextToDatabase();
-        questionsDatabase.forEach(q => {
-            if(q.type === 'mcq' && q.options.length > 0) {
-                let correctOpt = q.options.find(o => o.l == q.ans);
-                let correctText = correctOpt ? correctOpt.t : null;
-                q.options.sort(() => Math.random() - 0.5);
-                const letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
-                q.options.forEach((o, i) => {
-                    o.l = letters[i] || o.l;
-                    if(correctText && o.t === correctText) q.ans = o.l;
-                });
+    
+    function shuffleQuestions() { 
+        if(!confirm('سيتم خلط ترتيب مفردات الأسئلة، هل تود المتابعة؟')) return; 
+        syncTextToDatabase(); 
+        questionsDatabase.forEach(q=>{
+            if(q.type==='mcq'&&q.options.length>0){
+                let cOpt=q.options.find(o=>o.l==q.ans);let cTxt=cOpt?cOpt.t:null;q.options.sort(()=>Math.random()-0.5);const ls=['أ','ب','ج','د','هـ','و'];
+                q.options.forEach((o,i)=>{o.l=ls[i]||o.l;if(cTxt&&o.t===cTxt)q.ans=o.l;});
             }
-        });
-        questionsDatabase.sort(() => Math.random() - 0.5);
-        smartFormatAndClean(); showToast('تم إجراء الخلط بنجاح.', 'success');
+        }); 
+        questionsDatabase.sort(()=>Math.random()-0.5); 
+        smartFormatAndClean(); 
     }
-
-    function showAnalytics() {
-        syncTextToDatabase();
-        const total = questionsDatabase.length; 
-        const mcqCount = questionsDatabase.filter(q => q.type === 'mcq').length; 
-        const tfCount = questionsDatabase.filter(q => q.type === 'tf_inline').length;
-        const essayCount = questionsDatabase.filter(q => q.type === 'essay').length;
-        
-        document.getElementById('statTotal').innerText = total; 
-        document.getElementById('statMcqCount').innerText = mcqCount; 
-        document.getElementById('statTfCount').innerText = tfCount;
-        document.getElementById('statEssayCount').innerText = essayCount;
-        
-        const mcqPct = total > 0 ? (mcqCount / total) * 100 : 0; 
-        const tfPct = total > 0 ? (tfCount / total) * 100 : 0;
-        const essayPct = total > 0 ? (essayCount / total) * 100 : 0;
-        
-        document.getElementById('statMcqBar').style.width = `${Math.min(mcqPct, 100)}%`; 
-        document.getElementById('statTfBar').style.width = `${Math.min(tfPct, 100)}%`;
-        document.getElementById('statEssayBar').style.width = `${Math.min(essayPct, 100)}%`;
-        
-        document.getElementById('analyticsModal').style.display = 'flex';
+    
+    function showAnalytics() { 
+        syncTextToDatabase(); const t=questionsDatabase.length; const m=questionsDatabase.filter(q=>q.type==='mcq').length; const tf=questionsDatabase.filter(q=>q.type==='tf_inline').length; const e=questionsDatabase.filter(q=>q.type==='essay').length; document.getElementById('statTotal').innerText=t; document.getElementById('statMcqCount').innerText=m; document.getElementById('statTfCount').innerText=tf; document.getElementById('statEssayCount').innerText=e; document.getElementById('statMcqBar').style.width=`${t>0?(m/t)*100:0}%`; document.getElementById('statTfBar').style.width=`${t>0?(tf/t)*100:0}%`; document.getElementById('statEssayBar').style.width=`${t>0?(e/t)*100:0}%`; document.getElementById('analyticsModal').style.display='flex'; 
     }
 
     async function generateAIQuestions() {
-        const textInput = document.getElementById('aiTextInput').value.trim();
-        const fileInput = document.getElementById('aiFileInput').files[0];
-
-        if(!textInput && !fileInput) return showToast('يلزم تزويد المحرك بالمدخلات (نص أو ملف)!', 'error');
-        
+        const txt = document.getElementById('aiTextInput').value.trim(); const f = document.getElementById('aiFileInput').files[0];
+        if(!txt && !f) return showToast('يرجى كتابة نص المادة العلمية المراد استخراج الأسئلة منها', 'error');
         let apiKey = await localforage.getItem('gemini_api_key');
-        if (!apiKey) {
-            apiKey = prompt("🤖 مصادقة المحرك:\nيرجى إدخال مفتاح Google Gemini API لتفعيل الخدمة.");
-            if (!apiKey) return showToast('تم الإلغاء، الخدمة تتطلب مفتاح API.', 'error');
-            await localforage.setItem('gemini_api_key', apiKey);
-        }
-
-        let promptText = `أنت مساعد تعليمي خبير. قم بتحليل النص أو الملف المرفق واستخرج 5 أسئلة (2 اختيار من متعدد MCQ و 2 صح وخطأ TF_INLINE و 1 سؤال مقالي ESSAY) بناءً على المحتوى التعليمي الموجود.
-        يجب أن تعيد الناتج بصيغة JSON فقط (Array of Objects) بهذا الشكل بالضبط، ولا تكتب أي نص إضافي:
-        [
-          { "text": "نص السؤال هنا", "type": "mcq", "options": [{"l": "أ", "t": "الخيار الأول"}, {"l": "ب", "t": "الخيار الثاني"}, {"l": "ج", "t": "الخيار الثالث"}, {"l": "د", "t": "الخيار الرابع"}], "ans": "أ" },
-          { "text": "نص سؤال الصح والخطأ (   )", "type": "tf_inline", "options": [], "ans": "صح" },
-          { "text": "نص السؤال المقالي", "type": "essay", "options": [], "ans": "النموذج الإرشادي للإجابة هنا..." }
-        ]`;
-
-        if (textInput) promptText += `\n\nالمحتوى المرجعي:\n${textInput}`;
-
+        if (!apiKey) { apiKey = prompt("مفتاح Google Gemini API للمصادقة:"); if (!apiKey) return; await localforage.setItem('gemini_api_key', apiKey); }
+        let promptText = `أنت مساعد تعليمي محترف. استخرج 5 أسئلة (2 MCQ و 2 TF_INLINE و 1 ESSAY). المخرج كود JSON فقط مصفوفة كائنات.\n${txt}`;
         try {
-            showToast('🤖 جاري المعالجة المركزية، يرجى الانتظار...', 'info');
-            document.getElementById('aiModal').style.display = 'none';
-
+            showToast('جاري استخلاص البيانات وصياغة المفردات الاختبارية...', 'info'); document.getElementById('aiModal').style.display = 'none';
             let parts = [{ text: promptText }];
-
-            if (fileInput) {
-                const fileType = fileInput.type;
-                if (fileType.startsWith('image/')) {
-                    const base64Data = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                let MAX_WIDTH = 1000; let scaleSize = MAX_WIDTH / img.width; if (scaleSize > 1) scaleSize = 1;
-                                canvas.width = img.width * scaleSize; canvas.height = img.height * scaleSize;
-                                const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
-                            };
-                            img.src = e.target.result;
-                        };
-                        reader.readAsDataURL(fileInput);
-                    });
-                    parts.push({ inlineData: { data: base64Data, mimeType: 'image/jpeg' } });
-                } 
-                else if (fileType === 'application/pdf') {
-                    const base64Data = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result.split(',')[1]);
-                        reader.onerror = reject; reader.readAsDataURL(fileInput);
-                    });
-                    parts.push({ inlineData: { data: base64Data, mimeType: 'application/pdf' } });
-                } 
-                else if (fileType === 'text/plain') {
-                    const fileText = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = reject; reader.readAsText(fileInput);
-                    });
-                    parts[0].text += `\n\nبيانات المرفق:\n${fileText}`;
-                } 
-                else {
-                    throw new Error("صيغة الملف المرفق غير معتمدة للنظام.");
-                }
+            if(f) {
+                if(f.type.startsWith('image/')) { const b = await new Promise(r=>{const rd=new FileReader();rd.onload=e=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;c.getContext('2d').drawImage(i,0,0);r(c.toDataURL('image/jpeg',0.8).split(',')[1]);};i.src=e.target.result;};rd.readAsDataURL(f);}); parts.push({inlineData:{data:b,mimeType:'image/jpeg'}}); }
+                else if(f.type==='application/pdf') { const b = await new Promise(r=>{const rd=new FileReader();rd.onload=()=>r(rd.result.split(',')[1]);rd.readAsDataURL(f);}); parts.push({inlineData:{data:b,mimeType:'application/pdf'}}); }
+                else if(f.type==='text/plain') { const tx = await new Promise(r=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsText(f);}); parts[0].text+=`\n\n${tx}`; }
             }
-            
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: parts }] })
-            });
-
-            if (!response.ok) {
-                if(response.status === 400) { await localforage.removeItem('gemini_api_key'); throw new Error("مفتاح API غير مفعل."); }
-                throw new Error("فشل الاتصال بالخوادم.");
-            }
-
-            const data = await response.json();
-            let aiResponse = data.candidates[0].content.parts[0].text;
-            aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-            const generatedQuestions = JSON.parse(aiResponse);
-
-            if (!Array.isArray(generatedQuestions) || generatedQuestions.length === 0) throw new Error("تعذر صياغة مخرجات صالحة.");
-
-            syncTextToDatabase();
-            generatedQuestions.forEach(q => {
-                questionsDatabase.push({ num: questionsDatabase.length + 1, text: q.text, tags: ['#مستخرج_آلياً'], type: q.type || 'mcq', options: q.options || [], ans: q.ans });
-            });
-
-            smartFormatAndClean(); 
-            document.getElementById('aiTextInput').value = ''; document.getElementById('aiFileInput').value = ''; document.getElementById('aiFileName').innerText = 'لم يتم تحديد ملف';
-            showToast(`✨ تمت صياغة ${generatedQuestions.length} سؤال بنجاح!`, 'success');
-
-        } catch (error) {
-            console.error(error); showToast('❌ تعذر التوليد: ' + error.message, 'error'); document.getElementById('aiModal').style.display = 'flex';
-        }
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:parts}]})});
+            if (!res.ok) throw new Error("مفتاح API المدخل غير صحيح أو انتهت صلاحيته");
+            const data = await res.json(); let aiR = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
+            const gQs = JSON.parse(aiR); syncTextToDatabase();
+            gQs.forEach(q => questionsDatabase.push({num:questionsDatabase.length+1,text:q.text,tags:['#ذكاء_اصطناعي'],type:q.type||'mcq',options:q.options||[],ans:q.ans}));
+            smartFormatAndClean(); document.getElementById('aiTextInput').value=''; document.getElementById('aiFileInput').value=''; document.getElementById('aiFileName').innerText='لم يتم التحديد'; showToast('تم توليد الأسئلة الذكية بنجاح', 'success');
+        } catch(e) { showToast('خطأ توليد: ' + e.message, 'error'); }
     }
 
-    function resizeAndProcessImage(file, callback) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas'); let MAX_WIDTH = 800; let scaleSize = MAX_WIDTH / img.width; if (scaleSize > 1) scaleSize = 1;
-                canvas.width = img.width * scaleSize; canvas.height = img.height * scaleSize;
-                const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); callback(canvas.toDataURL('image/jpeg', 0.8)); 
-            }
-            img.src = event.target.result;
-        }
-        reader.readAsDataURL(file);
-    }
-
-    function insertImageToQuestion(event) {
-        if(event.target.files[0]) {
-            resizeAndProcessImage(event.target.files[0], (compressedBase64) => {
-                const imgTag = `\n<img src="${compressedBase64}" style="max-width:100%; max-height:300px; border-radius:6px; border:1px solid #e2e8f0; margin:15px 0;">\n`;
-                insertAtCursor('questionsInput', imgTag); showToast('تم الإدراج.', 'success');
-            });
-        } event.target.value = '';
-    }
-
-    function formatText(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('generalTextInput').focus(); autoSaveData(); }
-    function insertImage(e) { if(e.target.files[0]) { resizeAndProcessImage(e.target.files[0], (compressedBase64) => { document.execCommand('insertImage', false, compressedBase64); autoSaveData(); showToast('تم إدراج الصورة في المحرر.', 'success'); }); } e.target.value = ''; }
-    function insertTable() { const r = prompt("عدد الصفوف:", "3"); const c = prompt("عدد الأعمدة:", "3"); if (r && c) { let html = `<table border="1" style="width:100%; border-collapse:collapse; text-align:center; margin:20px 0;"><tbody>`; for(let i=0; i<r; i++) { html += `<tr>`; for(let j=0; j<c; j++) html += `<td style="padding:12px; border:1px solid #94a3b8;">إدراج نص</td>`; html += `</tr>`; } html += `</tbody></table><br/>`; document.execCommand('insertHTML', false, html); autoSaveData(); } }
-    function insertMathEquation() { const eq = prompt("أدخل كود المعادلة (LaTeX):", ""); if(eq) { document.execCommand('insertHTML', false, ` \\( ${eq} \\) `); if(window.MathJax) MathJax.typesetPromise(); autoSaveData(); } }
-
-    function applyUserSettings() {
-        const root = document.documentElement;
-        root.style.setProperty('--main-font', document.getElementById('userFont').value); root.style.setProperty('--primary-color', document.getElementById('userPrimaryColor').value); root.style.setProperty('--page-bg-color', document.getElementById('pageBgColor').value); root.style.setProperty('--text-color', document.getElementById('textColor').value); root.style.setProperty('--text-align', document.getElementById('textAlign').value); root.style.setProperty('--card-radius', document.getElementById('cardRadius').value + 'px');
-        
-        if(document.getElementById('textBgToggle').value === 'transparent') { root.style.setProperty('--text-bg-color', 'transparent'); root.style.setProperty('--card-border-color', 'transparent'); } else { root.style.setProperty('--text-bg-color', document.getElementById('textBgColor').value); root.style.setProperty('--card-border-color', '#e2e8f0'); }
-
-        root.style.setProperty('--q-font-size', document.getElementById('qFontSize').value + 'px'); root.style.setProperty('--opt-font-size', document.getElementById('optFontSize').value + 'px'); root.style.setProperty('--q-color', document.getElementById('qColor').value); root.style.setProperty('--opt-color', document.getElementById('optColor').value); root.style.setProperty('--correct-color', document.getElementById('correctColor').value);
-
-        if(document.getElementById('enableBorder').value === 'yes') { root.style.setProperty('--border-width', document.getElementById('borderWidth').value + 'px'); root.style.setProperty('--border-style', document.getElementById('borderStyle').value); root.style.setProperty('--border-color', document.getElementById('borderColor').value); root.style.setProperty('--print-border-display', 'block'); } else { root.style.setProperty('--print-border-display', 'none'); }
-
-        const titleHasBg = document.getElementById('titleHasBg').value;
-        root.style.setProperty('--title-align', document.getElementById('titleAlign').value); root.style.setProperty('--title-size', document.getElementById('titleSize').value + 'px'); root.style.setProperty('--title-radius', document.getElementById('titleShape').value);
-
-        if (titleHasBg === 'yes') { root.style.setProperty('--title-bg', document.getElementById('titleBg').value); root.style.setProperty('--title-color', document.getElementById('titleColor').value); root.style.setProperty('--title-border', 'none'); root.style.setProperty('--title-padding', '12px 40px'); root.style.setProperty('--title-shadow', '0 8px 20px rgba(0,0,0,0.1)'); } else { root.style.setProperty('--title-bg', 'transparent'); root.style.setProperty('--title-color', document.getElementById('titleColor').value); root.style.setProperty('--title-border', 'none'); root.style.setProperty('--title-padding', '0'); root.style.setProperty('--title-shadow', 'none'); }
-
-        root.style.setProperty('--hdr-size', document.getElementById('hdrSize').value + 'px'); root.style.setProperty('--hdr-text-color', document.getElementById('hdrTextColor').value); root.style.setProperty('--hdr-bg-color', document.getElementById('hdrBgColor').value);
-        
-        let hType = document.getElementById('hdrBorderType').value; let pColor = document.getElementById('userPrimaryColor').value;
-        if(hType === 'bottom') { root.style.setProperty('--hdr-border', 'none'); root.style.setProperty('--hdr-border-bottom', `3px solid ${pColor}`); root.style.setProperty('--hdr-padding', '0 0 12px 0'); root.style.setProperty('--hdr-margin', '0 0 25px 0'); } else if(hType === 'box') { root.style.setProperty('--hdr-border', `2px solid ${pColor}`); root.style.setProperty('--hdr-border-bottom', `2px solid ${pColor}`); root.style.setProperty('--hdr-padding', '15px 20px'); root.style.setProperty('--hdr-margin', '0 0 25px 0'); } else { root.style.setProperty('--hdr-border', 'none'); root.style.setProperty('--hdr-border-bottom', 'none'); root.style.setProperty('--hdr-padding', '0'); root.style.setProperty('--hdr-margin', '0 0 25px 0'); }
-        root.style.setProperty('--hdr-radius', document.getElementById('hdrRadius').value + 'px');
+    // إدراج الصور المرئي في بنك الأسئلة
+    function insertImageToQuestion(e) { 
+        if(e.target.files[0]) { 
+            const rd=new FileReader();
+            rd.onload=ev=>{
+                const i=new Image();
+                i.onload=()=>{
+                    const c=document.createElement('canvas');
+                    let scale = 1; if(i.width > 800) scale = 800 / i.width;
+                    c.width = i.width * scale; c.height = i.height * scale;
+                    c.getContext('2d').drawImage(i,0,0, c.width, c.height);
+                    
+                    const imgHTML = `<br><img src="${c.toDataURL('image/jpeg',0.8)}" style="width:50%; max-width:100%; display:block; margin:15px auto; border-radius:6px; cursor:pointer;" class="resizable-img"><br>`;
+                    
+                    document.getElementById('questionsInput').focus();
+                    document.execCommand('insertHTML', false, imgHTML);
+                };
+                i.src=ev.target.result;
+            };
+            rd.readAsDataURL(e.target.files[0]); 
+        } 
+        e.target.value=''; 
     }
     
+    function formatText(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('generalTextInput').focus(); }
+    function insertImage(e) { 
+        if(e.target.files[0]) { 
+            const rd=new FileReader();
+            rd.onload=ev=>{
+                const i=new Image();
+                i.onload=()=>{
+                    const c=document.createElement('canvas');
+                    let scale = 1; if(i.width > 800) scale = 800 / i.width;
+                    c.width = i.width * scale; c.height = i.height * scale;
+                    c.getContext('2d').drawImage(i,0,0, c.width, c.height);
+                    document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg',0.8)}" style="width:50%; max-width:100%; display:block; margin:15px auto; border-radius:6px; cursor:pointer;" class="resizable-img">`);
+                };
+                i.src=ev.target.result;
+            };
+            rd.readAsDataURL(e.target.files[0]); 
+        } 
+        e.target.value=''; 
+    }
+    function insertTable() { const r=prompt("صفوف:","3"); const c=prompt("أعمدة:","3"); if(r&&c) { let h=`<table border="1" style="width:100%; border-collapse:collapse; text-align:center;"><tbody>`; for(let i=0;i<r;i++){h+=`<tr>`;for(let j=0;j<c;j++)h+=`<td style="padding:12px;">نص</td>`;h+=`</tr>`;}h+=`</tbody></table><br/>`; document.execCommand('insertHTML',false,h); } }
+    function insertMathEquation() { const eq=prompt("أدخل كود المعادلة بصيغة LaTeX:"); if(eq) { document.execCommand('insertHTML',false,` \\( ${eq} \\) `); if(window.MathJax) MathJax.typesetPromise(); } }
+
+    function applyUserSettings() {
+        const r = document.documentElement; r.style.setProperty('--main-font', document.getElementById('userFont').value); r.style.setProperty('--primary-color', document.getElementById('userPrimaryColor').value); r.style.setProperty('--page-bg-color', document.getElementById('pageBgColor').value); r.style.setProperty('--text-color', document.getElementById('textColor').value); r.style.setProperty('--text-align', document.getElementById('textAlign').value); r.style.setProperty('--card-radius', document.getElementById('cardRadius').value + 'px');
+        if(document.getElementById('textBgToggle').value === 'transparent') { r.style.setProperty('--text-bg-color', 'transparent'); r.style.setProperty('--card-border-color', 'transparent'); } else { r.style.setProperty('--text-bg-color', document.getElementById('textBgColor').value); r.style.setProperty('--card-border-color', '#e2e8f0'); }
+        r.style.setProperty('--q-font-size', document.getElementById('qFontSize').value + 'px'); r.style.setProperty('--opt-font-size', document.getElementById('optFontSize').value + 'px'); r.style.setProperty('--q-color', document.getElementById('qColor').value); r.style.setProperty('--opt-color', document.getElementById('optColor').value); r.style.setProperty('--correct-color', document.getElementById('correctColor').value);
+        if(document.getElementById('enableBorder').value === 'yes') { r.style.setProperty('--border-width', document.getElementById('borderWidth').value + 'px'); r.style.setProperty('--border-style', document.getElementById('borderStyle').value); r.style.setProperty('--border-color', document.getElementById('borderColor').value); r.style.setProperty('--print-border-display', 'block'); } else { r.style.setProperty('--print-border-display', 'none'); }
+        if(document.getElementById('titleHasBg').value === 'yes') { r.style.setProperty('--title-bg', document.getElementById('titleBg').value); r.style.setProperty('--title-color', document.getElementById('titleColor').value); r.style.setProperty('--title-padding', '12px 40px'); } else { r.style.setProperty('--title-bg', 'transparent'); r.style.setProperty('--title-color', document.getElementById('titleColor').value); r.style.setProperty('--title-padding', '0'); }
+        r.style.setProperty('--title-align', document.getElementById('titleAlign').value); r.style.setProperty('--title-size', document.getElementById('titleSize').value + 'px'); r.style.setProperty('--title-radius', document.getElementById('titleShape').value);
+        r.style.setProperty('--hdr-size', document.getElementById('hdrSize').value + 'px'); r.style.setProperty('--hdr-text-color', document.getElementById('hdrTextColor').value); r.style.setProperty('--hdr-bg-color', document.getElementById('hdrBgColor').value);
+        let hType = document.getElementById('hdrBorderType').value; let pColor = document.getElementById('userPrimaryColor').value;
+        if(hType === 'bottom') { r.style.setProperty('--hdr-border', 'none'); r.style.setProperty('--hdr-border-bottom', `3px solid ${pColor}`); r.style.setProperty('--hdr-padding', '0 0 12px 0'); } else if(hType === 'box') { r.style.setProperty('--hdr-border', `2px solid ${pColor}`); r.style.setProperty('--hdr-border-bottom', `2px solid ${pColor}`); r.style.setProperty('--hdr-padding', '15px 20px'); } else { r.style.setProperty('--hdr-border', 'none'); r.style.setProperty('--hdr-border-bottom', 'none'); r.style.setProperty('--hdr-padding', '0'); }
+        r.style.setProperty('--hdr-radius', document.getElementById('hdrRadius').value + 'px');
+    }
+
     function getBackgroundCSS(modelLetter = '') {
-        const wmColor = document.getElementById('wmColor').value; const wmType = document.getElementById('wmType').value; let txt = document.getElementById('wmText').value;
-        if(modelLetter) txt += ` - نموذج (${modelLetter})`; 
-        let svg = wmType === 'repeat' ? `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><text x="30" y="200" transform="rotate(-35 200 200)" fill="${wmColor}" font-family="Arial" font-size="45" font-weight="900" opacity="1" letter-spacing="1">${txt}</text></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1200"><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" transform="rotate(-45 500 600)" fill="${wmColor}" font-family="Arial" font-size="120" font-weight="900" opacity="1">${txt}</text></svg>`;
-        return `url('data:image/svg+xml,${encodeURIComponent(svg)}') ${wmType === 'repeat' ? 'repeat' : 'no-repeat center center fixed'}`;
+        const c = document.getElementById('wmColor').value; const t = document.getElementById('wmType').value; let txt = document.getElementById('wmText').value; if(modelLetter) txt += ` - (${modelLetter})`; 
+        let svg = t === 'repeat' ? `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><text x="30" y="200" transform="rotate(-35 200 200)" fill="${c}" font-family="Arial" font-size="45" font-weight="900">${txt}</text></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1200"><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" transform="rotate(-45 500 600)" fill="${c}" font-family="Arial" font-size="120" font-weight="900">${txt}</text></svg>`;
+        return `url('data:image/svg+xml,${encodeURIComponent(svg)}') ${t === 'repeat' ? 'repeat' : 'no-repeat center center fixed'}`;
     }
 
     function buildQAndA_HTML(dataArray, pColor) {
-        let htmlNo = ''; let htmlAns = '';
-        const qMode = document.getElementById('qDisplayMode').value; const optLayout = document.getElementById('optionsLayout').value;
-        const cardClass = qMode === 'text' ? 'content-card mode-text' : 'content-card'; const listClass = `options-list layout-${optLayout}`;
-
-        dataArray.forEach((q, idx) => {
-            // ====== نسخة الطالب ======
-            htmlNo += `<div class="${cardClass}" dir="auto" style="text-align: start;"><div class="q-text" dir="auto">${idx+1}. ${q.text.replace(/\n/g, '<br>')}</div>`;
-            if(q.type === 'mcq') {
-                htmlNo += `<ul class="${listClass}" dir="auto">`;
-                q.options.forEach(o => htmlNo += `<li class="option-item" dir="auto">(&#x200E;${o.l}&#x200E;) ${o.t}</li>`); 
-                htmlNo += `</ul>`;
-            }
-            htmlNo += `</div>`;
-            
-            // ====== نموذج الإجابة للمعلم ======
-            let ansTextDisplay = q.text.replace(/\n/g, '<br>');
-            
-            // تحويل علامة الصح والخطأ في نموذج الإجابة ووضعها داخل الأقواس
-            if(q.type === 'tf_inline') {
-                let mark = ''; let mColor = 'var(--correct-color)';
-                let ansClean = q.ans ? q.ans.trim().toLowerCase() : '';
-                if(['صح', 'ص', 'true', 't', '✓', 'yes', 'نعم'].includes(ansClean)) { mark = '✓'; mColor = '#10b981'; }
-                else if(['خطأ', 'خ', 'غلط', 'غ', 'false', 'f', '✗', 'x', 'no', 'لا'].includes(ansClean)) { mark = '✗'; mColor = '#ef4444'; }
-                else { mark = q.ans; } 
-                
-                ansTextDisplay = ansTextDisplay.replace(/\(\s*\)/, `( <span style="color:${mColor}; font-weight:900;">${mark}</span> )`);
-            }
-
-            htmlAns += `<div class="${cardClass}" dir="auto" style="text-align: start; ${qMode !== 'text' ? `border-right-color: ${pColor};` : ''}"><div class="q-text" dir="auto">${idx+1}. ${ansTextDisplay}</div>`;
-            
-            if(q.type === 'mcq') {
-                htmlAns += `<ul class="${listClass}" dir="auto">`;
-                q.options.forEach(o => { 
-                    let cleanAns = q.ans ? q.ans.toString().replace(/[\u200E\u200F\s]/g, '').trim() : ''; let cleanOptL = o.l.toString().replace(/[\u200E\u200F\s]/g, '').trim();
-                    if(cleanAns === cleanOptL) {
-                        let bgStyle = (qMode === 'text') ? 'transparent' : 'var(--correct-color)'; let fgStyle = (qMode === 'text') ? 'var(--correct-color)' : '#ffffff'; let bdStyle = (qMode === 'text') ? '2px dashed var(--correct-color)' : 'none';
-                        htmlAns += `<li class="option-item correct" dir="auto" style="background: ${bgStyle} !important; color: ${fgStyle} !important; border: ${bdStyle} !important; font-weight: 900;"><span class="check-mark" style="background: var(--correct-color); color: white; padding: 0 5px; border-radius: 4px; display:inline-block;">✓</span> <span>(&#x200E;${o.l}&#x200E;) ${o.t}</span></li>`; 
-                    } else { htmlAns += `<li class="option-item" dir="auto">(&#x200E;${o.l}&#x200E;) ${o.t}</li>`; }
-                }); 
-                htmlAns += `</ul>`;
-            } else if (q.type === 'essay' && q.ans) {
-                // إظهار صندوق الإجابة النموذجية للسؤال المقالي
-                htmlAns += `<div style="margin-top:12px; padding:15px; background-color:#f0fdf4; border:1px dashed #10b981; border-radius:8px; color:#065f46; font-size:var(--opt-font-size);"><strong style="display:block; margin-bottom:5px;">الإجابة النموذجية:</strong><div dir="auto">${q.ans.replace(/\n/g, '<br>')}</div></div>`;
-            }
-            htmlAns += `</div>`;
-        }); 
-        return { noAns: htmlNo, withAns: htmlAns };
+        let hN=''; let hA=''; const qM=document.getElementById('qDisplayMode').value; const oL=document.getElementById('optionsLayout').value; const cC=qM==='text'?'content-card mode-text':'content-card'; const lC=`options-list layout-${oL}`;
+        dataArray.forEach((q,i) => {
+            hN+=`<div class="${cC}"><div class="q-text">${i+1}. ${q.text.replace(/\n/g,'<br>')}</div>`;
+            if(q.type==='mcq'){hN+=`<ul class="${lC}">`;q.options.forEach(o=>hN+=`<li class="option-item">(&#x200E;${o.l}&#x200E;) ${o.t}</li>`);hN+=`</ul>`;}hN+=`</div>`;
+            let aT=q.text.replace(/\n/g,'<br>');
+            if(q.type==='tf_inline'){let m='';let mC='var(--correct-color)';let cA=q.ans?q.ans.trim().toLowerCase():'';if(['صح','ص','true','t','✓','yes','نعم'].includes(cA)){m='✓';mC='#10b981';}else if(['خطأ','خ','غلط','غ','false','f','✗','x','no','لا'].includes(cA)){m='✗';mC='#ef4444';}else{m=q.ans;}aT=aT.replace(/\(\s*\)/,`( <span style="color:${mC}; font-weight:900;">${m}</span> )`);}
+            hA+=`<div class="${cC}" style="${qM!=='text'?`border-right-color:${pColor};`:''}"><div class="q-text">${i+1}. ${aT}</div>`;
+            if(q.type==='mcq'){hA+=`<ul class="${lC}">`;q.options.forEach(o=>{let clA=q.ans?q.ans.toString().replace(/\s/g,'').trim():'';let clO=o.l.toString().replace(/\s/g,'').trim();if(clA===clO){hA+=`<li class="option-item correct" style="background:${qM==='text'?'transparent':'var(--correct-color)'}!important;color:${qM==='text'?'var(--correct-color)':'#fff'}!important;border:${qM==='text'?'2px dashed var(--correct-color)':'none'}!important;font-weight:900;"><span>✓</span> <span>(&#x200E;${o.l}&#x200E;) ${o.t}</span></li>`;}else{hA+=`<li class="option-item">(&#x200E;${o.l}&#x200E;) ${o.t}</li>`;}});hA+=`</ul>`;}
+            else if(q.type==='essay'&&q.ans){hA+=`<div style="margin-top:12px;padding:15px;background:#f0fdf4;border:1px dashed #10b981;border-radius:8px;color:#065f46;"><strong>الإجابة الإرشادية:</strong><div>${q.ans.replace(/\n/g,'<br>')}</div></div>`;}hA+=`</div>`;
+        }); return {noAns:hN, withAns:hA};
     }
 
-    function generatePageHTML(contentHTML, pageTitle, bgCSS, isAnswers = false) {
-        let hdr = ''; let std = ''; let cols = '';
-        if (currentMode === 'questions' && !isAnswers) {
-            hdr = document.getElementById('enableHdr').value === 'yes' ? `<div class="exam-header-print"><div class="right">${document.getElementById('hdrRight').value}</div><div class="center">${document.getElementById('hdrCenter').value}</div><div class="left">${document.getElementById('hdrLeft').value}</div></div>` : '';
-            std = document.getElementById('enableStudentBox').value === 'yes' ? `<div class="student-info-print"><div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div></div>` : '';
-            cols = document.getElementById('columnsLayout').value === '2' ? 'two-columns-layout' : '';
+    function generatePageHTML(contentHTML, pageTitle, bgCSS, isAnswers = false, modelBadge = '') {
+        let hdr=''; let std=''; let cols='';
+        if (currentMode==='questions'&&!isAnswers) {
+            hdr=document.getElementById('enableHdr').value==='yes'?`<div class="exam-header-print"><div class="right">${document.getElementById('hdrRight').value}</div><div class="center">${document.getElementById('hdrCenter').value}</div><div class="left">${document.getElementById('hdrLeft').value}</div></div>`:'';
+            std=document.getElementById('enableStudentBox').value==='yes'?`<div class="student-info-print"><div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div></div>`:'';
+            cols=document.getElementById('columnsLayout').value==='2'?'two-columns-layout':'';
         }
-        return `<div class="pdf-page" style="background: ${bgCSS};">${hdr}${std}<div class="section-title-wrapper"><h2 class="section-title">${pageTitle}</h2></div><div class="${cols}">${contentHTML}</div></div>`;
+        return `<div class="pdf-page" style="background:${bgCSS};">${hdr}${modelBadge}${std}<div class="section-title-wrapper"><h2 class="section-title">${pageTitle}</h2></div><div class="${cols}">${contentHTML}</div></div>`;
     }
 
     async function executeExport(printType) {
-        applyUserSettings(); const pArea = document.getElementById('wordPrintPreviewArea'); pArea.innerHTML = '';
-        syncTextToDatabase();
-        
-        let qCount = questionsDatabase.length;
+        applyUserSettings(); const pA = document.getElementById('wordPrintPreviewArea'); pA.innerHTML = ''; syncTextToDatabase();
+        let qC = questionsDatabase.length;
+        if(printType==='bubble'&&qC===0){let m=prompt("عدد أسئلة البابل شيت الفارغ:","50");if(m&&!isNaN(m))qC=parseInt(m);else return showToast('تم إلغاء الأمر','error');}
+        else if(printType!=='bubble'&&qC===0&&currentMode==='questions') return showToast('أدرج الأسئلة والمفردات الاختبارية أولاً','error');
 
-        if (printType === 'bubble' && qCount === 0) {
-            let manualCount = prompt("لا يوجد أسئلة في المحرر. كم عدد الأسئلة التي تريد إنشائها لطباعة ورقة بابل شيت فارغة؟", "50");
-            if(manualCount && !isNaN(manualCount)) {
-                qCount = parseInt(manualCount);
-            } else {
-                return showToast('تم الإلغاء. يلزم تحديد عدد صحيح لطباعة البابل شيت.', 'error');
-            }
-        } else if (printType !== 'bubble' && qCount === 0 && currentMode === 'questions') {
-            return showToast('يلزم إدراج المفردات الاختبارية أولاً.', 'error');
-        }
-
-        if (currentMode === 'text') {
-            pArea.className = 'print-mode-text'; 
-            pArea.innerHTML = generatePageHTML(`<div class="content-card general-text-display">${document.getElementById('generalTextInput').innerHTML}</div>`, document.getElementById('textTitleInput').value, getBackgroundCSS(), false);
-        } else {
-            pArea.className = 'print-mode-questions';
-            
-            if (printType === 'bubble') {
-                const colCount = document.getElementById('bubbleColumns').value;
-                const bSize = document.getElementById('bubbleSize').value + 'px';
-                const bShapeStr = document.getElementById('bubbleShape').value;
-                const bShapeClass = 'shape-' + bShapeStr;
-                const pos = document.getElementById('bubbleTextPosition').value;
-                const optCount = parseInt(document.getElementById('bubbleOptionsCount').value);
-                const lType = document.getElementById('bubbleLettersType').value;
-                const strokeColor = document.getElementById('bubbleStrokeColor').value;
+        if (currentMode==='text') { pA.className='print-mode-text'; pA.innerHTML=generatePageHTML(`<div class="content-card general-text-display">${document.getElementById('generalTextInput').innerHTML}</div>`,document.getElementById('textTitleInput').value,getBackgroundCSS()); } 
+        else {
+            pA.className='print-mode-questions';
+            if (printType==='bubble') {
+                const cC=document.getElementById('bubbleColumns').value; const bS=document.getElementById('bubbleSize').value+'px'; const sh=document.getElementById('bubbleShape').value; const pos=document.getElementById('bubbleTextPosition').value; const oC=parseInt(document.getElementById('bubbleOptionsCount').value); const lT=document.getElementById('bubbleLettersType').value; const sC=document.getElementById('bubbleStrokeColor').value;
+                const lA={'arabic':['أ','ب','ج','د','هـ','و'],'english':['A','B','C','D','E','F'],'numbers':['1','2','3','4','5','6']}[lT];
+                let bH=''; const hs=document.getElementById('bHdrStyle').value; const hC=document.getElementById('bHdrColor').value; const hb=document.getElementById('bHdrBorderColor').value; const hbg=document.getElementById('bHdrBgColor').value; const hz=document.getElementById('bHdrSize').value+'px';
+                if(hs==='advanced'){let ig='';for(let c=0;c<6;c++){let cb=`<input type="text" class="bubble-id-input" style="border-color:${hb};color:${hC};" maxlength="1">`;for(let r=0;r<=9;r++){cb+=`<div class="bubble-shape shape-circle" style="width:16px;height:16px;font-size:11px;border:1px solid ${hb};color:${hC};margin-bottom:3px;">${r}</div>`;}ig+=`<div class="bubble-id-col">${cb}</div>`;}bH=`<div class="bubble-advanced-header" style="border:3px solid ${hb};background:${hbg};color:${hC};font-size:${hz};"><div class="bubble-student-info"><div>${document.getElementById('bHdrField1').value}</div><div style="display:flex;gap:25px;"><div>${document.getElementById('bHdrField2').value}</div><div>${document.getElementById('bHdrField3').value}</div></div></div><div style="display:flex;flex-direction:column;align-items:center;"><div>${document.getElementById('bHdrIdTitle').value}</div><div class="bubble-student-id-grid" style="border-color:${hb};background:#fff;">${ig}</div></div></div>`;}
+                else if(hs==='basic'){bH=`<div class="student-info-print" style="border:2px solid ${hb};background:${hbg};color:${hC};font-size:${hz};"><div>${document.getElementById('bHdrField1').value}</div><div>${document.getElementById('bHdrField2').value}</div><div>${document.getElementById('bHdrField3').value}</div></div>`;}
                 
-                const lettersArr = {
-                    'arabic': ['أ', 'ب', 'ج', 'د', 'هـ', 'و'],
-                    'english': ['A', 'B', 'C', 'D', 'E', 'F'],
-                    'numbers': ['1', '2', '3', '4', '5', '6']
-                }[lType];
-
-                let bubbleHeader = '';
-                const bHdrStyle = document.getElementById('bHdrStyle').value;
-                const hF1 = document.getElementById('bHdrField1').value;
-                const hF2 = document.getElementById('bHdrField2').value;
-                const hF3 = document.getElementById('bHdrField3').value;
-                const hId = document.getElementById('bHdrIdTitle').value;
-                const hNote = document.getElementById('bHdrNote').value;
-                const hSize = document.getElementById('bHdrSize').value + 'px';
-                const hColor = document.getElementById('bHdrColor').value;
-                const hBg = document.getElementById('bHdrBgColor').value;
-                const hBorder = document.getElementById('bHdrBorderColor').value;
-
-                if (bHdrStyle === 'advanced') {
-                    let idGrid = '';
-                    for(let c=0; c<6; c++) {
-                        let colBubs = `<input type="text" class="bubble-id-input" style="border-color:${hBorder}; color:${hColor};" maxlength="1">`;
-                        for(let r=0; r<=9; r++) {
-                            colBubs += `<div class="bubble-shape shape-circle" style="width:16px; height:16px; font-size:11px; border:1px solid ${hBorder}; color:${hColor}; margin-bottom:3px;">${r}</div>`;
-                        }
-                        idGrid += `<div class="bubble-id-col">${colBubs}</div>`;
-                    }
-                    bubbleHeader = `
-                    <div class="bubble-advanced-header" style="border: 3px solid ${hBorder}; background-color: ${hBg}; color: ${hColor}; font-size: ${hSize};">
-                        <div class="bubble-student-info" style="gap: 15px;">
-                            <div style="font-weight:bold;">${hF1}</div>
-                            <div style="display:flex; gap:25px; flex-wrap:wrap;">
-                                <div>${hF2}</div>
-                                <div>${hF3}</div>
-                            </div>
-                            ${hNote ? `<div style="font-size:calc(${hSize} - 3px); margin-top:10px; color:#ef4444; background: #fee2e2; padding:10px 15px; border-radius:6px; max-width:fit-content; border:1px solid #fca5a5;">${hNote}</div>` : ''}
-                        </div>
-                        <div style="display:flex; flex-direction:column; align-items:center;">
-                            <div style="font-weight:bold; margin-bottom:8px;">${hId}</div>
-                            <div class="bubble-student-id-grid" style="border-color:${hBorder}; background:#fff;">${idGrid}</div>
-                        </div>
-                    </div>`;
-                } else if (bHdrStyle === 'basic') {
-                    bubbleHeader = `
-                    <div class="student-info-print" style="margin-bottom: 30px; border: 2px solid ${hBorder}; background-color: ${hBg}; color: ${hColor}; font-size: ${hSize};">
-                        <div>${hF1}</div><div>${hF2}</div><div>${hF3}</div>
-                    </div>`;
-                }
-
-                let bHtml = `<div class="bubble-container bubble-col-${colCount}" style="color:${strokeColor};">`;
-                const isAbove = pos === 'above';
-                const rowClass = isAbove ? 'bubble-row spacing-above' : 'bubble-row';
-
-                for(let i=1; i<=qCount; i++) {
-                    let q = questionsDatabase[i-1];
-                    let isEssay = q && q.type === 'essay';
-
-                    bHtml += `<div class="${rowClass}"><div class="bubble-q-num">${i}.</div><div class="bubble-options-wrapper">`;
-                    
-                    if(!isEssay) {
-                        for(let o=0; o<optCount; o++) {
-                            let letter = lettersArr[o] || '';
-                            let shapeContent = pos === 'inside' ? letter : '';
-                            let externalLabel = (pos === 'above' || pos === 'beside') ? `<span class="bubble-label">${letter}</span>` : '';
-                            let customStyle = `width:${bSize}; height:${bShapeStr==='oval'? 'auto': bSize}; border-color:${strokeColor}; color:${strokeColor}; font-size:${parseInt(bSize)*0.45}px;`;
-                            
-                            bHtml += `
-                            <div class="bubble-item pos-${pos}">
-                                ${pos === 'above' ? externalLabel : ''}
-                                ${pos === 'beside' ? externalLabel : ''}
-                                <div class="bubble-shape ${bShapeClass}" style="${customStyle}">${shapeContent}</div>
-                            </div>`;
-                        }
-                    } else {
-                        // طباعة مؤشر ذكي في البابل شيت بدل الدوائر إذا كان السؤال مقالياً
-                        bHtml += `<div style="flex:1; border-bottom: 1px dashed ${strokeColor}; height: 20px; text-align:center; opacity:0.6; font-size:13px;">(سؤال مقالي)</div>`;
-                    }
-                    bHtml += `</div></div>`;
-                }
-                bHtml += `</div>`;
-
-                pArea.innerHTML = generatePageHTML(bubbleHeader + bHtml, "ورقة الإجابة الإلكترونية (Bubble Sheet)", getBackgroundCSS(), true); 
-                
+                let bHt=`<div class="bubble-container bubble-col-${cC}" style="color:${sC};">`;
+                for(let i=1;i<=qC;i++){
+                    let ie=questionsDatabase[i-1]&&questionsDatabase[i-1].type==='essay';
+                    bHt+=`<div class="bubble-row ${pos==='above'?'spacing-above':''}"><div class="bubble-q-num">${i}.</div><div class="bubble-options-wrapper">`;
+                    if(!ie){for(let o=0;o<oC;o++){let l=lA[o]||'';bHt+=`<div class="bubble-item pos-${pos}">${(pos==='above'||pos==='beside')?`<span class="bubble-label">${l}</span>`:''}<div class="bubble-shape shape-${sh}" style="width:${bS};height:${sh==='oval'?'auto':bS};border-color:${sC};font-size:${parseInt(bS)*0.45}px;">${pos==='inside'?l:''}</div></div>`;}}else{bHt+=`<div style="flex:1;border-bottom:1px dashed ${sC};height:20px;text-align:center;font-size:13px;opacity:0.6;">(سؤال مقالي)</div>`;}bHt+=`</div></div>`;
+                } bHt+=`</div>`;
+                pA.innerHTML=generatePageHTML(bH+bHt,"ورقة الإجابة الإلكترونية (Bubble Sheet)",getBackgroundCSS(),true);
             } else {
-                const htmls = buildQAndA_HTML(questionsDatabase, document.getElementById('userPrimaryColor').value); let fHtml = '';
-                if(printType === 'student' || printType === 'both') fHtml += generatePageHTML(htmls.noAns, document.getElementById('qTitleInput').value, getBackgroundCSS(), false);
-                if(printType === 'teacher' || printType === 'both') fHtml += generatePageHTML(htmls.withAns, document.getElementById('aTitleInput').value, getBackgroundCSS(), true);
-                pArea.innerHTML = fHtml;
+                const hs=buildQAndA_HTML(questionsDatabase,document.getElementById('userPrimaryColor').value); let fH='';
+                if(printType==='student'||printType==='both')fH+=generatePageHTML(hs.noAns,document.getElementById('qTitleInput').value,getBackgroundCSS(),false);
+                if(printType==='teacher'||printType==='both')fH+=generatePageHTML(hs.withAns,document.getElementById('aTitleInput').value,getBackgroundCSS(),true);
+                pA.innerHTML=fH;
             }
         }
-        if(window.MathJax) await MathJax.typesetPromise([pArea]);
-        
-        document.getElementById('printBorderOverlay').style.display = document.getElementById('enableBorder').value === 'yes' ? 'block' : 'none';
-        document.getElementById('wordPrintModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        if(window.MathJax) await MathJax.typesetPromise([pA]);
+        document.getElementById('printBorderOverlay').style.display=document.getElementById('enableBorder').value==='yes'?'block':'none';
+        document.getElementById('wordPrintModal').style.display='flex'; document.body.style.overflow='hidden';
     }
 
     async function generateMultiModels() {
-        syncTextToDatabase(); if(questionsDatabase.length === 0) return showToast('يلزم إدراج المفردات الاختبارية أولاً.', 'error');
-        const pArea = document.getElementById('wordPrintPreviewArea'); pArea.innerHTML = ''; pArea.className = 'print-mode-questions'; let fHtml = ''; const models = ['A', 'B', 'C', 'D'];
-        for(let i=0; i < models.length; i++) {
-            let m = models[i]; let shuffledDb = [...questionsDatabase].sort(() => Math.random() - 0.5); let htmls = buildQAndA_HTML(shuffledDb, document.getElementById('userPrimaryColor').value);
-            fHtml += generatePageHTML(htmls.noAns, `النموذج (${m})`, getBackgroundCSS(m), false) + generatePageHTML(htmls.withAns, `مفتاح إجابة النموذج (${m})`, getBackgroundCSS(m), true);
-        }
-        pArea.innerHTML = fHtml; if(window.MathJax) await MathJax.typesetPromise([pArea]);
+        syncTextToDatabase(); if(questionsDatabase.length===0) return showToast('يلزم إدراج الأسئلة أولاً','error');
+        const pA=document.getElementById('wordPrintPreviewArea'); pA.innerHTML=''; pA.className='print-mode-questions'; let fH=''; 
         
-        document.getElementById('printBorderOverlay').style.display = document.getElementById('enableBorder').value === 'yes' ? 'block' : 'none';
-        document.getElementById('wordPrintModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        const numType = document.getElementById('modelNumberType').value;
+        const posType = document.getElementById('modelLabelPos').value;
+        
+        let mods = ['A', 'B', 'C', 'D'];
+        if(numType === 'arabic') mods = ['أ', 'ب', 'ج', 'د'];
+        else if(numType === 'number') mods = ['1', '2', '3', '4'];
+
+        for(let i=0; i<mods.length; i++) {
+            let m=mods[i]; let sDb=[...questionsDatabase].sort(()=>Math.random()-0.5); let hs=buildQAndA_HTML(sDb,document.getElementById('userPrimaryColor').value);
+            
+            let bgCSS = getBackgroundCSS();
+            let modelBadgeHtml = '';
+
+            if (posType === 'watermark') {
+                bgCSS = getBackgroundCSS(m); 
+            } else {
+                let align = posType.replace('header_', ''); 
+                modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 20px;"><span style="font-weight: 900; font-size: 22px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 5px 25px; border-radius: 8px; background: rgba(255,255,255,0.9);">نموذج الاختبار (${m})</span></div>`;
+            }
+
+            fH+=generatePageHTML(hs.noAns,document.getElementById('qTitleInput').value,bgCSS,false,modelBadgeHtml) + generatePageHTML(hs.withAns,document.getElementById('aTitleInput').value,bgCSS,true,modelBadgeHtml);
+        }
+        pA.innerHTML=fH; if(window.MathJax) await MathJax.typesetPromise([pA]);
+        document.getElementById('printBorderOverlay').style.display=document.getElementById('enableBorder').value==='yes'?'block':'none';
+        document.getElementById('wordPrintModal').style.display='flex'; document.body.style.overflow='hidden';
     }
 
-    function closeWordPrint() {
-        document.getElementById('wordPrintModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
-        document.getElementById('printBorderOverlay').style.display = 'none';
-    }
+    function closeWordPrint() { document.getElementById('wordPrintModal').style.display='none'; document.body.style.overflow='auto'; document.getElementById('printBorderOverlay').style.display='none'; }
 </script>
 </body>
 </html>
