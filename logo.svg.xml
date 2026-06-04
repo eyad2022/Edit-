@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8E2DE2" />
+      <stop offset="100%" stop-color="#4A00E0" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#4A00E0" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <rect x="56" y="56" width="400" height="400" rx="100" fill="url(#bgGrad)" filter="url(#shadow)"/>
+
+  <path d="M 170 120 h 110 c 10 0 20 5 30 15 l 65 65 c 10 10 15 20 15 30 v 140 c 0 22 -18 40 -40 40 h -180 c -22 0 -40 -18 -40 -40 v -210 c 0 -22 18 -40 40 -40 z" fill="#ffffff" opacity="0.95"/>
+  
+  <path d="M 310 120 v 55 c 0 14 11 25 25 25 h 55 l -80 -80 z" fill="#e2e8f0"/>
+
+  <path d="M 190 270 l 40 40 l 90 -90" fill="none" stroke="#4A00E0" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="180" y="360" width="150" height="18" rx="9" fill="#cbd5e1"/>
+  <rect x="180" y="200" width="80" height="18" rx="9" fill="#cbd5e1"/>
+
+  <path d="M 380 90 Q 395 120 420 135 Q 395 150 380 180 Q 365 150 340 135 Q 365 120 380 90 z" fill="#FFD700"/>
+  <path d="M 130 360 Q 137 375 150 382 Q 137 390 130 405 Q 122 390 110 382 Q 122 375 130 360 z" fill="#FFD700"/>
+</svg>
