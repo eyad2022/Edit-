@@ -2,12 +2,41 @@
 <html lang="ar" dir="rtl">
 
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+(function() {
+    var allowedDomains = ["eyad2022.github.io", "localhost", "127.0.0.1"];
+    var currentDomain = window.location.hostname;
+    
+    if (allowedDomains.indexOf(currentDomain) === -1) {
+        document.documentElement.innerHTML = '<body style="background:#111;color:#ff3333;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:sans-serif;"><h1>⚠️ نسخة غير مصرح بها</h1></body>';
+        window.stop();
+        throw new Error('Unauthorized Access');
+    }
+
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || 
+           (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) || 
+           (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c')) || 
+           (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j')) || 
+           (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
+            e.preventDefault();
+            return false;
+        }
+    });
+})();
+</script>
+
     <title>المحرر الاحترافي الشامل المطور - EL-ALFEY</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Readex+Pro:wght@400;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
 
     
     
@@ -1434,6 +1463,75 @@
 .settings-panel.collapsible.collapsed .panel-content {
     display: none;
 }
+#autosaveIndicator {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    padding: 8px 16px;
+    background: var(--ui-container);
+    border: 1px solid var(--ui-border);
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    z-index: 1000001;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    color: var(--ui-text);
+}
+
+#autosaveIndicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+table.editor-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 20px 0 !important;
+    table-layout: fixed !important;
+}
+table.editor-table tr {
+    min-height: 55px !important;
+    height: 55px !important;
+}
+table.editor-table th, 
+table.editor-table td {
+    border: 2px solid #000 !important;
+    padding: 15px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1.5 !important;
+    font-size: 15px !important;
+    height: 55px !important;
+    box-sizing: border-box !important;
+}
+table.editor-table th {
+    background-color: #f1f5f9 !important;
+    font-weight: bold !important;
+}
+@media print {
+    table.editor-table {
+        page-break-inside: avoid !important;
+    }
+    table.editor-table tr, 
+    table.editor-table th, 
+    table.editor-table td {
+        height: 55px !important;
+        min-height: 55px !important;
+        padding: 15px !important;
+        border: 2px solid #000 !important;
+    }
+    table.editor-table th {
+        background-color: #e2e8f0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
 
 </style>
 
@@ -1499,7 +1597,7 @@
                 <span><strong>ملحوظة هامة:</strong> قد يقوم المتصفح بإضافة ورقة بيضاء زائدة في النهاية. يُرجى الانتباه وتحديد أرقام الصفحات المطلوبة فقط أثناء الحفظ.</span>
             </div>
             
-            <button class="word-btn btn-close" onclick="closeWordPrint()">
+            <button style=" margin-bottom: 305px !important;"  class="word-btn btn-close" onclick="closeWordPrint()">
                 <span style="font-size: 20px;">🔙</span> العودة للمحرر
             </button>
             
@@ -1583,7 +1681,7 @@
         <div style="margin-bottom: 20px; background: var(--ui-container); padding: 20px; border-radius: 8px; border: 1px solid var(--ui-border); display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <span style="font-weight: bold; color: var(--ui-text); display: flex; align-items: center; margin-left: 10px;">أدوات الإدراج:</span>
-                <button id="btnInsertMCQ" class="btn-tool" onclick="insertQuestionTemplate('mcq')" style="border-color: #10b981; color: #10b981;">➕ سؤال اختياري</button>
+                <button id="btnInsertMCQ" class="btn-tool" onclick="insertQuestionTemplate('mcq')" style="border-color: #10b981; color: #10b981;">➕ سؤال اختياري
                 <button id="btnInsertTF" class="btn-tool" onclick="insertQuestionTemplate('tf')" style="border-color: #f59e0b; color: #d97706;">➕ سؤال صح/خطأ</button>
                 <button id="btnInsertEssay" class="btn-tool" onclick="insertQuestionTemplate('essay')" style="border-color: #8b5cf6; color: #8b5cf6;">➕ سؤال مقالي</button>
                 <button class="btn-tool" onclick="document.getElementById('qImageUpload').click()" style="border-color: #3b82f6; color: #3b82f6;">🖼️ إدراج صورة</button>
@@ -1631,7 +1729,12 @@
                     <button type="button" onmousedown="event.preventDefault();" class="btn-sci" onclick="insertSci('\\( \\Delta \\)')">Δ</button>
                     <div class="divider"></div>
                     <button type="button" onmousedown="event.preventDefault();" onclick="insertMathEquation()" style="color:#ef4444; font-weight:bold; font-size: 13px;">{ } كتابة كود LaTeX حر</button>
-                </div>
+                    <button type="button" class="btn-tool" onclick="insertCustomTable()" style="border-color: #0ea5e9; color: #0ea5e9; font-weight: bold;">
+    📊 إدراج جدول مخصص
+</button>
+
+<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 10px; color: var(--ui-text); font-weight: bold; cursor: pointer;">
+               </div>
                 <div id="questionsInput" contenteditable="true" class="rich-textarea" dir="auto" placeholder="اكتب العنوان الرئيسي هنا، ثم انزل سطراً واكتب:&#10;1. اكتب سؤالك الأول هنا...&#10;أ) الخيار الأول&#10;ب) الخيار الثاني [✓]&#10;ج) الخيار الثالث&#10;د) الخيار الرابع"></div>
             </div>
             
@@ -3118,7 +3221,7 @@
             if (!txt && files.length === 0) return showToast('يرجى كتابة نص المادة العلمية أو إرفاق ملفات', 'error');
             
             // ⚠️ ضع مفتاحك هنا
-            const apiKey = "AQ.Ab8RN6IaggfGUQQoVumNuyk--tejvQ8wF5zdDoU6OaIrrDKQsg";
+            const apiKey = "AQ.Ab8RN6KWK-ibdpexSEdDNZXWkiltgPPTJvesTxq5j_N9vzbVuA";
             
             let systemInstruction = mode === 'quiz' ?
                 "أنت مساعد تعليمي. استخرج أسئلة من النص التالي. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" :
@@ -3227,7 +3330,8 @@
             } catch (e) {
                 console.error(e);
                 let errorMsg = e.message.includes('JSON') ? 'لم يقم النموذج بإرجاع الأسئلة بالتنسيق المطلوب، يرجى المحاولة مرة أخرى.' : e.message;
-                outputDiv.innerHTML = `<div style="color: #ef4444; font-weight: bold;">❌ حدث خطأ: ${errorMsg}</div>`;
+                outputDiv.innerHTML = `<div style="color: #ef4444; font-weight: bold;">❌ توقف النظام مؤقتاً.. <a href="https://wa.me/201155324374" target="_blank" style="color: #10b981; text-decoration: underline;">راسلني علي الواتس اب وسوف أحل هذه المشكلة 📞</a></div>`;
+
                 showToast('حدث خطأ في عملية التوليد', 'error');
             }
         }
@@ -4154,6 +4258,303 @@
         }
     });
 });
+document.addEventListener('DOMContentLoaded', () => {
+    const oldIndicator = document.getElementById('autosaveIndicator');
+    if (oldIndicator) oldIndicator.remove();
+
+    const indicator = document.createElement('div');
+    indicator.id = 'autosaveIndicator';
+    document.body.appendChild(indicator);
+
+    let saveStatusTimeout;
+    function triggerSaveUI(status) {
+        clearTimeout(saveStatusTimeout);
+        if (status === 'saving') {
+            indicator.innerHTML = '<span>⏳</span> <span>جاري التحديث آلياً...</span>';
+            indicator.classList.add('show');
+        } else if (status === 'saved') {
+            indicator.innerHTML = '<span>✅</span> <span>تم الحفظ والمزامنة سحابياً</span>';
+            indicator.classList.add('show');
+            saveStatusTimeout = setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+    }
+
+    const inputsToWatch = ['questionsInput', 'answersInput', 'generalTextInput'];
+    inputsToWatch.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => {
+                triggerSaveUI('saving');
+                clearTimeout(window.uiSaveDebounce);
+                window.uiSaveDebounce = setTimeout(() => {
+                    triggerSaveUI('saved');
+                }, 1600);
+            });
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            if (typeof syncCurrentToHistory === 'function') {
+                syncCurrentToHistory();
+            }
+            triggerSaveUI('saving');
+            setTimeout(() => triggerSaveUI('saved'), 500);
+        }
+        if (e.ctrlKey && e.key.toLowerCase() === 'p') {
+            e.preventDefault();
+            if (typeof executeExport === 'function') {
+                executeExport(currentMode === 'text' ? 'text' : 'both');
+            }
+        }
+    });
+
+    const oldArchiveModal = document.getElementById('archiveBankModal');
+    if (oldArchiveModal) oldArchiveModal.remove();
+
+    const oldBtn = document.getElementById('archiveBtnTrigger');
+    if (oldBtn) oldBtn.remove();
+
+    const archiveModal = document.createElement('div');
+    archiveModal.id = 'archiveBankModal';
+    archiveModal.className = 'custom-modal';
+    archiveModal.innerHTML = `
+        <div class="modal-content" style="text-align: right; max-width: 700px;">
+            <h3 style="color: var(--primary-color); margin-top: 0; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px;">☁️ أرشيف المسودات السحابي</h3>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">احفظ محتوى المحرر بالكامل كمسودة في حسابك السحابي لتسترجعها في أي وقت ومن أي جهاز.</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <button id="btnActionStoreBulk" style="background: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">☁️ حفظ المحرر الحالي في السحابة</button>
+                <button id="btnActionClearArchive" style="background: #fee2e2; color: #b91c1c; border: 1px solid #f87171; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">🗑️ تفريغ الأرشيف السحابي</button>
+            </div>
+            <div id="archiveQuestionsListContainer" style="max-height: 300px; overflow-y: auto; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border); display: flex; flex-direction: column; gap: 10px;">
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="btnCloseArchiveModal" style="background: #e2e8f0; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #1e293b; font-family: inherit;">إغلاق</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(archiveModal);
+
+    const targetToolBarGroup = document.querySelector('button[onclick="showAnalytics()"]')?.parentElement;
+    if (targetToolBarGroup) {
+        const archiveBtn = document.createElement('button');
+        archiveBtn.id = 'archiveBtnTrigger';
+        archiveBtn.className = 'btn-tool';
+        archiveBtn.style.borderColor = '#8b5cf6';
+        archiveBtn.style.color = '#8b5cf6';
+        archiveBtn.innerHTML = '☁️ أرشيف المسودات';
+        archiveBtn.onclick = () => {
+            archiveModal.style.display = 'flex';
+            renderArchiveQuestionsList();
+        };
+        targetToolBarGroup.insertBefore(archiveBtn, targetToolBarGroup.firstChild);
+    }
+
+    document.getElementById('btnCloseArchiveModal').onclick = () => {
+        archiveModal.style.display = 'none';
+    };
+
+    document.getElementById('btnActionStoreBulk').onclick = async () => {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            if (typeof showToast === 'function') showToast('يجب تسجيل الدخول لحفظ المسودات في السحابة', 'error');
+            return;
+        }
+
+        const qHtml = document.getElementById('questionsInput') ? document.getElementById('questionsInput').innerHTML : '';
+        const aHtml = document.getElementById('answersInput') ? document.getElementById('answersInput').innerHTML : '';
+        const gHtml = document.getElementById('generalTextInput') ? document.getElementById('generalTextInput').innerHTML : '';
+        
+        if (!qHtml.trim() && !gHtml.trim() && !gHtml.includes('اكتب محتوى المستند')) {
+            if (typeof showToast === 'function') showToast('المحرر فارغ، لا يوجد ما يمكن حفظه', 'error');
+            return;
+        }
+
+        if (typeof showToast === 'function') showToast('جاري الاتصال بالسحابة...', 'info');
+        
+        try {
+            const docRef = db.collection('users').doc(user.uid);
+            const docSnap = await docRef.get();
+            let drafts = [];
+            if (docSnap.exists && docSnap.data().drafts) {
+                drafts = docSnap.data().drafts;
+            }
+
+            let draftName = prompt('أدخل اسماً لهذه المسودة السحابية:', 'مسودة ' + new Date().toLocaleDateString('ar-EG'));
+            if (!draftName) return;
+            draftName = draftName.trim();
+
+            while (drafts.some(d => d.title === draftName)) {
+                draftName = prompt('⚠️ هذا الاسم مسجل مسبقاً لديك!\nالرجاء إدخال اسم مختلف لتمييز هذه المسودة:', draftName + ' 2');
+                if (!draftName) return;
+                draftName = draftName.trim();
+            }
+
+            const newDraft = {
+                type: 'draft',
+                title: draftName,
+                date: new Date().toLocaleTimeString('ar-EG'),
+                q: qHtml,
+                a: aHtml,
+                g: gHtml,
+                mode: typeof currentMode !== 'undefined' ? currentMode : 'questions'
+            };
+
+            drafts.push(newDraft);
+            await docRef.update({ drafts: drafts });
+            if (typeof showToast === 'function') showToast('تم حفظ المسودة في حسابك السحابي بنجاح', 'success');
+            renderArchiveQuestionsList();
+        } catch(e) {
+            if (typeof showToast === 'function') showToast('حدث خطأ أثناء الاتصال بالسحابة', 'error');
+        }
+    };
+
+    document.getElementById('btnActionClearArchive').onclick = async () => {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        
+        if (confirm('هل أنت متأكد من مسح جميع المسودات من حسابك السحابي نهائياً؟')) {
+            try {
+                await db.collection('users').doc(user.uid).update({ drafts: [] });
+                if (typeof showToast === 'function') showToast('تم تفريغ الأرشيف السحابي', 'info');
+                renderArchiveQuestionsList();
+            } catch(e) {}
+        }
+    };
+
+    async function renderArchiveQuestionsList() {
+        const container = document.getElementById('archiveQuestionsListContainer');
+        const user = firebase.auth().currentUser;
+        
+        if (!user) {
+            container.innerHTML = '<p style="color: #ef4444; text-align: center; font-size: 13px; margin: 10px 0;">يرجى تسجيل الدخول أولاً للوصول إلى مسوداتك السحابية.</p>';
+            return;
+        }
+
+        container.innerHTML = '<p style="color: #64748b; text-align: center; font-size: 13px; margin: 10px 0;">جاري جلب المسودات من السحابة... ⏳</p>';
+
+        try {
+            const docSnap = await db.collection('users').doc(user.uid).get();
+            let archive = [];
+            if (docSnap.exists && docSnap.data().drafts) {
+                archive = docSnap.data().drafts;
+            }
+            
+            if (archive.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; text-align: center; font-size: 13px; margin: 10px 0;">الأرشيف السحابي فارغ.</p>';
+                return;
+            }
+            
+            let html = '';
+            archive.forEach((item, idx) => {
+                let t = item.title || 'مسودة محفوظة';
+                let d = item.date || '';
+                html += `
+                    <div style="background: var(--ui-container); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border); display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                        <div style="text-align: right; flex: 1; overflow: hidden;">
+                            <div style="font-weight: bold; color: var(--primary-color); font-size: 14px;">☁️ ${t}</div>
+                            <div style="font-size: 11px; color: var(--ui-text-muted);">${d}</div>
+                        </div>
+                        <button data-idx="${idx}" class="btn-archive-inject" style="background: #10b981; color: white; border: none; padding: 6px 15px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; font-family: inherit;">استعادة ♻️</button>
+                        <button data-idx="${idx}" class="btn-archive-delete" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; font-family: inherit;">❌</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('.btn-archive-inject').forEach(btn => {
+                btn.onclick = (e) => {
+                    const index = e.target.getAttribute('data-idx');
+                    injectQuestionFromVault(index);
+                };
+            });
+            
+            container.querySelectorAll('.btn-archive-delete').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const index = e.target.getAttribute('data-idx');
+                    const docSnap = await db.collection('users').doc(user.uid).get();
+                    if (docSnap.exists && docSnap.data().drafts) {
+                        let arc = docSnap.data().drafts;
+                        arc.splice(index, 1);
+                        await db.collection('users').doc(user.uid).update({ drafts: arc });
+                        renderArchiveQuestionsList();
+                    }
+                };
+            });
+        } catch(e) {
+            container.innerHTML = '<p style="color: #ef4444; text-align: center;">حدث خطأ في جلب البيانات من السحابة.</p>';
+        }
+    }
+
+    async function injectQuestionFromVault(idx) {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        
+        try {
+            const docSnap = await db.collection('users').doc(user.uid).get();
+            if (docSnap.exists && docSnap.data().drafts) {
+                const archive = docSnap.data().drafts;
+                if (!archive[idx]) return;
+                const item = archive[idx];
+                
+                if (item.type === 'draft') {
+                    if (document.getElementById('questionsInput') && item.q !== undefined) document.getElementById('questionsInput').innerHTML = item.q;
+                    if (document.getElementById('answersInput') && item.a !== undefined) document.getElementById('answersInput').innerHTML = item.a;
+                    if (document.getElementById('generalTextInput') && item.g !== undefined) document.getElementById('generalTextInput').innerHTML = item.g;
+                    
+                    if (typeof switchTab === 'function' && item.mode) {
+                        const btnId = item.mode === 'questions' ? 'btnTabQuestions' : 'btnTabText';
+                        const btn = document.getElementById(btnId);
+                        if (btn) switchTab(item.mode, btn);
+                    }
+                    
+                    if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
+                    if (typeof autoSaveData === 'function') autoSaveData();
+                    
+                    const archiveModal = document.getElementById('archiveBankModal');
+                    if(archiveModal) archiveModal.style.display = 'none';
+                    if (typeof showToast === 'function') showToast('تم استعادة المسودة بنجاح من السحابة', 'success');
+                }
+            }
+        } catch(e) {
+            if (typeof showToast === 'function') showToast('فشل في استعادة المسودة', 'error');
+        }
+    }
+});
+function insertCustomTable() {
+    const rows = parseInt(prompt('أدخل عدد الصفوف:', '3'));
+    const cols = parseInt(prompt('أدخل عدد الأعمدة:', '3'));
+    
+    if (isNaN(rows) || isNaN(cols) || rows <= 0 || cols <= 0) return;
+    
+    let tableHTML = '<br><table class="editor-table"><tbody>';
+    
+    for (let i = 0; i < rows; i++) {
+        tableHTML += '<tr>';
+        for (let j = 0; j < cols; j++) {
+            if (i === 0) {
+                tableHTML += '<th>عنوان</th>';
+            } else {
+                tableHTML += '<td>...</td>';
+            }
+        }
+        tableHTML += '</tr>';
+    }
+    
+    tableHTML += '</tbody></table><br><p>&#8203;</p>';
+    
+    const editor = document.getElementById('questionsInput');
+    editor.focus();
+    document.execCommand('insertHTML', false, tableHTML);
+    
+    if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
+    if (typeof autoSaveData === 'function') autoSaveData();
+    if (typeof triggerSaveUI === 'function') triggerSaveUI('saving');
+    setTimeout(() => { if (typeof triggerSaveUI === 'function') triggerSaveUI('saved'); }, 500);
+}
 
     </script>
     
