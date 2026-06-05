@@ -33,7 +33,7 @@
 })();
 </script>
 
-    <title>المحرر الاحترافي الشامل المطور - EL-ALFEY</title>
+    <title>المحرر الاحترافي الشامل  - M&H</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Readex+Pro:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="icon.png">
@@ -3279,7 +3279,8 @@ table.editor-table th {
 
 if (!res.ok) {
     const errData = await res.json();
-    throw new Error(errData.error || 'حدث خطأ في الخادم');
+    alert("السبب التقني هو: " + errData.error);
+    throw new Error(errData.error || 'حدث خطأ');
 }
 
 
