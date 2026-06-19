@@ -79,9 +79,9 @@ function setQuestionSystem(sys) {
         aInp.style.textAlign = "start";
         aInp.style.fontFamily = "inherit";
         if (sciTb) sciTb.style.display = "none";
-        mcqBtn.innerHTML = "➕ سؤال اختياري";
-        tfBtn.innerHTML = "➕ سؤال صح/خطأ";
-        essayBtn.innerHTML = "➕ سؤال مقالي";
+        mcqBtn.innerHTML = "🔘 سؤال اختياري";
+        tfBtn.innerHTML = "✅ سؤال صح/خطأ";
+        essayBtn.innerHTML = "📝 سؤال مقالي";
     } else if (sys === 'foreign') {
         qInp.dir = "ltr";
         qInp.style.textAlign = "left";
@@ -90,9 +90,9 @@ function setQuestionSystem(sys) {
         aInp.style.textAlign = "left";
         aInp.style.fontFamily = "'Readex Pro', Arial, sans-serif";
         if (sciTb) sciTb.style.display = "none";
-        mcqBtn.innerHTML = "➕ Add MCQ";
-        tfBtn.innerHTML = "➕ Add T/F";
-        essayBtn.innerHTML = "➕ Add Essay";
+        mcqBtn.innerHTML = "🔘 Add MCQ";
+        tfBtn.innerHTML = "✅ Add T/F";
+        essayBtn.innerHTML = "📝 Add Essay";
     } else if (sys === 'science') {
         qInp.dir = "auto";
         qInp.style.textAlign = "left";
@@ -101,9 +101,9 @@ function setQuestionSystem(sys) {
         aInp.style.textAlign = "left";
         aInp.style.fontFamily = "inherit";
         if (sciTb) sciTb.style.display = "flex";
-        mcqBtn.innerHTML = "➕ MCQ (Science)";
-        tfBtn.innerHTML = "➕ T/F (Science)";
-        essayBtn.innerHTML = "➕ Essay (Science)";
+        mcqBtn.innerHTML = "🔘 MCQ (Science)";
+        tfBtn.innerHTML = "✅ T/F (Science)";
+        essayBtn.innerHTML = "📝 Essay (Science)";
     }
     showToast("تم تفعيل " + document.getElementById(activeBtn).innerText, 'info');
 }
@@ -160,13 +160,12 @@ function resizeImage(width, height = 'auto') {
     syncTextToDatabase();
 }
 
-// دالة جديدة للتحكم الدقيق بزيادة أو نقصان الطول والعرض
 function adjustImageSize(dimension, amount) {
     if (!activeImage) return;
     let currentSize = parseInt(window.getComputedStyle(activeImage)[dimension]);
     if (isNaN(currentSize)) currentSize = 100;
     let newSize = currentSize + amount;
-    if (newSize < 20) newSize = 20; // منع تصغير الصورة لدرجة الاختفاء
+    if (newSize < 20) newSize = 20;
     activeImage.style[dimension] = newSize + 'px';
     autoSaveData();
     syncTextToDatabase();
@@ -204,27 +203,25 @@ function getRawPreamble(elementId) {
     return html;
 }
 
-let sessionListener = null; // متغير لحفظ المراقب اللحظي
+let sessionListener = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         const docRef = db.collection('users').doc(user.uid);
-
-        // 1. الفحص الأولي عند الدخول
         const docSnap = await docRef.get();
+
         if (docSnap.exists) {
             let data = docSnap.data();
             let devices = data.devices || [];
 
-            // 2. نظام التخيير الصارم للأجهزة الجديدة
             if (!devices.includes(localDeviceId)) {
                 if (devices.length >= 3) {
                     let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (3 أجهزة).\n\n- اضغط [إلغاء/Cancel] للذهاب وتسجيل الخروج يدوياً من أحد أجهزتك.\n- اضغط [موافق/OK] لتصفير الأجهزة وطرد جميع الأجهزة الأخرى إجبارياً الآن.");
                     if (resetConfirm) {
-                        devices = [localDeviceId]; // تصفير القائمة وتسجيل هذا الجهاز فقط
+                        devices = [localDeviceId];
                         await docRef.update({ devices: devices });
                     } else {
-                        auth.signOut(); // التراجع عن تسجيل الدخول
+                        auth.signOut();
                         return;
                     }
                 } else {
@@ -233,7 +230,6 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
 
-            // 3. تحديث الواجهة
             document.getElementById('currentLoggedInUser').innerText = user.email;
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('userProfileSection').style.display = 'block';
@@ -248,29 +244,40 @@ auth.onAuthStateChanged(async (user) => {
             if (data.vipExpiry) localStorage.setItem('elalfey_vip_expiry', data.vipExpiry);
             if (data.trialStart) localStorage.setItem('elalfey_trial_start', data.trialStart);
 
-            // 4. تشغيل "المراقب اللحظي الصارم" (Real-time Enforcer)
-            if (sessionListener) sessionListener(); // إيقاف أي مراقب قديم
+            if (sessionListener) sessionListener();
             sessionListener = docRef.onSnapshot((snap) => {
                 if (snap.exists) {
                     let liveData = snap.data();
-                    let liveDevices = liveData.devices || [];
 
-                    // تحديث العداد في الشاشة لحظياً
+                    if (liveData.deleted) {
+                        showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
+                        handleLogoutCloud();
+                        return;
+                    }
+                    if (liveData.banned) {
+                        showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
+                        handleLogoutCloud();
+                        return;
+                    }
+                    if (liveData.vipExpiry === 'expired' && localStorage.getItem('elalfey_vip_expiry')) {
+                        localStorage.removeItem('elalfey_vip_expiry');
+                        showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من قبل الإدارة!', 'error');
+                    }
+
+                    let liveDevices = liveData.devices || [];
                     const countEl = document.getElementById('activeDevicesCount');
                     if (countEl) countEl.innerText = liveDevices.length;
 
-                    // 🛑 الطرد الإجباري: إذا تم تصفير الأجهزة من جهاز آخر، يتم طرد هذا الجهاز فوراً
                     if (!liveDevices.includes(localDeviceId)) {
-                        showToast('⚠️ تم تسجيل خروجك إجبارياً لأن الحساب تم فتحه وتصفيره من جهاز آخر!', 'error');
-                        auth.signOut();
+                        showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
+                        handleLogoutCloud();
                     }
                 }
             });
         }
     } else {
-        // حالة تسجيل الخروج
         if (sessionListener) {
-            sessionListener(); // إيقاف المراقب اللحظي
+            sessionListener();
             sessionListener = null;
         }
         document.getElementById('authSection').style.display = 'block';
@@ -279,8 +286,6 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// 1. دالة إنشاء الحساب (صارمة لمنع تكرار الحسابات لنفس الجهاز)
-// 1. دالة تسجيل الدخول المطورة (مع الحفظ التلقائي)
 async function handleLoginCloud() {
     const email = document.getElementById('emailInput').value.trim();
     const pass = document.getElementById('passwordInput').value.trim();
@@ -288,18 +293,14 @@ async function handleLoginCloud() {
 
     try {
         showToast('جاري تسجيل الدخول...', 'info');
-
-        // 🛑 إجبار Firebase على حفظ الجلسة بشكل دائم على هذا الجهاز
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
         await auth.signInWithEmailAndPassword(email, pass);
-        showToast('تم تسجيل الدخول وحفظ الحساب بنجاح!', 'success');
+        showToast('تم تسجيل الدخول بنجاح!', 'success');
     } catch (e) {
         showToast('بيانات الدخول غير صحيحة', 'error');
     }
 }
 
-// 2. دالة إنشاء الحساب المطورة (مع الحفظ التلقائي)
 async function handleSignupCloud() {
     const email = document.getElementById('emailInput').value.trim();
     const pass = document.getElementById('passwordInput').value.trim();
@@ -308,85 +309,96 @@ async function handleSignupCloud() {
     try {
         showToast('جاري التحقق من صلاحية الجهاز...', 'info');
 
-        const deviceCheck = await db.collection('users').where('devices', 'array-contains', localDeviceId).get();
-        if (!deviceCheck.empty) {
-            return showToast('عذراً، هذا الجهاز مسجل بحساب بالفعل! لا يمكنك إنشاء حساب جديد من نفس الجهاز.', 'error');
+        const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
+        const deviceDoc = await deviceRegRef.get();
+        if (deviceDoc.exists) {
+            return showToast('عذراً، لقد قمت بإنشاء حساب من هذا الجهاز مسبقاً! كل جهاز مسموح له بحساب واحد فقط.', 'error');
         }
 
-        // 🛑 إجبار النظام على حفظ الحساب الجديد دائمًا بعد إنشائه
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
+
         await db.collection('users').doc(cred.user.uid).set({
             email: email,
             devices: [localDeviceId],
             history: [],
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        showToast('تم إنشاء الحساب وحفظه تلقائياً بنجاح!', 'success');
+
+        await deviceRegRef.set({
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast('تم إنشاء الحساب بنجاح!', 'success');
         document.getElementById('passwordInput').value = '';
     } catch (e) {
         showToast(e.message, 'error');
     }
 }
 
+// 🛑 دالة الخروج المدمرة (تمحو كل شيء)
 async function handleLogoutCloud() {
     try {
         const user = auth.currentUser;
         if (user) {
-            // إزالة هذا الجهاز من السحابة لتحرير "الكرسي" للأجهزة الأخرى
             const docRef = db.collection('users').doc(user.uid);
             await docRef.update({
                 devices: firebase.firestore.FieldValue.arrayRemove(localDeviceId)
             });
         }
 
-        // تسجيل الخروج ومسح الجلسة
-        await auth.signOut();
+        // مسح جميع الصلاحيات
         localStorage.removeItem('elalfey_vip_expiry');
+        localStorage.removeItem('elalfey_trial_start');
+        localStorage.removeItem('elalfey_q_input');
+        localStorage.removeItem('elalfey_a_input');
+        localStorage.removeItem('elalfey_general_text');
+
+        // تفريغ المحرر بالكامل
+        if (document.getElementById('questionsInput')) document.getElementById('questionsInput').innerHTML = '';
+        if (document.getElementById('answersInput')) document.getElementById('answersInput').innerHTML = '';
+        if (document.getElementById('generalTextInput')) document.getElementById('generalTextInput').innerHTML = '';
+
+        questionsDatabase = [];
+        appHistory = [];
+
+        await auth.signOut();
 
         document.getElementById('authSection').style.display = 'block';
         document.getElementById('userProfileSection').style.display = 'none';
         document.getElementById('adminPanelBtn').style.display = 'none';
 
-        showToast('تم تسجيل الخروج بنجاح وإخلاء الجهاز من النظام', 'info');
+        showToast('تم تسجيل الخروج ومحو جميع الصلاحيات والمزايا من الجهاز', 'info');
     } catch (error) {
-        showToast('حدث خطأ أثناء تسجيل الخروج', 'error');
+        showToast('حدث خطأ أثناء الخروج', 'error');
     }
 }
 
+// 🛑 دالة حذف الحساب نهائياً
 async function deleteUserAccount() {
     const user = auth.currentUser;
     if (!user) return;
 
-    // رسالة تأكيد تحذيرية للمستخدم
-    const confirmation = confirm("⚠️ تحذير نهائي: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح جميع بياناتك وسجل مستنداتك السحابية فوراً ولا يمكن التراجع عن هذا الإجراء.");
+    const confirmation = confirm("⚠️ تحذير نهائي: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح جميع بياناتك، وسيتم تحرير جهازك لتتمكن من التسجيل به كحساب جديد.");
 
     if (confirmation) {
         try {
             showToast('جاري مسح بياناتك وإغلاق الحساب...', 'info');
 
-            // 1. مسح جميع بيانات المستخدم من قاعدة بيانات Firestore
-            await db.collection('users').doc(user.uid).delete();
+            // تحرير الجهاز ليكون قادراً على التسجيل مرة أخرى
+            const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
+            await deviceRegRef.delete();
 
-            // 2. حذف الحساب جذرياً من نظام Authentication
+            await db.collection('users').doc(user.uid).delete();
             await user.delete();
 
-            // 3. تنظيف الذاكرة المحلية لتسجيل خروجه
-            localStorage.removeItem('elalfey_vip_expiry');
-
-            // 4. تحديث الواجهة لتعود لشاشة تسجيل الدخول
-            document.getElementById('authSection').style.display = 'block';
-            document.getElementById('userProfileSection').style.display = 'none';
-            document.getElementById('adminPanelBtn').style.display = 'none';
+            handleLogoutCloud();
 
             showToast('تم حذف حسابك وجميع بياناتك بنجاح', 'success');
-
         } catch (error) {
-            console.error(error);
-            // إجراء أمني من Firebase: إذا كان تسجيل الدخول قديماً، يطلب تسجيل دخول حديث قبل الحذف
             if (error.code === 'auth/requires-recent-login') {
-                showToast('لدواعي أمنية، يرجى تسجيل الخروج ثم الدخول مرة أخرى قبل محاولة حذف الحساب.', 'error');
+                showToast('لدواعي أمنية، يرجى تسجيل الخروج ثم الدخول مرة أخرى قبل محاولة الحذف.', 'error');
             } else {
                 showToast('حدث خطأ أثناء حذف الحساب: ' + error.message, 'error');
             }
@@ -548,7 +560,6 @@ async function verifyVIPCode() {
 async function generateDynamicCodes() {
     const days = parseInt(document.getElementById('adminCodeType').value);
     const count = parseInt(document.getElementById('adminCodeCount').value);
-    // جعل البادئة تمثل المقطع الأول
     let prefix = days === 7 ? 'W' : days === 30 ? 'M' : days === 365 ? 'Y' : 'L';
     let generated = [];
     document.getElementById('generatedCodesOutput').value = 'جاري توليد الأكواد وحفظها سحابياً...';
@@ -556,12 +567,10 @@ async function generateDynamicCodes() {
     try {
         const batch = db.batch();
         for (let i = 0; i < count; i++) {
-            // توليد 3 مقاطع عشوائية، كل مقطع يتكون من 4 رموز
             let p1 = Math.random().toString(36).substring(2, 6).toUpperCase().padStart(4, '0');
             let p2 = Math.random().toString(36).substring(2, 6).toUpperCase().padStart(4, '0');
             let p3 = Math.random().toString(36).substring(2, 6).toUpperCase().padStart(4, '0');
 
-            // دمج المقاطع الأربعة معاً (البادئة + 3 مقاطع عشوائية)
             let newCode = `${prefix}-${p1}-${p2}-${p3}`;
             let codeRef = db.collection('vip_codes').doc(newCode);
 
@@ -576,6 +585,47 @@ async function generateDynamicCodes() {
     }
 }
 
+// 🛑 نظام الإدارة الفائق (Super Admin Actions)
+window.executeAdminAction = async function (action) {
+    const targetEmail = document.getElementById('adminTargetEmail').value.trim();
+    if (!targetEmail) return showToast('يرجى إدخال بريد المستخدم أولاً!', 'error');
+
+    try {
+        showToast('جاري تنفيذ الإجراء سحابياً...', 'info');
+        const usersRef = db.collection('users');
+        const qSnap = await usersRef.where('email', '==', targetEmail).get();
+
+        if (qSnap.empty) return showToast('هذا البريد غير موجود في قاعدة بيانات المستخدمين!', 'error');
+
+        const userDoc = qSnap.docs[0];
+        const userData = userDoc.data();
+
+        if (action === 'cancel_vip') {
+            await userDoc.ref.update({ vipExpiry: 'expired' });
+            showToast('تم إلغاء اشتراك الـ VIP للمستخدم بنجاح', 'success');
+        } else if (action === 'ban_user') {
+            await userDoc.ref.update({ banned: true, vipExpiry: 'expired' });
+            showToast('تم حظر المستخدم وطرده من النظام نهائياً', 'success');
+        } else if (action === 'delete_user') {
+            const confirmDelete = confirm('⚠️ تحذير: هل أنت متأكد من مسح حساب هذا المستخدم نهائياً ليتمكن من التسجيل به كحساب جديد؟');
+            if (!confirmDelete) return;
+
+            // فك ارتباط الأجهزة المرتبطة بهذا الحساب
+            if (userData.devices && Array.isArray(userData.devices)) {
+                for (let dId of userData.devices) {
+                    await db.collection('device_registry').doc(dId).delete();
+                }
+            }
+
+            // مسح الحساب
+            await userDoc.ref.delete();
+            showToast('تم مسح الحساب وتحرير أجهزته بنجاح. (يمكنه التسجيل من جديد الآن)', 'success');
+        }
+    } catch (e) {
+        showToast('حدث خطأ أثناء التنفيذ: ' + e.message, 'error');
+    }
+};
+
 function proceedWithAction(actionType, param) {
     if (actionType === 'export') executeExport(param);
     else if (actionType === 'multi') generateMultiModels();
@@ -584,6 +634,24 @@ function proceedWithAction(actionType, param) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+
+    const adminModalContent = document.querySelector('#adminModal .modal-content');
+    if (adminModalContent) {
+        const adminTools = document.createElement('div');
+        adminTools.innerHTML = `
+            <div style="margin-top: 25px; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
+                <h4 style="color: #ef4444; margin-top: 0; font-weight: 900;">👥 إدارة المستخدمين وصلاحياتهم</h4>
+                <input type="email" id="adminTargetEmail" placeholder="أدخل إيميل المستخدم المستهدف هنا..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="executeAdminAction('cancel_vip')" style="flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">إلغاء الـ VIP</button>
+                    <button onclick="executeAdminAction('ban_user')" style="flex: 1; background: #64748b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">حظر الحساب</button>
+                    <button onclick="executeAdminAction('delete_user')" style="flex: 1; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">تفريغ وحذف</button>
+                </div>
+            </div>
+        `;
+        adminModalContent.insertBefore(adminTools, adminModalContent.lastElementChild);
+    }
+
     await loadSavedData();
     document.querySelectorAll('input, select').forEach(el => { el.addEventListener('input', autoSaveData); });
     const qInp = document.getElementById('questionsInput');
@@ -688,7 +756,7 @@ function showToast(message, type = 'success') {
     t.style.display = 'flex';
     t.style.alignItems = 'center';
     t.style.gap = '12px';
-    t.style.zIndex = '999999';
+    t.style.zIndex = '9999999';
     t.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
     t.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span> <span>${message}</span>`;
     document.getElementById('toastContainer').appendChild(t);
@@ -776,16 +844,14 @@ function syncTextToDatabase() {
     const aText = getEditorText('answersInput');
     if (!qText.trim()) { questionsDatabase = []; return; }
 
-    // بناء خريطة إجابات ذكية تفصل بين الأقسام (الاختياري، صح/خطأ، مقالي)
     const ansMap = { mcq: {}, tf_inline: {}, essay: {} };
     if (aText.trim()) {
         const aLines = aText.split('\n');
-        let currentAnsSection = 'mcq'; // القسم الافتراضي
+        let currentAnsSection = 'mcq';
         let currentAnsNum = null;
 
         aLines.forEach(line => {
             let cleanLine = line.replace(/<[^>]+>/g, '').trim();
-            // تحديد القسم الحالي بذكاء
             if (cleanLine.includes('الاختيار من متعدد')) currentAnsSection = 'mcq';
             else if (cleanLine.includes('الصواب والخطأ')) currentAnsSection = 'tf_inline';
             else if (cleanLine.includes('المقالي')) currentAnsSection = 'essay';
@@ -820,7 +886,7 @@ function syncTextToDatabase() {
                 text: qMatch[2].trim(),
                 options: [],
                 type: 'essay',
-                ans: "", // سيتم التعيين بعد معرفة النوع
+                ans: "",
                 tags: qMatch[2].match(/#[\w\u0600-\u06FF]+/g) || []
             };
             curQ.text = curQ.text.replace(/#[\w\u0600-\u06FF]+/g, '').trim();
@@ -910,7 +976,6 @@ function syncTextToDatabase() {
 
             q.num = typeCounters[q.type]++;
 
-            // سحب الإجابة بذكاء بناءً على (رقم السؤال + نوع القسم) لمنع التداخل تماماً
             if (!q.ans && ansMap[q.type] && ansMap[q.type][q.num]) {
                 q.ans = ansMap[q.type][q.num];
             }
@@ -1040,13 +1105,11 @@ function showAnalytics() {
 
 async function generateAIQuestions(mode = 'quiz') {
     const txt = document.getElementById('aiTextInput').value.trim();
-    // التعديل هنا: جلب جميع الملفات بدلاً من الملف الأول فقط
     const files = document.getElementById('aiFileInput').files;
     const outputDiv = document.getElementById('aiChatOutput');
 
     if (!txt && files.length === 0) return showToast('يرجى كتابة نص المادة العلمية أو إرفاق ملفات', 'error');
 
-    // ⚠️ ضع مفتاحك هنا
     const apiKey = "AQ.Ab8RN6IvZM5OdpXCh3_PJDyn_lXFHufz04OH-zdtUtg6APgZrA";
 
     let systemInstruction = mode === 'quiz' ?
@@ -1062,7 +1125,6 @@ async function generateAIQuestions(mode = 'quiz') {
 
         let parts = [{ text: promptText }];
 
-        // التعديل هنا: المرور على جميع الملفات المرفقة ومعالجتها
         if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 let f = files[i];
@@ -1118,8 +1180,6 @@ async function generateAIQuestions(mode = 'quiz') {
             alert("السبب التقني هو: " + errData.error);
             throw new Error(errData.error || 'حدث خطأ');
         }
-
-
 
         const data = await res.json();
         if (!data.candidates || data.candidates.length === 0) throw new Error("لم يقم النموذج بتوليد أي بيانات.");
@@ -1339,8 +1399,6 @@ function buildQAndA_HTML(dataArray, pColor) {
         }
         else if (q.type === 'essay' && q.ans) {
             let ansHtml = `<span style="color:#10b981; font-weight:bold;">${q.ans.replace(/\n/g, '<br>')}</span>`;
-
-            // خوارزمية ذكية لمحو جميع سطور النقاط أياً كان عددها ووضع الحل مكانها بسلاسة
             if (aT.match(/[\.\-_]{4,}/)) {
                 let replaced = false;
                 aT = aT.replace(/(?:<br\s*\/?>)?\s*[\.\-_]{4,}/g, (match) => {
@@ -1376,7 +1434,6 @@ function buildQAndA_HTML(dataArray, pColor) {
         hA += `</div>`;
     });
 
-    // إخفاء العناوين التي تخص مفتاح الإجابات من الظهور العشوائي في شاشة الطباعة
     hA = `<style>#wordPrintPreviewArea .ans-key-heading { display: none !important; }</style>` + hA;
 
     return { noAns: hN, withAns: hA };
@@ -1387,7 +1444,6 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
     let std = '';
     let cols = '';
 
-    // التحقق من النظام المختار للتحويل التلقائي للإنجليزية
     let isForeign = (currentQuestionSystem === 'foreign');
     let dir = isForeign ? 'ltr' : 'rtl';
     let align = isForeign ? 'left' : 'right';
@@ -1401,7 +1457,6 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
                </div>` :
             '';
 
-        // ترجمة بيانات الطالب التلقائية
         let stdText = isForeign ?
             `<div>Student Name: ....................................................</div><div>Seat No: .........................</div>` :
             `<div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div>`;
@@ -1430,7 +1485,6 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
 }
 
 function getBubbleSheetContent(qDb, emptyCount = 0) {
-    // 1. جلب جميع القيم من واجهة المستخدم بشكل ديناميكي (بدون أي أرقام ثابتة)
     const sh = document.getElementById('bubbleShape').value;
     const pos = document.getElementById('bubbleTextPosition').value;
     const oC = parseInt(document.getElementById('bubbleOptionsCount').value);
@@ -1439,7 +1493,6 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
     const userBubbleSize = document.getElementById('bubbleSize').value + 'px';
     const userColumnsCount = parseInt(document.getElementById('bubbleColumns').value);
 
-    // 2. تحديد نوع الأحرف (عربي، إنجليزي، أرقام) بناءً على القائمة المنسدلة
     const lA = { 'arabic': ['أ', 'ب', 'ج', 'د', 'هـ', 'و'], 'english': ['A', 'B', 'C', 'D', 'E', 'F'], 'numbers': ['1', '2', '3', '4', '5', '6'] }[lT];
 
     let isForeign = (currentQuestionSystem === 'foreign');
@@ -1483,12 +1536,10 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
         let secHtml = `<div style="border: 2px solid ${sC}; padding: 6px 10px; margin-bottom: 6px; border-radius: 8px; background: rgba(255,255,255,0.8); direction:${dir}; text-align:${align};">`;
         secHtml += `<h4 style="margin-top: 0; color: ${sC}; text-align: center; margin-bottom: 12px; border-bottom: 1px dashed ${sC}; padding-bottom: 4px; font-weight: 900; font-size: 13px;">${title}</h4>`;
 
-        // تطبيق فئة الأعمدة التي اختارها المستخدم (bubble-col-1 إلى 4)
         secHtml += `<div class="bubble-container bubble-col-${gridCols}" style="display: grid; color:${sC}; direction:${dir};">`;
 
         qList.forEach((q) => {
             let i = q.num;
-            // إضافة مسافة علوية تلقائياً إذا اختار المستخدم الحروف فوق الفقاعة لتجنب تداخل النصوص
             let rowClass = pos === 'above' ? 'bubble-row spacing-above' : 'bubble-row';
             let rowMargin = pos === 'above' ? 'margin-top: 22px;' : '';
 
@@ -1499,7 +1550,6 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
             let bSize = userBubbleSize;
             let fontSize = (parseInt(userBubbleSize) * 0.45) + 'px';
 
-            // 3. دالة بناء الفقاعة المتطورة للتحكم في موضع الحرف (بجانب، أعلى، داخل، مخفي)
             const createBubbleHTML = (letter) => {
                 let lbl = (pos === 'above' || pos === 'beside') ? `<span class="bubble-label" style="color:${sC};">${letter}</span>` : '';
                 let ins = (pos === 'inside') ? letter : '';
@@ -1514,7 +1564,6 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
                 </div>`;
             };
 
-            // 4. تطبيق عدد الخيارات (أقصى عدد للخيارات لكل سؤال) بناءً على ما يختاره المستخدم
             if (qType === 'mcq') {
                 for (let o = 0; o < oC; o++) {
                     let l = lA[o] || '';
@@ -1534,7 +1583,6 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
 
     let bHt = '';
 
-    // في حالة النماذج الفارغة، يتم تطبيق الأعمدة والتحكمات بدقة
     if (qDb.filter(q => q.type !== 'heading').length === 0) {
         let dummyMCQ = Array.from({ length: 60 }, (_, i) => ({ num: i + 1 }));
         let dummyTF = Array.from({ length: 50 }, (_, i) => ({ num: i + 1 }));
@@ -1551,7 +1599,6 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
 
     return bH + bHt;
 }
-
 
 async function executeExport(printType) {
     applyUserSettings();
@@ -1704,19 +1751,15 @@ function closeWordPrint() {
 }
 
 function applySystemLanguageSettings() {
-    // 1. اكتشاف لغة نظام التشغيل أو المتصفح للجهاز الحالي
     const userLang = navigator.language || navigator.userLanguage;
     const isArabic = userLang.toLowerCase().startsWith('ar');
 
-    // 2. تغيير اتجاه الصفحة جذرياً (RTL للعربية و LTR للإنجليزية)
     document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
     document.documentElement.lang = isArabic ? 'ar' : 'en';
     document.documentElement.style.setProperty('--text-align', isArabic ? 'right' : 'left');
 
-    // إذا كانت لغة الجهاز ليست عربية، سيبقى الموقع باللغة الإنجليزية كما هو
     if (!isArabic) return;
 
-    // 3. قاموس المصطلحات لإعادتها للغة العربية برمجياً دون المساس بتركيبة الـ HTML
     const translations = {
         'Integrated workspace to create and format professional notes and exams with one click': 'بيئة عمل متكاملة لإنشاء وتنسيق الملازم والامتحانات الاحترافية بلمسة واحدة',
         'Comprehensive Question Bank': 'بنك الأسئلة الشامل',
@@ -1765,15 +1808,13 @@ function applySystemLanguageSettings() {
         'Gen Multi-Model Empty Bubbles (60 MCQ, 50 TF)': 'نماذج بابل شيت فارغة (60 MCQ, 50 TF)'
     };
 
-    // دالة للمرور على كافة النصوص في الصفحة واستبدالها بسلاسة
     function translateDOM(node) {
-        if (node.nodeType === 3) { // إذا كان النص مجرداً
+        if (node.nodeType === 3) {
             let text = node.nodeValue;
             let textTrimmed = text.trim();
             if (textTrimmed && translations[textTrimmed]) {
                 node.nodeValue = text.replace(textTrimmed, translations[textTrimmed]);
             } else {
-                // استبدال الكلمات المتداخلة
                 for (let [eng, ar] of Object.entries(translations)) {
                     if (text.includes(eng)) {
                         text = text.replace(eng, ar);
@@ -1790,7 +1831,6 @@ function applySystemLanguageSettings() {
 
     translateDOM(document.body);
 
-    // 4. تعديل النصوص الإرشادية داخل مربعات الكتابة (Placeholders)
     const qInput = document.getElementById('questionsInput');
     if (qInput) {
         qInput.setAttribute('placeholder', 'اكتب العنوان الرئيسي هنا، ثم انزل سطراً واكتب:\n1. اكتب سؤالك الأول هنا...\nأ) الخيار الأول\nب) الخيار الثاني [✓]\nج) الخيار الثالث\nد) الخيار الرابع');
@@ -1802,161 +1842,7 @@ function applySystemLanguageSettings() {
     }
 }
 
-// تفعيل الدالة فور تحميل عناصر الصفحة بالكامل
 window.addEventListener('DOMContentLoaded', applySystemLanguageSettings);
-
-// 1. الدالة الأساسية لتوليد وعرض النماذج المضغوطة
-function generateCompactEmptyBubbleSheet() {
-    const lType = document.getElementById('compactLettersType').value;
-    const sColor = document.getElementById('compactColor').value;
-
-    // قراءة إعدادات النماذج المتعددة الجديدة الخاصة بالنظام المضغوط
-    const mCount = parseInt(document.getElementById('compactModelsCount').value) || 1;
-    const mType = document.getElementById('compactModelNaming').value;
-    const placement = document.getElementById('compactModelPlacement').value;
-
-    const pA = { 'arabic_letters': ['أ', 'ب', 'ج', 'د', 'هـ', 'و'], 'english_letters': ['A', 'B', 'C', 'D', 'E', 'F'], 'numbers': ['1', '2', '3', '4', '5', '6'] }[mType] || ['أ', 'ب', 'ج', 'د'];
-
-    let finalHtml = '';
-    const isForeign = (currentQuestionSystem === 'foreign');
-
-    for (let i = 0; i < mCount; i++) {
-        let modelName = '';
-        if (mCount > 1) {
-            let mLetter = pA[i] || (i + 1);
-            modelName = isForeign ? `Model (${mLetter})` : `نموذج الاختبار (${mLetter})`;
-        }
-
-        finalHtml += `<div class="pdf-page" style="position: relative; padding: 10mm; background: white; margin: 0 auto 20px auto; width: 210mm; min-height: 297mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); page-break-after: always; overflow: hidden;">`;
-        if (typeof getWatermarkHTML === "function") finalHtml += getWatermarkHTML();
-        finalHtml += getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement);
-        finalHtml += `</div>`;
-    }
-
-    document.getElementById('wordPrintPreviewArea').innerHTML = finalHtml;
-    document.getElementById('wordPrintModal').style.display = 'flex';
-    showToast('تم تجهيز النموذج المضغوط بنجاح!', 'success');
-}
-
-// 2. الكود الهندسي الصارم للـ 110 سؤال مع التحكم بالترتيب
-// الكود الهندسي الصارم المطور (يدعم الترويسات الديناميكية)
-function getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement) {
-    let isForeign = (currentQuestionSystem === 'foreign');
-    let dir = isForeign ? 'ltr' : 'rtl';
-    let align = isForeign ? 'left' : 'right';
-
-    const lA = { 'arabic': ['أ', 'ب', 'ج', 'د'], 'english': ['A', 'B', 'C', 'D'], 'numbers': ['1', '2', '3', '4'] }[lType];
-    const tfLetters = isForeign ? ['T', 'F'] : ['ص', 'خ'];
-
-    // 1. قراءة النصوص المخصصة من اللوحة الخضراء (أو وضع قيم افتراضية)
-    let f1 = document.getElementById('compactField1') ? document.getElementById('compactField1').value : 'اسم الطالب:';
-    let f2 = document.getElementById('compactField2') ? document.getElementById('compactField2').value : 'المادة:';
-    let f3 = document.getElementById('compactField3') ? document.getElementById('compactField3').value : 'الفرقة/الصف:';
-    let hStyle = document.getElementById('compactHeaderStyle') ? document.getElementById('compactHeaderStyle').value : 'basic';
-    let seatTitle = isForeign ? 'Seat No.' : 'رقم الجلوس';
-
-    // 2. تصميم الترويسة بناءً على اختيار المستخدم
-    let headerInfoHtml = '';
-
-    if (hStyle === 'basic') {
-        // التصميم الأول: صندوق كلاسيكي
-        headerInfoHtml = `
-            <div style="border: 2px solid ${sColor}; padding: 8px 12px; margin-bottom: 8px; border-radius: 6px; direction:${dir}; text-align:${align}; font-size: 13px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between;">
-                <div style="flex:1;"><div>${f3} ........................</div></div>
-                <div style="flex:1; text-align:center;"><div>${f2} ........................</div></div>
-                <div style="flex:2; text-align:${isForeign ? 'right' : 'left'};"><div>${f1} ....................................................</div></div>
-            </div>`;
-    }
-    else if (hStyle === 'lines') {
-        // التصميم الثاني: خطوط حرة بدون إطار
-        headerInfoHtml = `
-            <div style="padding: 4px 12px; margin-bottom: 12px; direction:${dir}; text-align:${align}; font-size: 14px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between;">
-                <div style="flex:1; border-bottom: 1px dashed ${sColor}; margin-inline-end: 15px;">${f3} </div>
-                <div style="flex:1; border-bottom: 1px dashed ${sColor}; margin-inline-end: 15px; text-align:center;">${f2} </div>
-                <div style="flex:2; border-bottom: 1px dashed ${sColor}; text-align:${isForeign ? 'right' : 'left'};">${f1} </div>
-            </div>`;
-    }
-    else if (hStyle === 'advanced') {
-        // التصميم الثالث: متقدم مع شبكة بابل شيت صغيرة لرقم الجلوس (لا تؤثر على مساحة الصفحة)
-        let ig = '';
-        for (let c = 0; c < 6; c++) {
-            let cb = `<div style="border:1px solid ${sColor}; height:14px; margin-bottom:2px; background:#fff;"></div>`;
-            for (let r = 0; r <= 9; r++) {
-                cb += `<div style="width:11px;height:11px;font-size:8px;border:1px solid ${sColor};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1px auto;">${r}</div>`;
-            }
-            ig += `<div style="display:flex;flex-direction:column;width:14px;gap:1px;">${cb}</div>`;
-        }
-        headerInfoHtml = `
-            <div style="border: 2px solid ${sColor}; padding: 6px 12px; margin-bottom: 8px; border-radius: 6px; direction:${dir}; text-align:${align}; font-size: 13px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.7);">
-                <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
-                    <div>${f1} ....................................................................</div>
-                    <div style="display:flex; gap: 20px;">
-                        <div style="flex:1;">${f2} ......................................</div>
-                        <div style="flex:1;">${f3} ......................................</div>
-                    </div>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center; border-inline-start: 2px dashed ${sColor}; padding-inline-start: 15px; margin-inline-start: 15px;">
-                    <div style="font-size:11px; margin-bottom:4px;">${seatTitle}</div>
-                    <div style="display:flex; gap: 2px;">${ig}</div>
-                </div>
-            </div>`;
-    }
-
-    let modelHeaderHtml = modelName ? `<div style="text-align:center; margin-bottom: 8px;"><span style="border: 2px dashed ${sColor}; padding: 4px 20px; font-weight: 900; border-radius: 8px; color: ${sColor}; font-size: 15px;">${modelName}</span></div>` : '';
-
-    // ترتيب ظهور الترويسة مع اسم النموذج (Top or Above Student)
-    let topSection = placement === 'top' ? (modelHeaderHtml + headerInfoHtml) : (headerInfoHtml + modelHeaderHtml);
-
-    const renderSection = (title, startNum, totalQs, cols, options) => {
-        let html = `<div style="border: 2px solid ${sColor}; padding: 6px; margin-bottom: 6px; border-radius: 6px; direction:${dir}; text-align:${align}; color: ${sColor};">`;
-        html += `<div style="text-align: center; font-weight: 900; font-size: 12px; border-bottom: 1px dashed ${sColor}; margin-bottom: 6px; padding-bottom: 4px;">${title}</div>`;
-        html += `<div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 4px 8px;">`;
-
-        for (let i = 0; i < totalQs; i++) {
-            let num = startNum + i;
-            html += `<div style="display: flex; align-items: center; justify-content: flex-start; font-size: 11px; margin-bottom: 2px;">`;
-            html += `<div style="width: 22px; font-weight: bold; text-align: ${align};">${num}.</div>`;
-            html += `<div style="display: flex; gap: 6px; flex: 1;">`;
-            options.forEach(opt => {
-                html += `<div style="display: flex; align-items: center; gap: 3px;">`;
-                html += `<span style="font-size: 11px;">${opt}</span>`;
-                html += `<div style="width: 14px; height: 14px; border: 1px solid ${sColor}; border-radius: 50%;"></div>`;
-                html += `</div>`;
-            });
-            html += `</div></div>`;
-        }
-        html += `</div></div>`;
-        return html;
-    };
-
-    let mcqTitle = isForeign ? 'Multiple Choice Questions' : 'قسم أسئلة الاختيار من متعدد';
-    let tfTitle = isForeign ? 'True/False Questions' : 'قسم أسئلة الصواب والخطأ';
-
-    let mcqHtml = renderSection(mcqTitle, 1, 60, 4, lA);
-    let tfHtml = renderSection(tfTitle, 1, 50, 4, tfLetters);
-
-    return topSection + mcqHtml + tfHtml;
-}
-// 1. نظام العلامة المائية المتطور (مربوط بأسماء لوحتك الأصلية)
-function getWatermarkHTML() {
-    let textEl = document.getElementById('wmText');
-    let text = textEl ? textEl.value : 'EL-ALFEY';
-    if (!text.trim()) text = 'EL-ALFEY';
-    let colorEl = document.getElementById('wmColor');
-    const color = colorEl ? colorEl.value : '#4A00E0';
-    let typeEl = document.getElementById('wmType');
-    const type = typeEl ? typeEl.value : 'repeat';
-    if (type === 'single') {
-        return '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 120px; color: ' + color + '; opacity: 0.1; z-index: 1; pointer-events: none; font-weight: 900; white-space: nowrap;">' + text + '</div>';
-    } else {
-        let wmHtml = '<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; z-index: 1; pointer-events: none; display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: space-around; gap: 40px; padding: 30px; opacity: 0.08;">';
-        for (let i = 0; i < 60; i++) {
-            wmHtml += '<div style="transform: rotate(-35deg); font-size: 32px; font-weight: 900; color: ' + color + '; user-select: none; margin: 10px;">' + text + '</div>';
-        }
-        wmHtml += '</div>';
-        return wmHtml;
-    }
-}
 
 function applyGlobalPaperFormatting() {
     try {
@@ -2093,14 +1979,11 @@ window.addEventListener('afterprint', function () {
     let strut = document.getElementById('print-strut-helper');
     if (strut) strut.remove();
 });
+
 window.addEventListener('load', () => {
     const panels = document.querySelectorAll('.settings-panel');
     panels.forEach((panel, index) => {
-
-        // 🌟 السر هنا: استثناء لوحة تسجيل الدخول (نظام الحسابات) من الطي 🌟
         if (panel.id === 'accountHistoryPanel') return;
-
-        // إضافة كلاس لتمييز اللوحات القابلة للطي فقط
         panel.classList.add('collapsible');
 
         const header = panel.querySelector('h3');
@@ -2118,12 +2001,12 @@ window.addEventListener('load', () => {
             panel.classList.toggle('collapsed');
         });
 
-        // طي اللوحات في الهواتف، أو اللوحات التي بعد الأولى في الكمبيوتر
         if (window.innerWidth <= 768 || index > 0) {
             panel.classList.add('collapsed');
         }
     });
 });
+
 document.addEventListener('DOMContentLoaded', () => {
     const oldIndicator = document.getElementById('autosaveIndicator');
     if (oldIndicator) oldIndicator.remove();
@@ -2177,12 +2060,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    const oldArchiveModal = document.getElementById('archiveBankModal');
-    if (oldArchiveModal) oldArchiveModal.remove();
-
-    const oldBtn = document.getElementById('archiveBtnTrigger');
-    if (oldBtn) oldBtn.remove();
 
     const archiveModal = document.createElement('div');
     archiveModal.id = 'archiveBankModal';
@@ -2390,6 +2267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 function insertCustomTable() {
     const rows = parseInt(prompt('أدخل عدد الصفوف:', '3'));
     const cols = parseInt(prompt('أدخل عدد الأعمدة:', '3'));
@@ -2418,6 +2296,103 @@ function insertCustomTable() {
 
     if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
     if (typeof autoSaveData === 'function') autoSaveData();
-    if (typeof triggerSaveUI === 'function') triggerSaveUI('saving');
-    setTimeout(() => { if (typeof triggerSaveUI === 'function') triggerSaveUI('saved'); }, 500);
 }
+
+/* ========================================================
+   الجولة التعريفية التفاعلية المفصلة (Detailed Spotlight Tour)
+   ======================================================== */
+function runSmartOnboardingTour() {
+    if (localStorage.getItem('elalfey_tour_completed')) return;
+
+    const steps = [
+        { selector: '.top-navbar', title: 'شريط التنقل العلوي', text: 'يحتوي على أزرار الدخول، حسابك السحابي، وأدوات الذكاء الاصطناعي (AI) وتفعيل الـ VIP.' },
+        { selector: '#btnTabQuestions', title: 'محرر بنك الأسئلة', text: 'هذا التبويب مخصص لبناء الامتحانات وتنسيقها بشكل ذكي واستخراج مفتاح الإجابة تلقائياً.' },
+        { selector: '#btnTabText', title: 'محرر النصوص والمستندات', text: 'هذا التبويب مخصص لكتابة الملازم والمستندات الحرة بتنسيقات تشبه برنامج Word.' },
+        { selector: '.system-switcher-container', title: 'أنظمة الإدخال', text: 'اختر النظام المناسب لمادتك: النظام العربي لليمين، اللغات لليسار، والعلمي لدعم المعادلات الرياضية.' },
+        { selector: '.btn-icon-insert', title: 'إدراج سؤال جديد', text: 'اضغط هنا لإدراج قوالب جاهزة لأسئلة (الاختياري، الصح والخطأ، المقالي) أو إدراج صورة.' },
+        { selector: 'button[onclick="showAnalytics()"]', title: 'التحليل الإحصائي', text: 'يعرض لك إحصائيات دقيقة عن عدد الأسئلة وأنواعها في امتحانك الحالي.' },
+        { selector: 'button[onclick="shuffleQuestions()"]', title: 'الخلط الشامل', text: 'يقوم بخلط ترتيب الأسئلة وترتيب الخيارات (أ، ب، ج، د) لعمل نماذج مختلفة.' },
+        { selector: 'button[onclick="smartFormatAndClean()"]', title: 'إعادة التنسيق الذكي', text: 'يقوم بترتيب وتنسيق المستند بالكامل وفصل الأسئلة عن الإجابات بضغطة واحدة.' },
+        { selector: '#questionsInput', title: 'مساحة كتابة الأسئلة', text: 'هنا تكتب أسئلتك. تأكد من اتباع التنسيق الصحيح المكتوب في النص الإرشادي.' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'generalSettingsPanel\\\')"]', title: 'التنسيق العام (🎨)', text: 'يتحكم في إطار الورقة، الألوان، الخطوط، والعلامة المائية.' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'examSettingsPanel\\\')"]', title: 'هندسة الترويسة (🏛️)', text: 'لإضافة وتعديل بيانات رأس الامتحان (اسم المدرسة، المادة، الزمن).' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'questionSettingsPanel\\\')"]', title: 'بنيوية الأسئلة (📝)', text: 'للتحكم في حجم ولون الخطوط للأسئلة والخيارات، وترتيبها في أعمدة.' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'compactBubblePanel\\\')"]', title: 'البابل شيت المضغوط (📄)', text: 'لإنشاء ورقة بابل شيت متكاملة وموفرة للورق.' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'multiModelSettingsPanel\\\')"]', title: 'إعدادات النماذج المتعددة (🔀)', text: 'لضبط شكل ومكان ظهور رمز النموذج (A, B, C).' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'bubbleSettingsPanel\\\')"]', title: 'تنسيق البابل شيت (⭕)', text: 'للتحكم في شكل الدوائر، حجمها، وموضع الحروف (داخل/خارج).' },
+        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'bubbleHeaderSettingsPanel\\\')"]', title: 'ترويسة البابل شيت (📋)', text: 'لتصميم الجزء العلوي الخاص ببيانات الطالب في ورقة البابل شيت.' },
+        { selector: '.settings-dock button[onclick*="confirmModal"]', title: 'تفريغ المحرر (🗑️)', text: 'اضغط هنا لمسح جميع البيانات والبدء بمسودة جديدة.' },
+        { selector: '.btn-pdf-student', title: 'نسخة الطالب', text: 'طباعة أو تصدير الامتحان بدون إجابات.' },
+        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة', text: 'طباعة مفتاح الإجابات والامتحان مجاباً عليه.' },
+        { selector: '.btn-pdf-both', title: 'تصدير كامل', text: 'طباعة نسخة الطالب ونسخة المعلم معاً في ملف واحد.' },
+        { selector: '.btn-pdf-multi', title: 'توليد النماذج المتعددة', text: 'توليد 4 نماذج مختلفة بأسئلة وخيارات عشوائية الترتيب مع البابل شيت الخاص بها!' }
+    ];
+
+    let currentStep = 0;
+
+    const highlightBox = document.createElement('div');
+    highlightBox.style.cssText = 'position:absolute; border:3px dashed #00f2fe; border-radius:12px; transition:all 0.4s ease; pointer-events:none; z-index:9999991; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.85);';
+
+    const tooltip = document.createElement('div');
+    tooltip.style.cssText = 'position:absolute; background:#ffffff; padding:20px; border-radius:15px; width:300px; box-shadow:0 15px 40px rgba(0,0,0,0.5); z-index:9999992; direction:rtl; transition:all 0.4s ease;';
+
+    document.body.appendChild(highlightBox);
+    document.body.appendChild(tooltip);
+
+    function showStep(index) {
+        if (index >= steps.length) {
+            highlightBox.remove();
+            tooltip.remove();
+            localStorage.setItem('elalfey_tour_completed', 'true');
+            return;
+        }
+
+        let target = null;
+        try {
+            target = document.querySelector(steps[index].selector);
+        } catch (e) {
+            target = null;
+        }
+
+        if (!target || target.offsetParent === null) {
+            showStep(index + 1);
+            return;
+        }
+
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setTimeout(() => {
+            const rect = target.getBoundingClientRect();
+
+            highlightBox.style.top = (rect.top + window.scrollY - 10) + 'px';
+            highlightBox.style.left = (rect.left + window.scrollX - 10) + 'px';
+            highlightBox.style.width = (rect.width + 20) + 'px';
+            highlightBox.style.height = (rect.height + 20) + 'px';
+
+            let tooltipTop = rect.bottom + window.scrollY + 20;
+            let tooltipLeft = rect.left + window.scrollX + (rect.width / 2) - 150;
+
+            if (tooltipLeft < 10) tooltipLeft = 10;
+            if (tooltipLeft + 300 > window.innerWidth) tooltipLeft = window.innerWidth - 310;
+            if (tooltipTop + 150 > document.body.scrollHeight) tooltipTop = rect.top + window.scrollY - 160;
+
+            tooltip.style.top = tooltipTop + 'px';
+            tooltip.style.left = tooltipLeft + 'px';
+
+            tooltip.innerHTML = `
+                <h3 style="margin:0 0 10px 0; color:#6366f1; font-size:18px;">${steps[index].title}</h3>
+                <p style="margin:0 0 20px 0; color:#333; font-size:14px; line-height:1.6;">${steps[index].text}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; color:#888;">الخطوة ${index + 1} من ${steps.length}</span>
+                    <button id="tourNextBtn" style="background:linear-gradient(135deg, #6366f1, #00f2fe); color:#fff; border:none; padding:8px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">${index === steps.length - 1 ? 'إنهاء الجولة 🚀' : 'التالي ⬅️'}</button>
+                </div>
+            `;
+
+            document.getElementById('tourNextBtn').onclick = () => showStep(index + 1);
+        }, 400);
+    }
+
+    setTimeout(() => showStep(0), 1000);
+}
+
+window.addEventListener('load', runSmartOnboardingTour);
