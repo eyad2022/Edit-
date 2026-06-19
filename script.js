@@ -813,14 +813,14 @@ function switchTab(mode, btnElement) {
     currentMode = mode;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.input-section').forEach(sec => sec.classList.remove('active'));
-    
+
     if (btnElement) btnElement.classList.add('active');
     else document.querySelector(`button[onclick*="${mode}"]`).classList.add('active');
-    
+
     document.getElementById(mode + 'Tab').classList.add('active');
     document.getElementById('questionActionButtons').style.display = (mode === 'questions') ? 'flex' : 'none';
     document.getElementById('textActionButtons').style.display = (mode === 'text') ? 'flex' : 'none';
-    
+
     // إغلاق جميع اللوحات العائمة عند التبديل لضمان نظافة الشاشة
     ['examSettingsPanel', 'questionSettingsPanel', 'bubbleSettingsPanel', 'bubbleHeaderSettingsPanel', 'multiModelSettingsPanel', 'generalSettingsPanel', 'compactBubblePanel'].forEach(id => {
         let el = document.getElementById(id);
@@ -831,12 +831,12 @@ function switchTab(mode, btnElement) {
     const dockItems = document.querySelectorAll('.settings-dock > *');
     dockItems.forEach(item => {
         let onclickAttr = item.getAttribute('onclick') || '';
-        
+
         // استثناء زر "التنسيق العام" وزر "المسودة الجديدة" (confirmModal) ليبقيا ظاهران دائماً
         if (onclickAttr.includes('generalSettingsPanel') || onclickAttr.includes('confirmModal')) {
-            return; 
+            return;
         }
-        
+
         if (mode === 'text') {
             item.classList.add('hide-in-text-mode');
         } else {
@@ -895,7 +895,7 @@ async function executeClearData() {
         try {
             await localforage.removeItem('elalfey_q_input');
             await localforage.removeItem('elalfey_a_input');
-        } catch(e) {}
+        } catch (e) { }
         showToast('تم تهيئة مسودة جديدة لبنك الأسئلة فقط', 'success');
     } else if (currentMode === 'text') {
         // مسح محرر النصوص فقط
@@ -904,10 +904,10 @@ async function executeClearData() {
         textHistoryIndex = 0;
         try {
             await localforage.removeItem('elalfey_general_text');
-        } catch(e) {}
+        } catch (e) { }
         showToast('تم تهيئة مسودة جديدة لمحرر النصوص فقط', 'success');
     }
-    
+
     document.getElementById('confirmModal').style.display = 'none';
 }
 
@@ -1957,27 +1957,19 @@ function applyGlobalPaperFormatting() {
         styleStr += "width: 210mm !important; ";
         styleStr += "min-height: 297mm !important; ";
         styleStr += "overflow: visible !important; ";
+        styleStr += "-webkit-print-color-adjust: exact !important; ";
+        styleStr += "print-color-adjust: exact !important; ";
         styleStr += "} ";
 
-        /* =======================================================
-           السر الجذري: أمر طباعة عالي القوة يقهر أي أكواد سابقة
-           ======================================================= */
         styleStr += "@media print { ";
         styleStr += "@page { size: A4 portrait; margin: 0 !important; } ";
-        
-        styleStr += "html, body { width: 100% !important; height: auto !important; min-height: 100% !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; display: block !important; overflow: visible !important; } ";
-        
-        /* إخفاء كل ما هو خارج شاشة الطباعة */
-        styleStr += "body > *:not(#wordPrintModal) { display: none !important; } ";
-        
-        /* استخدام تحديد قوي جداً (body #id) لإلغاء الـ Absolute القديم */
-        styleStr += "body #wordPrintModal, html body div#wordPrintModal { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; background: transparent !important; margin: 0 !important; padding: 0 !important; } ";
-        
-        styleStr += "body #wordPrintPreviewArea { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; } ";
-        
-        styleStr += "body #wordPrintPreviewArea .pdf-page { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0px 4mm 0px 4mm !important; box-shadow: none !important; border: none !important; page-break-after: always !important; break-after: page !important; } ";
-        
-        styleStr += "body .word-sidebar, body .btn-print, body .btn-close { display: none !important; } ";
+        styleStr += "html, body { width: 100% !important; height: auto !important; min-height: 100% !important; display: block !important; overflow: visible !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; } ";
+        styleStr += "body * { visibility: hidden !important; } ";
+        styleStr += "#wordPrintModal, #wordPrintModal * { visibility: visible !important; } ";
+        styleStr += "#wordPrintModal { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: transparent !important; } ";
+        styleStr += "#wordPrintPreviewArea { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; } ";
+        styleStr += "#wordPrintPreviewArea .pdf-page { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0px 4mm 0px 4mm !important; box-shadow: none !important; page-break-after: always !important; } ";
+        styleStr += ".word-sidebar, .btn-print, .btn-close { display: none !important; } ";
         styleStr += "} ";
 
         let styleTag = document.getElementById('dynamicGlobalPaperStyles');
