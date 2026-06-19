@@ -48,8 +48,11 @@ localStorage.setItem('elalfey_device_id', localDeviceId);
 let currentMode = 'questions';
 let currentQuestionSystem = 'arabic';
 let questionsDatabase = [];
-let appHistory = [];
-let appHistoryIndex = -1;
+// فصل الذاكرة لكل محرر على حدة
+let questionsHistory = [];
+let textHistory = [];
+let questionsHistoryIndex = -1;
+let textHistoryIndex = -1;
 let historyTimeout;
 let pendingAction = null;
 let pendingActionParam = null;
@@ -679,68 +682,98 @@ window.addEventListener('DOMContentLoaded', async () => {
     syncTextToDatabase();
     recordHistory();
 
-    appHistory = [{
+    questionsHistory = [{
         q: qInp ? qInp.innerHTML : '',
-        a: aInp ? aInp.innerHTML : '',
+        a: aInp ? aInp.innerHTML : ''
+    }];
+    questionsHistoryIndex = 0;
+
+    textHistory = [{
         g: gText ? gText.innerHTML : ''
     }];
-    appHistoryIndex = 0;
+    textHistoryIndex = 0;
 });
-
 function recordHistory() {
     clearTimeout(historyTimeout);
     historyTimeout = setTimeout(() => {
-        const qEl = document.getElementById('questionsInput');
-        const aEl = document.getElementById('answersInput');
-        const gEl = document.getElementById('generalTextInput');
-        const qVal = qEl ? qEl.innerHTML : '';
-        const aVal = aEl ? aEl.innerHTML : '';
-        const gVal = gEl ? gEl.innerHTML : '';
+        if (currentMode === 'questions') {
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            const qVal = qEl ? qEl.innerHTML : '';
+            const aVal = aEl ? aEl.innerHTML : '';
 
-        if (appHistoryIndex >= 0 && appHistory[appHistoryIndex] &&
-            appHistory[appHistoryIndex].q === qVal &&
-            appHistory[appHistoryIndex].a === aVal &&
-            appHistory[appHistoryIndex].g === gVal) return;
+            if (questionsHistoryIndex >= 0 && questionsHistory[questionsHistoryIndex] &&
+                questionsHistory[questionsHistoryIndex].q === qVal &&
+                questionsHistory[questionsHistoryIndex].a === aVal) return;
 
-        if (appHistoryIndex < appHistory.length - 1) appHistory = appHistory.slice(0, appHistoryIndex + 1);
-        appHistory.push({ q: qVal, a: aVal, g: gVal });
-        if (appHistory.length > 50) appHistory.shift();
-        else appHistoryIndex++;
+            if (questionsHistoryIndex < questionsHistory.length - 1) {
+                questionsHistory = questionsHistory.slice(0, questionsHistoryIndex + 1);
+            }
+            questionsHistory.push({ q: qVal, a: aVal });
+            if (questionsHistory.length > 50) questionsHistory.shift();
+            else questionsHistoryIndex++;
+
+        } else if (currentMode === 'text') {
+            const gEl = document.getElementById('generalTextInput');
+            const gVal = gEl ? gEl.innerHTML : '';
+
+            if (textHistoryIndex >= 0 && textHistory[textHistoryIndex] &&
+                textHistory[textHistoryIndex].g === gVal) return;
+
+            if (textHistoryIndex < textHistory.length - 1) {
+                textHistory = textHistory.slice(0, textHistoryIndex + 1);
+            }
+            textHistory.push({ g: gVal });
+            if (textHistory.length > 50) textHistory.shift();
+            else textHistoryIndex++;
+        }
     }, 300);
 }
 
 function execUndo() {
-    if (appHistoryIndex > 0) {
-        appHistoryIndex--;
-        const qEl = document.getElementById('questionsInput');
-        const aEl = document.getElementById('answersInput');
-        const gEl = document.getElementById('generalTextInput');
-
-        if (qEl) qEl.innerHTML = appHistory[appHistoryIndex].q;
-        if (aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
-        if (gEl) gEl.innerHTML = appHistory[appHistoryIndex].g;
-
-        syncTextToDatabase();
-        autoSaveData();
-        showToast('تم التراجع عن الإجراء', 'info');
-    } else { showToast('لا توجد خطوات سابقة', 'error'); }
+    if (currentMode === 'questions') {
+        if (questionsHistoryIndex > 0) {
+            questionsHistoryIndex--;
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            if (qEl) qEl.innerHTML = questionsHistory[questionsHistoryIndex].q;
+            if (aEl) aEl.innerHTML = questionsHistory[questionsHistoryIndex].a;
+            syncTextToDatabase();
+            autoSaveData();
+            showToast('تم التراجع (بنك الأسئلة)', 'info');
+        } else { showToast('لا توجد خطوات سابقة', 'error'); }
+    } else if (currentMode === 'text') {
+        if (textHistoryIndex > 0) {
+            textHistoryIndex--;
+            const gEl = document.getElementById('generalTextInput');
+            if (gEl) gEl.innerHTML = textHistory[textHistoryIndex].g;
+            autoSaveData();
+            showToast('تم التراجع (محرر النصوص)', 'info');
+        } else { showToast('لا توجد خطوات سابقة', 'error'); }
+    }
 }
 
 function execRedo() {
-    if (appHistoryIndex < appHistory.length - 1) {
-        appHistoryIndex++;
-        const qEl = document.getElementById('questionsInput');
-        const aEl = document.getElementById('answersInput');
-        const gEl = document.getElementById('generalTextInput');
-
-        if (qEl) qEl.innerHTML = appHistory[appHistoryIndex].q;
-        if (aEl) aEl.innerHTML = appHistory[appHistoryIndex].a;
-        if (gEl) gEl.innerHTML = appHistory[appHistoryIndex].g;
-
-        syncTextToDatabase();
-        autoSaveData();
-        showToast('تم إعادة الإجراء', 'info');
-    } else { showToast('أنت في الخطوة الأحدث', 'error'); }
+    if (currentMode === 'questions') {
+        if (questionsHistoryIndex < questionsHistory.length - 1) {
+            questionsHistoryIndex++;
+            const qEl = document.getElementById('questionsInput');
+            const aEl = document.getElementById('answersInput');
+            if (qEl) qEl.innerHTML = questionsHistory[questionsHistoryIndex].q;
+            if (aEl) aEl.innerHTML = questionsHistory[questionsHistoryIndex].a;
+            syncTextToDatabase();
+            autoSaveData();
+            showToast('تم الإعادة (بنك الأسئلة)', 'info');
+        } else { showToast('أنت في الخطوة الأحدث', 'error'); }
+    } else if (currentMode === 'text') {
+        if (textHistoryIndex < textHistory.length - 1) {
+            textHistoryIndex++;
+            const gEl = document.getElementById('generalTextInput');
+            if (gEl) gEl.innerHTML = textHistory[textHistoryIndex].g;
+            autoSaveData();
+            showToast('تم الإعادة (محرر النصوص)', 'info');
+        } else { showToast('أنت في الخطوة الأحدث', 'error'); }
+    }
 }
 
 function showToast(message, type = 'success') {
@@ -780,14 +813,37 @@ function switchTab(mode, btnElement) {
     currentMode = mode;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.input-section').forEach(sec => sec.classList.remove('active'));
+    
     if (btnElement) btnElement.classList.add('active');
     else document.querySelector(`button[onclick*="${mode}"]`).classList.add('active');
+    
     document.getElementById(mode + 'Tab').classList.add('active');
     document.getElementById('questionActionButtons').style.display = (mode === 'questions') ? 'flex' : 'none';
     document.getElementById('textActionButtons').style.display = (mode === 'text') ? 'flex' : 'none';
-    ['examSettingsPanel', 'questionSettingsPanel', 'bubbleSettingsPanel', 'bubbleHeaderSettingsPanel', 'multiModelSettingsPanel'].forEach(id => document.getElementById(id).style.display = (mode === 'questions') ? 'block' : 'none');
-}
+    
+    // إغلاق جميع اللوحات العائمة عند التبديل لضمان نظافة الشاشة
+    ['examSettingsPanel', 'questionSettingsPanel', 'bubbleSettingsPanel', 'bubbleHeaderSettingsPanel', 'multiModelSettingsPanel', 'generalSettingsPanel', 'compactBubblePanel'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
 
+    // التحكم الذكي في القائمة الجانبية (إخفاء كل شيء في محرر النصوص ما عدا التنسيق العام والمسودة الجديدة)
+    const dockItems = document.querySelectorAll('.settings-dock > *');
+    dockItems.forEach(item => {
+        let onclickAttr = item.getAttribute('onclick') || '';
+        
+        // استثناء زر "التنسيق العام" وزر "المسودة الجديدة" (confirmModal) ليبقيا ظاهران دائماً
+        if (onclickAttr.includes('generalSettingsPanel') || onclickAttr.includes('confirmModal')) {
+            return; 
+        }
+        
+        if (mode === 'text') {
+            item.classList.add('hide-in-text-mode');
+        } else {
+            item.classList.remove('hide-in-text-mode');
+        }
+    });
+}
 const inputIdsToSave = [
     'enableBorder', 'borderStyle', 'borderWidth', 'borderColor', 'pageBgColor',
     'wmText', 'wmColor', 'wmType', 'userFont', 'textAlign', 'textColor', 'textBgToggle', 'textBgColor',
@@ -829,14 +885,30 @@ async function loadSavedData() {
 }
 
 async function executeClearData() {
-    await localforage.clear();
-    document.getElementById('questionsInput').innerHTML = '';
-    document.getElementById('answersInput').innerHTML = '';
-    document.getElementById('generalTextInput').innerHTML = 'اكتب محتوى المستند الخاص بك هنا...';
-    questionsDatabase = [];
+    if (currentMode === 'questions') {
+        // مسح بنك الأسئلة فقط
+        document.getElementById('questionsInput').innerHTML = '';
+        document.getElementById('answersInput').innerHTML = '';
+        questionsDatabase = [];
+        questionsHistory = [{ q: '', a: '' }];
+        questionsHistoryIndex = 0;
+        try {
+            await localforage.removeItem('elalfey_q_input');
+            await localforage.removeItem('elalfey_a_input');
+        } catch(e) {}
+        showToast('تم تهيئة مسودة جديدة لبنك الأسئلة فقط', 'success');
+    } else if (currentMode === 'text') {
+        // مسح محرر النصوص فقط
+        document.getElementById('generalTextInput').innerHTML = 'اكتب محتوى المستند الخاص بك هنا...';
+        textHistory = [{ g: 'اكتب محتوى المستند الخاص بك هنا...' }];
+        textHistoryIndex = 0;
+        try {
+            await localforage.removeItem('elalfey_general_text');
+        } catch(e) {}
+        showToast('تم تهيئة مسودة جديدة لمحرر النصوص فقط', 'success');
+    }
+    
     document.getElementById('confirmModal').style.display = 'none';
-    recordHistory();
-    showToast('تم تهيئة مسودة جديدة فارغة للموقع', 'success');
 }
 
 function syncTextToDatabase() {
@@ -2396,3 +2468,4 @@ function runSmartOnboardingTour() {
 }
 
 window.addEventListener('load', runSmartOnboardingTour);
+

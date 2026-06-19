@@ -1648,10 +1648,8 @@ button.action-btn:hover {
 }
 
 
-/* ========================================================
-    كود الطباعة الأصلي 100% (نسخة مطابقة لمشروعك الأول)
-    ======================================================== */
-@media print {
+//* ========================================================
+أكواد الطباعة 100% (نظيفة وغير متأثرة بالتصميم)========================================================*/ @media print {
     @page {
         margin: 0;
         size: A4 portrait;
@@ -1665,6 +1663,7 @@ button.action-btn:hover {
         background: white !important;
         margin: 0 !important;
         padding: 0 !important;
+        animation: none !important;
     }
 
     body>*:not(#wordPrintModal) {
@@ -1702,34 +1701,37 @@ button.action-btn:hover {
 
     .print-border-overlay {
         display: var(--print-border-display, none) !important;
-        position: fixed;
-        top: 8mm;
-        left: 8mm;
-        right: 8mm;
-        bottom: 8mm;
-        border: var(--border-width) var(--border-style) var(--border-color) !important;
+        position: fixed !important;
+        top: 8mm !important;
+        left: 8mm !important;
+        right: 8mm !important;
+        bottom: 8mm !important;
+        border: var(--border-width) !important;
+        border-style: var(--border-style) !important;
+        border-color: var(--border-color) !important;
         border-radius: var(--hdr-radius, 0) !important;
-        z-index: 9999;
-        pointer-events: none;
+        z-index: 9999 !important;
+        pointer-events: none !important;
     }
 
     .pdf-page {
         min-height: 100vh !important;
         height: auto !important;
         padding: 0 15mm !important;
-        box-sizing: border-box;
-        margin: 0;
+        box-sizing: border-box !important;
+        margin: 0 !important;
         width: 100% !important;
         border: none !important;
         background-color: transparent !important;
         transform: none !important;
         box-shadow: none !important;
-        page-break-after: always;
+        page-break-after: always !important;
     }
 
+    /* تعديل أحجام الخطوط هنا لتستجيب لاختيارات لوحة التحكم */
     .exam-header-print {
         margin-bottom: 15px !important;
-        font-size: 14pt !important;
+        font-size: var(--hdr-size) !important;
         padding-bottom: 8px !important;
     }
 
@@ -1759,8 +1761,9 @@ button.action-btn:hover {
         box-shadow: none !important;
     }
 
+    /* ربط الخطوط بالمتغيرات بدلاً من الأرقام الثابتة */
     .q-text {
-        font-size: 14pt !important;
+        font-size: var(--q-font-size) !important;
         margin-bottom: 10px !important;
         line-height: 1.4 !important;
     }
@@ -1778,7 +1781,7 @@ button.action-btn:hover {
         flex: 1 1 auto !important;
         width: auto !important;
         max-width: 100% !important;
-        font-size: 12pt !important;
+        font-size: var(--opt-font-size) !important;
         border: none !important;
         background: transparent !important;
         padding: 4px 6px !important;
@@ -1796,7 +1799,7 @@ button.action-btn:hover {
     .options-list.layout-grid .option-item {
         width: 100% !important;
         margin: 0 !important;
-        font-size: 12pt !important;
+        font-size: var(--opt-font-size) !important;
         border: none !important;
         background: transparent !important;
         padding: 4px 6px !important;
@@ -1812,7 +1815,7 @@ button.action-btn:hover {
     .options-list.layout-col .option-item {
         width: 100% !important;
         margin: 0 !important;
-        font-size: 12pt !important;
+        font-size: var(--opt-font-size) !important;
         border: none !important;
         background: transparent !important;
         padding: 4px 6px !important;
@@ -1820,7 +1823,7 @@ button.action-btn:hover {
     }
 
     .print-mode-text .general-text-display {
-        line-height: 1.6;
+        line-height: 1.6 !important;
     }
 
     .bubble-advanced-header {
@@ -1844,10 +1847,10 @@ button.action-btn:hover {
     }
 
     #wordPrintModal {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100vw;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100vw !important;
         background: white !important;
     }
 }
@@ -1974,6 +1977,7 @@ body.dark-mode .setup-container {
         z-index: 9998 !important;
         display: flex !important;
     }
+
     .setup-container {
         width: calc(100% - 110px) !important;
         margin-right: 95px !important;
@@ -2003,7 +2007,7 @@ body.dark-mode .setup-container {
         z-index: 99999 !important;
         background: rgba(255, 255, 255, 0.98) !important;
         border-top: 1px solid var(--ui-border) !important;
-        box-shadow: 0 -5px 25px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.15) !important;
         display: flex !important;
     }
 
@@ -2025,9 +2029,10 @@ body.dark-mode .setup-container {
     }
 
     .setup-container {
-        margin-bottom: 90px !important; /* رفع المحرر للأعلى لكي لا يتغطى بالشريط السفلي */
+        margin-bottom: 90px !important;
+        /* رفع المحرر للأعلى لكي لا يتغطى بالشريط السفلي */
     }
-    
+
     .floating-panel {
         right: 5% !important;
         left: 5% !important;
@@ -2039,4 +2044,7 @@ body.dark-mode .setup-container {
     }
 }
 
-
+/* كلاس مخصص لإخفاء عناصر القائمة الجانبية في محرر النصوص */
+.hide-in-text-mode {
+    display: none !important;
+}

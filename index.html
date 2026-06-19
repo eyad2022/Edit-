@@ -1,313 +1,244 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>المحرر الاحترافي الشامل - M&H</title>
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Readex+Pro:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="icon" type="image/png" href="icon.png" />
-    <link rel="stylesheet" href="style.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>المحرر الاحترافي الشامل - M&H</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/polyfill/3.104.0/polyfill.min.js"></script>
-    <script
-      id="MathJax-script"
-      async
-      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-    ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  </head>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Readex+Pro:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="stylesheet" href="style.css" />
 
-  <body>
-      <!-- الناف بار العلوي العصري -->
-    <nav class="top-navbar">
-        <div class="nav-right" style="position: relative;">
-            <!-- أزرار الضيوف (تختفي عند تسجيل الدخول) -->
-            <div id="guestNavButtons" style="display: flex; gap: 12px;">
-                <button class="nav-btn btn-outline" onclick="document.getElementById('authModal').style.display='flex'">تسجيل الدخول</button>
-                <button class="nav-btn btn-primary" onclick="document.getElementById('authModal').style.display='flex'">إنشاء حساب</button>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/polyfill/3.104.0/polyfill.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+</head>
+
+<body>
+  <!-- الناف بار العلوي العصري -->
+  <nav class="top-navbar">
+    <div class="nav-right" style="position: relative;">
+      <!-- أزرار الضيوف (تختفي عند تسجيل الدخول) -->
+      <div id="guestNavButtons" style="display: flex; gap: 12px;">
+        <button class="nav-btn btn-outline" onclick="document.getElementById('authModal').style.display='flex'">تسجيل
+          الدخول</button>
+        <button class="nav-btn btn-primary" onclick="document.getElementById('authModal').style.display='flex'">إنشاء
+          حساب</button>
+      </div>
+
+      <!-- زر القائمة المنسدلة للحساب (يظهر تلقائياً بعد تسجيل الدخول) -->
+      <div id="loggedInNav" style="display: none;">
+        <button class="nav-btn btn-outline"
+          style="border-color: var(--correct-color); color: var(--correct-color); gap: 8px;"
+          onclick="toggleCustomDropdown('profileDropdownMenu')">
+          👤 حسابي
+        </button>
+
+        <!-- القائمة المنسدلة (Dropdown) الخاصة بالحساب وسجل المستندات -->
+        <div id="profileDropdownMenu" class="floating-dropdown-menu"
+          style="display: none; width: 330px; top: calc(100% + 15px); right: 0; padding: 15px; cursor: default;">
+          <!-- تم نقل قسم بيانات المستخدم هنا ليقرأه الجافاسكريبت بشكل طبيعي -->
+          <div id="userProfileSection" style="display: none; text-align: right;">
+            <div
+              style="margin-bottom: 15px; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border);">
+              <span style="font-weight: 900; color: var(--primary-color); font-size: 13px;">مرحباً بك: <br> <span
+                  id="currentLoggedInUser" style="color:var(--text-color);"></span> 🟢</span><br>
+              <span
+                style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">(الأجهزة
+                النشطة: <span id="activeDevicesCount">0</span> / 3)</span>
             </div>
 
-            <!-- زر القائمة المنسدلة للحساب (يظهر تلقائياً بعد تسجيل الدخول) -->
-            <div id="loggedInNav" style="display: none;">
-                <button class="nav-btn btn-outline" style="border-color: var(--correct-color); color: var(--correct-color); gap: 8px;" onclick="toggleCustomDropdown('profileDropdownMenu')">
-                    👤 حسابي
-                </button>
-                
-                <!-- القائمة المنسدلة (Dropdown) الخاصة بالحساب وسجل المستندات -->
-                <div id="profileDropdownMenu" class="floating-dropdown-menu" style="display: none; width: 330px; top: calc(100% + 15px); right: 0; padding: 15px; cursor: default;">
-                    <!-- تم نقل قسم بيانات المستخدم هنا ليقرأه الجافاسكريبت بشكل طبيعي -->
-                    <div id="userProfileSection" style="display: none; text-align: right;">
-                        <div style="margin-bottom: 15px; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border);">
-                            <span style="font-weight: 900; color: var(--primary-color); font-size: 13px;">مرحباً بك: <br> <span id="currentLoggedInUser" style="color:var(--text-color);"></span> 🟢</span><br>
-                            <span style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">(الأجهزة النشطة: <span id="activeDevicesCount">0</span> / 3)</span>
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--ui-border);">
-                            <button id="adminPanelBtn" class="btn-tool btn-danger" onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu')" style="display: none; padding: 6px 12px; font-size: 12px;">⚙️ الإدارة</button>
-                            <button class="btn-tool btn-danger" onclick="handleLogoutCloud(); closeCustomDropdown('profileDropdownMenu')" style="padding: 6px 12px; font-size: 12px;">🚪 خروج</button>
-                            <button class="btn-tool" onclick="deleteUserAccount(); closeCustomDropdown('profileDropdownMenu')" style="background: #fee2e2; color: #b91c1c; border-color: #f87171; padding: 6px 12px; font-size: 12px;">🗑️ حذف الحساب</button>
-                        </div>
-                        
-                        <h4 style="margin: 0 0 10px 0; font-weight: 900; color: var(--ui-text); font-size: 13px;">🗂️ سجل المستندات السحابي:</h4>
-                        <div id="historyListContainer" style="max-height: 200px; overflow-y: auto; background: var(--ui-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--ui-border);"></div>
-                    </div>
-                </div>
+            <div
+              style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--ui-border);">
+              <button id="adminPanelBtn" class="btn-tool btn-danger"
+                onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu')"
+                style="display: none; padding: 6px 12px; font-size: 12px;">⚙️ الإدارة</button>
+              <button class="btn-tool btn-danger"
+                onclick="handleLogoutCloud(); closeCustomDropdown('profileDropdownMenu')"
+                style="padding: 6px 12px; font-size: 12px;">🚪 خروج</button>
+              <button class="btn-tool" onclick="deleteUserAccount(); closeCustomDropdown('profileDropdownMenu')"
+                style="background: #fee2e2; color: #b91c1c; border-color: #f87171; padding: 6px 12px; font-size: 12px;">🗑️
+                حذف الحساب</button>
             </div>
-        </div>
-        
-        <div class="nav-center">
-            <img src="icon.png" alt="شعار المحرر" style="width: 35px; height: 35px; border-radius: 8px;">
-            <h2 style="margin: 0; font-weight: 900; font-size: 20px; font-family: 'Arial Black', Impact, sans-serif; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">M&H EDITOR PRO</h2>
-            <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع الداكن/المضيء">🌙</button>
-        </div>
 
-        <div class="nav-left">
-            <button class="nav-btn btn-ai" onclick="requireVIP('ai', null)">✨ AI</button>
-            <button class="nav-btn btn-vip" onclick="openVIPModalManual()">👑 VIP</button>
+            <h4 style="margin: 0 0 10px 0; font-weight: 900; color: var(--ui-text); font-size: 13px;">🗂️ سجل المستندات
+              السحابي:</h4>
+            <div id="historyListContainer"
+              style="max-height: 200px; overflow-y: auto; background: var(--ui-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--ui-border);">
+            </div>
+          </div>
         </div>
-    </nav>
-
-
-    <div class="settings-dock">
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('generalSettingsPanel')"
-        title="التنسيق العام للمستند"
-      >
-        🎨
-      </button>
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('examSettingsPanel')"
-        title="هندسة الترويسة العلوية"
-      >
-        🏛️
-      </button>
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('questionSettingsPanel')"
-        title="التحكم في بنيوية الأسئلة"
-      >
-        📝
-      </button>
-      <div class="dock-divider"></div>
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('compactBubblePanel')"
-        title="نظام البابل شيت المضغوط"
-      >
-        📄
-      </button>
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('multiModelSettingsPanel')"
-        title="توليد النماذج المتعددة"
-      >
-        🔀
-      </button>
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('bubbleSettingsPanel')"
-        title="تنسيقات ومحاذاة البابل شيت"
-      >
-        ⭕
-      </button>
-      <button
-        class="dock-item"
-        onclick="toggleFloatingPanel('bubbleHeaderSettingsPanel')"
-        title="تخصيص ترويسة البابل شيت"
-      >
-        📋
-      </button>
-      <div class="dock-divider"></div>
-      <button
-        class="dock-item btn-dock-danger"
-        onclick="document.getElementById('confirmModal').style.display = 'flex'"
-        title="مسودة جديدة (مسح الكل)"
-      >
-        🗑️
-      </button>
+      </div>
     </div>
 
-    <div id="printBorderOverlay" class="print-border-overlay"></div>
+    <div class="nav-center">
+      <img src="icon.png" alt="شعار المحرر" style="width: 35px; height: 35px; border-radius: 8px;">
+      <h2
+        style="margin: 0; font-weight: 900; font-size: 20px; font-family: 'Arial Black', Impact, sans-serif; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        M&H EDITOR PRO</h2>
+      <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع الداكن/المضيء">🌙</button>
+    </div>
 
-    <div id="imageToolbar" class="image-toolbar">
-      <div
-        style="
+    <div class="nav-left">
+      <button class="nav-btn btn-ai" onclick="requireVIP('ai', null)">✨ AI</button>
+      <button class="nav-btn btn-vip" onclick="openVIPModalManual()">👑 VIP</button>
+    </div>
+  </nav>
+
+
+  <div class="settings-dock">
+    <button class="dock-item" onclick="toggleFloatingPanel('generalSettingsPanel')" title="التنسيق العام للمستند">
+      🎨
+    </button>
+    <button class="dock-item" onclick="toggleFloatingPanel('examSettingsPanel')" title="هندسة الترويسة العلوية">
+      🏛️
+    </button>
+    <button class="dock-item" onclick="toggleFloatingPanel('questionSettingsPanel')" title="التحكم في بنيوية الأسئلة">
+      📝
+    </button>
+    <div class="dock-divider"></div>
+    <button class="dock-item" onclick="toggleFloatingPanel('compactBubblePanel')" title="نظام البابل شيت المضغوط">
+      📄
+    </button>
+    <button class="dock-item" onclick="toggleFloatingPanel('multiModelSettingsPanel')" title="توليد النماذج المتعددة">
+      🔀
+    </button>
+    <button class="dock-item" onclick="toggleFloatingPanel('bubbleSettingsPanel')" title="تنسيقات ومحاذاة البابل شيت">
+      ⭕
+    </button>
+    <button class="dock-item" onclick="toggleFloatingPanel('bubbleHeaderSettingsPanel')"
+      title="تخصيص ترويسة البابل شيت">
+      📋
+    </button>
+    <div class="dock-divider"></div>
+    <button class="dock-item btn-dock-danger" onclick="document.getElementById('confirmModal').style.display = 'flex'"
+      title="مسودة جديدة (مسح الكل)">
+      🗑️
+    </button>
+  </div>
+
+  <div id="printBorderOverlay" class="print-border-overlay"></div>
+
+  <div id="imageToolbar" class="image-toolbar">
+    <div style="
           font-size: 11px;
           color: #64748b;
           font-weight: bold;
           margin-bottom: 2px;
-        "
-      >
-        تنسيق وحجم الصورة
-      </div>
-      <div class="toolbar-row">
-        <button type="button" onclick="alignImage('right')">➡️ يمين</button>
-        <button type="button" onclick="alignImage('center')">↔️ وسط</button>
-        <button type="button" onclick="alignImage('left')">⬅️ يسار</button>
-      </div>
-      <div class="toolbar-row" style="margin-top: 5px">
-        <button type="button" onclick="resizeImage('30%', 'auto')">S</button>
-        <button type="button" onclick="resizeImage('60%', 'auto')">M</button>
-        <button type="button" onclick="resizeImage('100%', 'auto')">L</button>
-      </div>
-      <div
-        class="toolbar-row"
-        style="
+        ">
+      تنسيق وحجم الصورة
+    </div>
+    <div class="toolbar-row">
+      <button type="button" onclick="alignImage('right')">➡️ يمين</button>
+      <button type="button" onclick="alignImage('center')">↔️ وسط</button>
+      <button type="button" onclick="alignImage('left')">⬅️ يسار</button>
+    </div>
+    <div class="toolbar-row" style="margin-top: 5px">
+      <button type="button" onclick="resizeImage('30%', 'auto')">S</button>
+      <button type="button" onclick="resizeImage('60%', 'auto')">M</button>
+      <button type="button" onclick="resizeImage('100%', 'auto')">L</button>
+    </div>
+    <div class="toolbar-row" style="
           margin-top: 8px;
           background: #f1f5f9;
           padding: 6px;
           border-radius: 6px;
           gap: 10px;
-        "
-      >
-        <div
-          style="
+        ">
+      <div style="
             display: flex;
             flex-direction: column;
             align-items: center;
             flex: 1;
-          "
-        >
-          <span
-            style="
+          ">
+        <span style="
               font-size: 10px;
               font-weight: bold;
               color: var(--primary-color);
-            "
-            >العرض (Width)</span
-          >
-          <div style="display: flex; gap: 4px; margin-top: 4px">
-            <button
-              type="button"
-              onclick="adjustImageSize('width', 20)"
-              style="background: #10b981; color: white"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              onclick="adjustImageSize('width', -20)"
-              style="background: #ef4444; color: white"
-            >
-              -
-            </button>
-          </div>
+            ">العرض (Width)</span>
+        <div style="display: flex; gap: 4px; margin-top: 4px">
+          <button type="button" onclick="adjustImageSize('width', 20)" style="background: #10b981; color: white">
+            +
+          </button>
+          <button type="button" onclick="adjustImageSize('width', -20)" style="background: #ef4444; color: white">
+            -
+          </button>
         </div>
-        <div
-          style="
+      </div>
+      <div style="
             display: flex;
             flex-direction: column;
             align-items: center;
             flex: 1;
-          "
-        >
-          <span
-            style="
+          ">
+        <span style="
               font-size: 10px;
               font-weight: bold;
               color: var(--primary-color);
-            "
-            >الطول (Height)</span
-          >
-          <div style="display: flex; gap: 4px; margin-top: 4px">
-            <button
-              type="button"
-              onclick="adjustImageSize('height', 20)"
-              style="background: #10b981; color: white"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              onclick="adjustImageSize('height', -20)"
-              style="background: #ef4444; color: white"
-            >
-              -
-            </button>
-          </div>
+            ">الطول (Height)</span>
+        <div style="display: flex; gap: 4px; margin-top: 4px">
+          <button type="button" onclick="adjustImageSize('height', 20)" style="background: #10b981; color: white">
+            +
+          </button>
+          <button type="button" onclick="adjustImageSize('height', -20)" style="background: #ef4444; color: white">
+            -
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="wordPrintModal" class="word-print-modal">
-      <div class="word-sidebar">
-        <div
-          style="
+  <div id="wordPrintModal" class="word-print-modal">
+    <div class="word-sidebar">
+      <div style="
             text-align: center;
             margin-bottom: 25px;
             padding-bottom: 15px;
             border-bottom: 1px solid #e2e8f0;
-          "
-        >
-          <h2 style="margin: 0; font-size: 24px; color: var(--primary-color)">
-            معاينة الطباعة الاحترافية
-          </h2>
-          <p style="color: #64748b; font-size: 13px; margin-top: 5px">
-            جاهز للتصدير بنفس التنسيق المعروض
-          </p>
-        </div>
-        <button class="word-btn btn-print" onclick="window.print()">
-          <span style="font-size: 20px">🖨️</span> طباعة المستند الآن
-        </button>
-        <div class="print-warning-note">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="currentColor"
-          >
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-            />
-          </svg>
-          <span
-            ><strong>ملحوظة هامة:</strong> قد يقوم المتصفح بإضافة ورقة بيضاء
-            زائدة في النهاية. يُرجى الانتباه وتحديد أرقام الصفحات المطلوبة فقط
-            أثناء الحفظ.</span
-          >
-        </div>
-        <button
-          style="margin-bottom: 305px !important"
-          class="word-btn btn-close"
-          onclick="closeWordPrint()"
-        >
-          <span style="font-size: 20px">🔙</span> العودة للمحرر
-        </button>
+          ">
+        <h2 style="margin: 0; font-size: 24px; color: var(--primary-color)">
+          معاينة الطباعة الاحترافية
+        </h2>
+        <p style="color: #64748b; font-size: 13px; margin-top: 5px">
+          جاهز للتصدير بنفس التنسيق المعروض
+        </p>
       </div>
-      <div class="word-preview-area" id="wordPrintPreviewArea"></div>
+      <button class="word-btn btn-print" onclick="window.print()">
+        <span style="font-size: 20px">🖨️</span> طباعة المستند الآن
+      </button>
+      <div class="print-warning-note">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+        </svg>
+        <span><strong>ملحوظة هامة:</strong> قد يقوم المتصفح بإضافة ورقة بيضاء
+          زائدة في النهاية. يُرجى الانتباه وتحديد أرقام الصفحات المطلوبة فقط
+          أثناء الحفظ.</span>
+      </div>
+      <button style="margin-bottom: 305px !important" class="word-btn btn-close" onclick="closeWordPrint()">
+        <span style="font-size: 20px">🔙</span> العودة للمحرر
+      </button>
+    </div>
+    <div class="word-preview-area" id="wordPrintPreviewArea"></div>
+  </div>
+
+  <div class="setup-container" id="setupContainer">
+    <div class="tabs">
+      <button id="btnTabQuestions" class="tab-btn active" onclick="switchTab('questions', this)">
+        📝 بنك الأسئلة الشامل
+      </button>
+      <button id="btnTabText" class="tab-btn" onclick="switchTab('text', this)">
+        📄 محرر النصوص والمستندات
+      </button>
     </div>
 
-    <div class="setup-container" id="setupContainer">
-      <div class="tabs">
-        <button
-          id="btnTabQuestions"
-          class="tab-btn active"
-          onclick="switchTab('questions', this)"
-        >
-          📝 بنك الأسئلة الشامل
-        </button>
-        <button
-          id="btnTabText"
-          class="tab-btn"
-          onclick="switchTab('text', this)"
-        >
-          📄 محرر النصوص والمستندات
-        </button>
-      </div>
-
-      <div id="questionsTab" class="input-section active">
-        <div
-          style="
+    <div id="questionsTab" class="input-section active">
+      <div style="
             display: flex;
             justify-content: center;
             gap: 20px;
@@ -315,27 +246,16 @@
             background: transparent;
             border: none;
             margin-bottom: 20px;
-          "
-        >
-          <button
-            class="btn-icon"
-            onclick="execUndo()"
-            title="تراجع خطوة للخلف (Undo)"
-          >
-            ↩️
-          </button>
-          <button
-            class="btn-icon"
-            onclick="execRedo()"
-            title="تقدم خطوة للأمام (Redo)"
-          >
-            ↪️
-          </button>
-        </div>
+          ">
+        <button class="btn-icon" onclick="execUndo()" title="تراجع خطوة للخلف (Undo)">
+          ↩️
+        </button>
+        <button class="btn-icon" onclick="execRedo()" title="تقدم خطوة للأمام (Redo)">
+          ↪️
+        </button>
+      </div>
 
-        <div
-          class="system-switcher-container"
-          style="
+      <div class="system-switcher-container" style="
             margin-bottom: 15px;
             display: flex;
             flex-wrap: wrap;
@@ -346,54 +266,37 @@
             border-radius: 12px;
             border: 1px solid var(--ui-border);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          "
-        >
-          <div
-            style="
+          ">
+        <div style="
               font-weight: 900;
               color: var(--primary-color);
               align-self: center;
               margin-left: 10px;
               font-size: 16px;
-            "
-          >
-            أنظمة الإدخال والتنسيق المتقدم:
-          </div>
-          <button
-            id="sysBtnArabic"
-            class="btn-tool active"
-            onclick="setQuestionSystem('arabic')"
-            style="
+            ">
+          أنظمة الإدخال والتنسيق المتقدم:
+        </div>
+        <button id="sysBtnArabic" class="btn-tool active" onclick="setQuestionSystem('arabic')" style="
               border-color: var(--primary-color);
               background: var(--primary-color);
               color: white;
               flex: 1;
               justify-content: center;
               min-width: 200px;
-            "
-          >
-            🇸🇦 النظام العربي المطور
-          </button>
-          <button
-            id="sysBtnForeign"
-            class="btn-tool"
-            onclick="setQuestionSystem('foreign')"
-            style="flex: 1; justify-content: center; min-width: 200px"
-          >
-            🇬🇧 نظام اللغات الأجنبية (LTR)
-          </button>
-          <button
-            id="sysBtnScience"
-            class="btn-tool"
-            onclick="setQuestionSystem('science')"
-            style="flex: 1; justify-content: center; min-width: 200px"
-          >
-            ⚛️ النظام العلمي (الرياضيات)
-          </button>
-        </div>
+            ">
+          🇸🇦 النظام العربي المطور
+        </button>
+        <button id="sysBtnForeign" class="btn-tool" onclick="setQuestionSystem('foreign')"
+          style="flex: 1; justify-content: center; min-width: 200px">
+          🇬🇧 نظام اللغات الأجنبية (LTR)
+        </button>
+        <button id="sysBtnScience" class="btn-tool" onclick="setQuestionSystem('science')"
+          style="flex: 1; justify-content: center; min-width: 200px">
+          ⚛️ النظام العلمي (الرياضيات)
+        </button>
+      </div>
 
-        <div
-          style="
+      <div style="
             margin-bottom: 20px;
             background: var(--ui-container);
             padding: 20px;
@@ -405,195 +308,120 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          "
-        >
-          <div
-            style="
+          ">
+        <div style="
               position: relative;
               display: flex;
               align-items: center;
               gap: 15px;
-            "
-          >
-            <span
-              style="font-weight: bold; color: var(--ui-text); font-size: 15px"
-              >أدوات الإدراج:</span
-            >
-            <button
-              class="btn-icon-insert"
-              onclick="toggleCustomDropdown('insertMenu')"
-              title="إضافة عنصر جديد"
-            >
-              ➕
-            </button>
+            ">
+          <span style="font-weight: bold; color: var(--ui-text); font-size: 15px">أدوات الإدراج:</span>
+          <button class="btn-icon-insert" onclick="toggleCustomDropdown('insertMenu')" title="إضافة عنصر جديد">
+            ➕
+          </button>
 
-            <div
-              id="insertMenu"
-              class="floating-dropdown-menu"
-              style="display: none"
-            >
-              <button
-                id="btnInsertMCQ"
-                onclick="
+          <div id="insertMenu" class="floating-dropdown-menu" style="display: none">
+            <button id="btnInsertMCQ" onclick="
                   insertQuestionTemplate('mcq');
                   closeCustomDropdown('insertMenu');
-                "
-              >
-                🔘 سؤال اختياري
-              </button>
-              <button
-                id="btnInsertTF"
-                onclick="
+                ">
+              🔘 سؤال اختياري
+            </button>
+            <button id="btnInsertTF" onclick="
                   insertQuestionTemplate('tf');
                   closeCustomDropdown('insertMenu');
-                "
-              >
-                ✅ سؤال صح/خطأ
-              </button>
-              <button
-                id="btnInsertEssay"
-                onclick="
+                ">
+              ✅ سؤال صح/خطأ
+            </button>
+            <button id="btnInsertEssay" onclick="
                   insertQuestionTemplate('essay');
                   closeCustomDropdown('insertMenu');
-                "
-              >
-                📝 سؤال مقالي
-              </button>
-              <div
-                style="height: 1px; background: var(--ui-border); margin: 5px 0"
-              ></div>
-              <button
-                onclick="
+                ">
+              📝 سؤال مقالي
+            </button>
+            <div style="height: 1px; background: var(--ui-border); margin: 5px 0"></div>
+            <button onclick="
                   document.getElementById('qImageUpload').click();
                   closeCustomDropdown('insertMenu');
-                "
-              >
-                🖼️ إدراج صورة
-              </button>
-              <input
-                type="file"
-                id="qImageUpload"
-                accept="image/*"
-                style="display: none"
-                onchange="insertImageToQuestion(event)"
-              />
-            </div>
+                ">
+              🖼️ إدراج صورة
+            </button>
+            <input type="file" id="qImageUpload" accept="image/*" style="display: none"
+              onchange="insertImageToQuestion(event)" />
           </div>
+        </div>
 
-          <div
-            style="
+        <div style="
               display: flex;
               gap: 10px;
               flex-wrap: wrap;
               border-right: 1px solid var(--ui-border);
               padding-right: 15px;
-            "
-          >
-            <button class="btn-tool" onclick="showAnalytics()">
-              📊 تحليل البنك
-            </button>
-            <button class="btn-tool" onclick="shuffleQuestions()">
-              🔀 خلط شامل
-            </button>
-            <button class="btn-tool" onclick="smartFormatAndClean()">
-              ✨ إعادة تنسيق
-            </button>
-          </div>
+            ">
+          <button class="btn-tool" onclick="showAnalytics()">
+            📊 تحليل البنك
+          </button>
+          <button class="btn-tool" onclick="shuffleQuestions()">
+            🔀 خلط شامل
+          </button>
+          <button class="btn-tool" onclick="smartFormatAndClean()">
+            ✨ إعادة تنسيق
+          </button>
         </div>
+      </div>
 
-        <div class="grid-layout">
-          <div class="form-group">
-            <label>1. محرر العناوين والأسئلة:</label>
-            <div
-              class="editor-toolbar"
-              style="
+      <div class="grid-layout">
+        <div class="form-group">
+          <label>1. محرر العناوين والأسئلة:</label>
+          <div class="editor-toolbar" style="
                 border-radius: 8px 8px 0 0;
                 border: 1px solid var(--ui-border);
                 border-bottom: none;
-              "
-            >
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('bold')"
-                title="عريض"
-                style="font-weight: 900"
-              >
-                B
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('italic')"
-                title="مائل"
-                style="font-style: italic"
-              >
-                I
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('underline')"
-                title="تسطير"
-                style="text-decoration: underline"
-              >
-                U
-              </button>
-              <div class="divider"></div>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('justifyRight')"
-                title="محاذاة لليمين"
-              >
-                ➡️
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('justifyCenter')"
-                title="توسيط"
-              >
-                ↔️
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('justifyLeft')"
-                title="محاذاة لليسار"
-              >
-                ⬅️
-              </button>
-              <div class="divider"></div>
-              <input
-                type="color"
-                onchange="formatText('foreColor', this.value)"
-                title="لون النص"
-                style="
+              ">
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('bold')" title="عريض"
+              style="font-weight: 900">
+              B
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('italic')" title="مائل"
+              style="font-style: italic">
+              I
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('underline')" title="تسطير"
+              style="text-decoration: underline">
+              U
+            </button>
+            <div class="divider"></div>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyRight')"
+              title="محاذاة لليمين">
+              ➡️
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyCenter')"
+              title="توسيط">
+              ↔️
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyLeft')"
+              title="محاذاة لليسار">
+              ⬅️
+            </button>
+            <div class="divider"></div>
+            <input type="color" onchange="formatText('foreColor', this.value)" title="لون النص" style="
                   width: 30px;
                   height: 30px;
                   padding: 0;
                   border: none;
                   border-radius: 4px;
-                "
-              />
-              <select
-                onchange="formatText('fontSize', this.value)"
-                title="حجم الخط"
-                style="max-width: 90px; height: 32px; padding: 2px 8px"
-              >
-                <option value="">حجم</option>
-                <option value="3">عادي</option>
-                <option value="4">متوسط</option>
-                <option value="5">كبير</option>
-                <option value="6">ضخم</option>
-                <option value="7">عملاق</option>
-              </select>
-            </div>
-            <div
-              id="scientificToolbar"
-              class="editor-toolbar"
-              style="
+                " />
+            <select onchange="formatText('fontSize', this.value)" title="حجم الخط"
+              style="max-width: 90px; height: 32px; padding: 2px 8px">
+              <option value="">حجم</option>
+              <option value="3">عادي</option>
+              <option value="4">متوسط</option>
+              <option value="5">كبير</option>
+              <option value="6">ضخم</option>
+              <option value="7">عملاق</option>
+            </select>
+          </div>
+          <div id="scientificToolbar" class="editor-toolbar" style="
                 display: none;
                 border-radius: 0;
                 border-bottom: none;
@@ -602,333 +430,106 @@
                 padding: 8px;
                 border-left: 1px solid var(--ui-border);
                 border-right: 1px solid var(--ui-border);
-              "
-            >
-              <span
-                style="
+              ">
+            <span style="
                   font-size: 12px;
                   font-weight: bold;
                   color: #065f46;
                   margin-left: 5px;
-                "
-                >رموز علمية:</span
-              >
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( x^2 \\)')"
-              >
-                x²
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( x_2 \\)')"
-              >
-                x₂
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\frac{a}{b} \\)')"
-              >
-                a/b
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\sqrt{x} \\)')"
-              >
-                √
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\sum \\)')"
-              >
-                ∑
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\infty \\)')"
-              >
-                ∞
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\pm \\)')"
-              >
-                ±
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\rightarrow \\)')"
-              >
-                →
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                class="btn-sci"
-                onclick="insertSci('\\( \\Delta \\)')"
-              >
-                Δ
-              </button>
-              <div class="divider"></div>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="insertMathEquation()"
-                style="color: #ef4444; font-weight: bold; font-size: 13px"
-              >
-                { } كتابة كود LaTeX حر
-              </button>
-              <button
-                type="button"
-                class="btn-tool"
-                onclick="insertCustomTable()"
-                style="border-color: #0ea5e9; color: #0ea5e9; font-weight: bold"
-              >
-                📊 إدراج جدول مخصص
-              </button>
-            </div>
-            <div
-              id="questionsInput"
-              contenteditable="true"
-              class="rich-textarea"
-              dir="auto"
-              placeholder="اكتب العنوان الرئيسي هنا، ثم انزل سطراً واكتب:&#10;1. اكتب سؤالك الأول هنا...&#10;أ) الخيار الأول&#10;ب) الخيار الثاني [✓]&#10;ج) الخيار الثالث&#10;د) الخيار الرابع"
-            ></div>
+                ">رموز علمية:</span>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( x^2 \\)')">
+              x²
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( x_2 \\)')">
+              x₂
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\frac{a}{b} \\)')">
+              a/b
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\sqrt{x} \\)')">
+              √
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\sum \\)')">
+              ∑
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\infty \\)')">
+              ∞
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\pm \\)')">
+              ±
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\rightarrow \\)')">
+              →
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" class="btn-sci"
+              onclick="insertSci('\\( \\Delta \\)')">
+              Δ
+            </button>
+            <div class="divider"></div>
+            <button type="button" onmousedown="event.preventDefault()" onclick="insertMathEquation()"
+              style="color: #ef4444; font-weight: bold; font-size: 13px">
+              { } كتابة كود LaTeX حر
+            </button>
+            <button type="button" class="btn-tool" onclick="insertCustomTable()"
+              style="border-color: #0ea5e9; color: #0ea5e9; font-weight: bold">
+              📊 إدراج جدول مخصص
+            </button>
           </div>
+          <div id="questionsInput" contenteditable="true" class="rich-textarea" dir="auto"
+            placeholder="اكتب العنوان الرئيسي هنا، ثم انزل سطراً واكتب:&#10;1. اكتب سؤالك الأول هنا...&#10;أ) الخيار الأول&#10;ب) الخيار الثاني [✓]&#10;ج) الخيار الثالث&#10;د) الخيار الرابع">
+          </div>
+        </div>
 
-          <div class="form-group">
-            <label
-              >2. مفتاح الإجابات: (يتم التوليد تلقائياً أو الصق يدوياً)</label
-            >
-            <div
-              class="editor-toolbar"
-              style="
+        <div class="form-group">
+          <label>2. مفتاح الإجابات: (يتم التوليد تلقائياً أو الصق يدوياً)</label>
+          <div class="editor-toolbar" style="
                 border-radius: 8px 8px 0 0;
                 border: 1px solid var(--ui-border);
                 border-bottom: none;
-              "
-            >
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('bold')"
-                title="عريض"
-                style="font-weight: 900"
-              >
-                B
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('italic')"
-                title="مائل"
-                style="font-style: italic"
-              >
-                I
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('underline')"
-                title="تسطير"
-                style="text-decoration: underline"
-              >
-                U
-              </button>
-              <div class="divider"></div>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('justifyRight')"
-                title="محاذاة لليمين"
-              >
-                ➡️
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('justifyCenter')"
-                title="توسيط"
-              >
-                ↔️
-              </button>
-              <button
-                type="button"
-                onmousedown="event.preventDefault()"
-                onclick="formatText('justifyLeft')"
-                title="محاذاة لليسار"
-              >
-                ⬅️
-              </button>
-              <div class="divider"></div>
-              <input
-                type="color"
-                onchange="formatText('foreColor', this.value)"
-                title="لون النص"
-                style="
+              ">
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('bold')" title="عريض"
+              style="font-weight: 900">
+              B
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('italic')" title="مائل"
+              style="font-style: italic">
+              I
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('underline')" title="تسطير"
+              style="text-decoration: underline">
+              U
+            </button>
+            <div class="divider"></div>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyRight')"
+              title="محاذاة لليمين">
+              ➡️
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyCenter')"
+              title="توسيط">
+              ↔️
+            </button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyLeft')"
+              title="محاذاة لليسار">
+              ⬅️
+            </button>
+            <div class="divider"></div>
+            <input type="color" onchange="formatText('foreColor', this.value)" title="لون النص" style="
                   width: 30px;
                   height: 30px;
                   padding: 0;
                   border: none;
                   border-radius: 4px;
-                "
-              />
-              <select
-                onchange="formatText('fontSize', this.value)"
-                title="حجم الخط"
-                style="max-width: 90px; height: 32px; padding: 2px 8px"
-              >
-                <option value="">حجم</option>
-                <option value="3">عادي</option>
-                <option value="4">متوسط</option>
-                <option value="5">كبير</option>
-                <option value="6">ضخم</option>
-                <option value="7">عملاق</option>
-              </select>
-            </div>
-            <div
-              id="answersInput"
-              contenteditable="true"
-              class="rich-textarea"
-              dir="auto"
-              placeholder="عنوان صفحة الإجابات هنا...&#10;إذا لم تضع الإجابة بجوار الخيار، اكتبها هنا:&#10;1- ب&#10;2- صح"
-            ></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="textTab" class="input-section">
-        <div class="form-group">
-          <label
-            >📝 محرر المستندات المتقدم (متوافق مع أدوات وتنسيقات Word
-            مجاناً):</label
-          >
-          <div class="editor-toolbar">
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('bold')"
-              title="عريض"
-              style="font-weight: 900"
-            >
-              B
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('italic')"
-              title="مائل"
-              style="font-style: italic"
-            >
-              I
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('underline')"
-              title="تسطير"
-              style="text-decoration: underline"
-            >
-              U
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('strikeThrough')"
-              title="يتوسطه خط"
-              style="text-decoration: line-through"
-            >
-              S
-            </button>
-            <div class="divider"></div>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('justifyRight')"
-              title="محاذاة لليمين"
-            >
-              ➡️
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('justifyCenter')"
-              title="توسيط"
-            >
-              ↔️
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('justifyLeft')"
-              title="محاذاة لليسار"
-            >
-              ⬅️
-            </button>
-            <div class="divider"></div>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('insertOrderedList')"
-              title="قائمة رقمية"
-            >
-              1.
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="formatText('insertUnorderedList')"
-              title="قائمة نقطية"
-            >
-              •
-            </button>
-            <div class="divider"></div>
-            <input
-              type="color"
-              onchange="formatText('foreColor', this.value)"
-              title="لون النص"
-              style="
-                width: 30px;
-                height: 30px;
-                padding: 0;
-                border: none;
-                border-radius: 4px;
-              "
-            />
-            <input
-              type="color"
-              onchange="formatText('hiliteColor', this.value)"
-              title="لون التمييز"
-              style="
-                width: 30px;
-                height: 30px;
-                padding: 0;
-                border: none;
-                border-radius: 4px;
-              "
-              value="#ffff00"
-            />
-            <select
-              onchange="formatText('fontSize', this.value)"
-              title="حجم الخط"
-              style="max-width: 90px; height: 32px; padding: 2px 8px"
-            >
+                " />
+            <select onchange="formatText('fontSize', this.value)" title="حجم الخط"
+              style="max-width: 90px; height: 32px; padding: 2px 8px">
               <option value="">حجم</option>
               <option value="3">عادي</option>
               <option value="4">متوسط</option>
@@ -936,192 +537,194 @@
               <option value="6">ضخم</option>
               <option value="7">عملاق</option>
             </select>
-            <div class="divider"></div>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="document.getElementById('imageUploadEditor').click()"
-              style="color: #3b82f6"
-            >
-              🖼️ إدراج صورة
-            </button>
-            <input
-              type="file"
-              id="imageUploadEditor"
-              accept="image/*"
-              style="display: none"
-              onchange="insertImage(event)"
-            />
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="insertTable()"
-              style="color: #10b981"
-            >
-              📊 جدول
-            </button>
-            <button
-              type="button"
-              onmousedown="event.preventDefault()"
-              onclick="insertMathEquation()"
-              style="color: #ef4444; font-weight: bold"
-            >
-              ∑ معادلة LaTeX
-            </button>
           </div>
-          <div class="editor-area-wrapper">
-            <div
-              id="generalTextInput"
-              contenteditable="true"
-              class="editor-area"
-              dir="auto"
-            >
-              اكتب محتوى المستند الخاص بك هنا...
-            </div>
+          <div id="answersInput" contenteditable="true" class="rich-textarea" dir="auto"
+            placeholder="عنوان صفحة الإجابات هنا...&#10;إذا لم تضع الإجابة بجوار الخيار، اكتبها هنا:&#10;1- ب&#10;2- صح">
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="action-buttons" id="questionActionButtons">
-        <button
-          class="action-btn btn-pdf-student"
-          onclick="requireVIP('export', 'student')"
-        >
-          <i>🧑‍🎓</i> طباعة نسخة الطالب
-        </button>
-        <button
-          class="action-btn btn-pdf-teacher"
-          onclick="requireVIP('export', 'teacher')"
-        >
-          <i>👨‍🏫</i> طباعة نموذج الإجابة
-        </button>
-        <button
-          class="action-btn btn-pdf-both"
-          onclick="requireVIP('export', 'both')"
-        >
-          <i>📑</i> تصدير المستند كاملاً
-        </button>
-        <button
-          class="action-btn btn-pdf-multi"
-          onclick="requireVIP('multi', null)"
-        >
-          <i>🔀</i> توليد نماذج متعددة
-        </button>
+    <div id="textTab" class="input-section">
+      <div
+        style="display: flex; justify-content: center; gap: 20px; padding: 10px; background: transparent; border: none; margin-bottom: 20px;">
+        <button class="btn-icon" onclick="execUndo()" title="تراجع خطوة للخلف (Undo)">↩️</button>
+        <button class="btn-icon" onclick="execRedo()" title="تقدم خطوة للأمام (Redo)">↪️</button>
       </div>
-
-      <div class="action-buttons" id="textActionButtons" style="display: none">
-        <button
-          class="action-btn btn-pdf-general"
-          onclick="executeExport('text')"
-        >
-          <i>🖨️</i> بدء عملية الطباعة
-        </button>
+      <div class="form-group">
+        <label>📝 محرر المستندات المتقدم (متوافق مع أدوات وتنسيقات Word
+          مجاناً):</label>
+        <div class="editor-toolbar">
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('bold')" title="عريض"
+            style="font-weight: 900">
+            B
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('italic')" title="مائل"
+            style="font-style: italic">
+            I
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('underline')" title="تسطير"
+            style="text-decoration: underline">
+            U
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('strikeThrough')"
+            title="يتوسطه خط" style="text-decoration: line-through">
+            S
+          </button>
+          <div class="divider"></div>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyRight')"
+            title="محاذاة لليمين">
+            ➡️
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyCenter')"
+            title="توسيط">
+            ↔️
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('justifyLeft')"
+            title="محاذاة لليسار">
+            ⬅️
+          </button>
+          <div class="divider"></div>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('insertOrderedList')"
+            title="قائمة رقمية">
+            1.
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="formatText('insertUnorderedList')"
+            title="قائمة نقطية">
+            •
+          </button>
+          <div class="divider"></div>
+          <input type="color" onchange="formatText('foreColor', this.value)" title="لون النص" style="
+                width: 30px;
+                height: 30px;
+                padding: 0;
+                border: none;
+                border-radius: 4px;
+              " />
+          <input type="color" onchange="formatText('hiliteColor', this.value)" title="لون التمييز" style="
+                width: 30px;
+                height: 30px;
+                padding: 0;
+                border: none;
+                border-radius: 4px;
+              " value="#ffff00" />
+          <select onchange="formatText('fontSize', this.value)" title="حجم الخط"
+            style="max-width: 90px; height: 32px; padding: 2px 8px">
+            <option value="">حجم</option>
+            <option value="3">عادي</option>
+            <option value="4">متوسط</option>
+            <option value="5">كبير</option>
+            <option value="6">ضخم</option>
+            <option value="7">عملاق</option>
+          </select>
+          <div class="divider"></div>
+          <button type="button" onmousedown="event.preventDefault()"
+            onclick="document.getElementById('imageUploadEditor').click()" style="color: #3b82f6">
+            🖼️ إدراج صورة
+          </button>
+          <input type="file" id="imageUploadEditor" accept="image/*" style="display: none"
+            onchange="insertImage(event)" />
+          <button type="button" onmousedown="event.preventDefault()" onclick="insertTable()" style="color: #10b981">
+            📊 جدول
+          </button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="insertMathEquation()"
+            style="color: #ef4444; font-weight: bold">
+            ∑ معادلة LaTeX
+          </button>
+        </div>
+        <div class="editor-area-wrapper">
+          <div id="generalTextInput" contenteditable="true" class="editor-area" dir="auto">
+            اكتب محتوى المستند الخاص بك هنا...
+          </div>
+        </div>
       </div>
     </div>
-    <div id="compactBubblePanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>📄 البابل شيت المضغوط</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('compactBubblePanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="setting-item">
-            <label>عدد النماذج (A, B, C)</label
-            ><input
-              type="number"
-              id="compactModelsCount"
-              class="ui-input"
-              value="1"
-              min="1"
-              max="10"
-            />
-          </div>
-          <div class="setting-item">
-            <label>تنسيق اسم النموذج</label
-            ><select id="compactModelNaming" class="ui-select">
-              <option value="arabic_letters">حروف عربية (أ، ب، ج، د)</option>
-              <option value="english_letters">
-                حروف إنجليزية (A, B, C, D)
-              </option>
-              <option value="numbers">أرقام (1، 2، 3، 4)</option>
-            </select>
-          </div>
-          <div class="setting-item">
-            <label>مكان ظهور اسم النموذج</label
-            ><select id="compactModelPlacement" class="ui-select">
-              <option value="top">أعلى الورقة (فوق الترويسة)</option>
-              <option value="above_student">
-                تحت الترويسة (أعلى اسم الطالب)
-              </option>
-            </select>
-          </div>
-          <div class="setting-item">
-            <label>نوع أحرف الاختيارات</label
-            ><select id="compactLettersType" class="ui-select">
-              <option value="arabic">أ، ب، ج، د</option>
-              <option value="english">A, B, C, D</option>
-              <option value="numbers">1, 2, 3, 4</option>
-            </select>
-          </div>
-          <div class="setting-item">
-            <label>لون تصميم الورقة</label
-            ><input
-              type="color"
-              id="compactColor"
-              value="#4c1d95"
-              style="
+
+    <div class="action-buttons" id="questionActionButtons">
+      <button class="action-btn btn-pdf-student" onclick="requireVIP('export', 'student')">
+        <i>🧑‍🎓</i> طباعة نسخة الطالب
+      </button>
+      <button class="action-btn btn-pdf-teacher" onclick="requireVIP('export', 'teacher')">
+        <i>👨‍🏫</i> طباعة نموذج الإجابة
+      </button>
+      <button class="action-btn btn-pdf-both" onclick="requireVIP('export', 'both')">
+        <i>📑</i> تصدير المستند كاملاً
+      </button>
+      <button class="action-btn btn-pdf-multi" onclick="requireVIP('multi', null)">
+        <i>🔀</i> توليد نماذج متعددة
+      </button>
+    </div>
+
+    <div class="action-buttons" id="textActionButtons" style="display: none">
+      <button class="action-btn btn-pdf-general" onclick="executeExport('text')">
+        <i>🖨️</i> بدء عملية الطباعة
+      </button>
+    </div>
+  </div>
+  <div id="compactBubblePanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>📄 البابل شيت المضغوط</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('compactBubblePanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label>عدد النماذج (A, B, C)</label><input type="number" id="compactModelsCount" class="ui-input" value="1"
+            min="1" max="10" />
+        </div>
+        <div class="setting-item">
+          <label>تنسيق اسم النموذج</label><select id="compactModelNaming" class="ui-select">
+            <option value="arabic_letters">حروف عربية (أ، ب، ج، د)</option>
+            <option value="english_letters">
+              حروف إنجليزية (A, B, C, D)
+            </option>
+            <option value="numbers">أرقام (1، 2، 3، 4)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label>مكان ظهور اسم النموذج</label><select id="compactModelPlacement" class="ui-select">
+            <option value="top">أعلى الورقة (فوق الترويسة)</option>
+            <option value="above_student">
+              تحت الترويسة (أعلى اسم الطالب)
+            </option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label>نوع أحرف الاختيارات</label><select id="compactLettersType" class="ui-select">
+            <option value="arabic">أ، ب، ج، د</option>
+            <option value="english">A, B, C, D</option>
+            <option value="numbers">1, 2, 3, 4</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label>لون تصميم الورقة</label><input type="color" id="compactColor" value="#4c1d95" style="
                 width: 100%;
                 height: 40px;
                 border-radius: 8px;
                 cursor: pointer;
-              "
-            />
-          </div>
-          <div class="setting-item">
-            <label>الحقل الأول (الرئيسي)</label
-            ><input
-              type="text"
-              id="compactField1"
-              class="ui-input"
-              value="اسم الطالب:"
-            />
-          </div>
-          <div class="setting-item">
-            <label>الحقل الثاني</label
-            ><input
-              type="text"
-              id="compactField2"
-              class="ui-input"
-              value="المادة:"
-            />
-          </div>
-          <div class="setting-item">
-            <label>الحقل الثالث</label
-            ><input
-              type="text"
-              id="compactField3"
-              class="ui-input"
-              value="الفرقة/الصف:"
-            />
-          </div>
-          <div class="setting-item">
-            <label>تخطيط وشكل الترويسة</label
-            ><select id="compactHeaderStyle" class="ui-select">
-              <option value="basic">صندوق أفقي كلاسيكي (بإطار)</option>
-              <option value="lines">خطوط كتابة حرة (بدون إطار)</option>
-              <option value="advanced">متقدم (مع شبكة تظليل)</option>
-            </select>
-          </div>
+              " />
         </div>
-        <button
-          class="btn-tool"
-          onclick="generateCompactEmptyBubbleSheet()"
-          style="
+        <div class="setting-item">
+          <label>الحقل الأول (الرئيسي)</label><input type="text" id="compactField1" class="ui-input"
+            value="اسم الطالب:" />
+        </div>
+        <div class="setting-item">
+          <label>الحقل الثاني</label><input type="text" id="compactField2" class="ui-input" value="المادة:" />
+        </div>
+        <div class="setting-item">
+          <label>الحقل الثالث</label><input type="text" id="compactField3" class="ui-input" value="الفرقة/الصف:" />
+        </div>
+        <div class="setting-item">
+          <label>تخطيط وشكل الترويسة</label><select id="compactHeaderStyle" class="ui-select">
+            <option value="basic">صندوق أفقي كلاسيكي (بإطار)</option>
+            <option value="lines">خطوط كتابة حرة (بدون إطار)</option>
+            <option value="advanced">متقدم (مع شبكة تظليل)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-tool" onclick="generateCompactEmptyBubbleSheet()" style="
             background: #10b981;
             color: white;
             border: none;
@@ -1132,530 +735,415 @@
             border-radius: 8px;
             margin-top: 15px;
             justify-content: center;
-          "
-        >
-          ⚡ توليد النموذج المضغوط
-        </button>
-      </div>
+          ">
+        ⚡ توليد النموذج المضغوط
+      </button>
     </div>
+  </div>
 
-    <div id="multiModelSettingsPanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>🔀 إعدادات النماذج المتعددة</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('multiModelSettingsPanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>تنسيق الترقيم للنموذج</label
-            ><select id="modelNumberType">
-              <option value="arabic">حروف عربية (أ, ب, ج)</option>
-              <option value="english" selected>حروف إنجليزية (A, B, C)</option>
-              <option value="number">أرقام (1, 2, 3)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>مكان الظهور في الورقة</label
-            ><select id="modelLabelPos">
-              <option value="watermark">كعلامة مائية شفافة</option>
-              <option value="header_right">تحت الترويسة - يمين</option>
-              <option value="header_center" selected>
-                تحت الترويسة - منتصف
-              </option>
-              <option value="header_left">تحت الترويسة - يسار</option>
-            </select>
-          </div>
+  <div id="multiModelSettingsPanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>🔀 إعدادات النماذج المتعددة</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('multiModelSettingsPanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>تنسيق الترقيم للنموذج</label><select id="modelNumberType">
+            <option value="arabic">حروف عربية (أ, ب, ج)</option>
+            <option value="english" selected>حروف إنجليزية (A, B, C)</option>
+            <option value="number">أرقام (1, 2, 3)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>مكان الظهور في الورقة</label><select id="modelLabelPos">
+            <option value="watermark">كعلامة مائية شفافة</option>
+            <option value="header_right">تحت الترويسة - يمين</option>
+            <option value="header_center" selected>
+              تحت الترويسة - منتصف
+            </option>
+            <option value="header_left">تحت الترويسة - يسار</option>
+          </select>
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="bubbleSettingsPanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>⭕ تنسيقات ومحاذاة البابل شيت</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('bubbleSettingsPanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>شكل الفقاعة</label
-            ><select id="bubbleShape">
-              <option value="circle">دائرة ⭕</option>
-              <option value="square">مربع ⏹️</option>
-              <option value="oval">بيضاوي ⬭</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>موضع أحرف الإجابة</label
-            ><select id="bubbleTextPosition">
-              <option value="above">أعلى الفقاعة</option>
-              <option value="beside">بجانب الفقاعة</option>
-              <option value="inside">داخل الفقاعة</option>
-              <option value="hidden">بدون أحرف</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>نوع الأحرف</label
-            ><select id="bubbleLettersType">
-              <option value="arabic">أ ، ب ، ج ، د ، هـ ، و</option>
-              <option value="english">A, B, C, D, E, F</option>
-              <option value="numbers">1, 2, 3, 4, 5, 6</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>خيارات لكل سؤال</label
-            ><input
-              type="number"
-              id="bubbleOptionsCount"
-              value="4"
-              min="2"
-              max="6"
-            />
-          </div>
-          <div class="form-group">
-            <label>عدد الأعمدة في الورقة</label
-            ><select id="bubbleColumns">
-              <option value="1">عمود واحد</option>
-              <option value="2">عمودين</option>
-              <option value="3" selected>3 أعمدة</option>
-              <option value="4">4 أعمدة</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>حجم الفقاعة (px)</label
-            ><input
-              type="number"
-              id="bubbleSize"
-              value="26"
-              min="15"
-              max="50"
-            />
-          </div>
-          <div class="form-group">
-            <label>لون الفقاعات</label
-            ><input type="color" id="bubbleStrokeColor" value="#334155" />
-          </div>
+  <div id="bubbleSettingsPanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>⭕ تنسيقات ومحاذاة البابل شيت</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('bubbleSettingsPanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>شكل الفقاعة</label><select id="bubbleShape">
+            <option value="circle">دائرة ⭕</option>
+            <option value="square">مربع ⏹️</option>
+            <option value="oval">بيضاوي ⬭</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>موضع أحرف الإجابة</label><select id="bubbleTextPosition">
+            <option value="above">أعلى الفقاعة</option>
+            <option value="beside">بجانب الفقاعة</option>
+            <option value="inside">داخل الفقاعة</option>
+            <option value="hidden">بدون أحرف</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع الأحرف</label><select id="bubbleLettersType">
+            <option value="arabic">أ ، ب ، ج ، د ، هـ ، و</option>
+            <option value="english">A, B, C, D, E, F</option>
+            <option value="numbers">1, 2, 3, 4, 5, 6</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>خيارات لكل سؤال</label><input type="number" id="bubbleOptionsCount" value="4" min="2" max="6" />
+        </div>
+        <div class="form-group">
+          <label>عدد الأعمدة في الورقة</label><select id="bubbleColumns">
+            <option value="1">عمود واحد</option>
+            <option value="2">عمودين</option>
+            <option value="3" selected>3 أعمدة</option>
+            <option value="4">4 أعمدة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>حجم الفقاعة (px)</label><input type="number" id="bubbleSize" value="26" min="15" max="50" />
+        </div>
+        <div class="form-group">
+          <label>لون الفقاعات</label><input type="color" id="bubbleStrokeColor" value="#334155" />
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="bubbleHeaderSettingsPanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>📋 تخصيص ترويسة البابل شيت</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('bubbleHeaderSettingsPanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>تفعيل وإخفاء الترويسة</label
-            ><select id="bHdrStyle">
-              <option value="advanced">متقدمة (مع شبكة)</option>
-              <option value="basic">بسيطة</option>
-              <option value="none">بدون ترويسة</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>الحقل الأول</label
-            ><input
-              type="text"
-              id="bHdrField1"
-              value="اسم الطالب: ..........................................................."
-            />
-          </div>
-          <div class="form-group">
-            <label>الحقل الثاني</label
-            ><input
-              type="text"
-              id="bHdrField2"
-              value="المادة: ........................................."
-            />
-          </div>
-          <div class="form-group">
-            <label>الحقل الثالث</label
-            ><input
-              type="text"
-              id="bHdrField3"
-              value="الفرقة/الصف: ........................."
-            />
-          </div>
-          <div class="form-group">
-            <label>عنوان شبكة التظليل</label
-            ><input type="text" id="bHdrIdTitle" value="رقم الجلوس" />
-          </div>
-          <div class="form-group">
-            <label>ملاحظات</label
-            ><input
-              type="text"
-              id="bHdrNote"
-              value="* التظليل بالقلم الرصاص."
-            />
-          </div>
-          <div class="form-group">
-            <label>حجم الخط</label
-            ><input type="number" id="bHdrSize" value="16" />
-          </div>
-          <div class="form-group">
-            <label>لون النصوص</label
-            ><input type="color" id="bHdrColor" value="#1e293b" />
-          </div>
-          <div class="form-group">
-            <label>لون الإطار</label
-            ><input type="color" id="bHdrBorderColor" value="#4A00E0" />
-          </div>
-          <div class="form-group">
-            <label>لون الخلفية</label
-            ><input type="color" id="bHdrBgColor" value="#f8fafc" />
-          </div>
+  <div id="bubbleHeaderSettingsPanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>📋 تخصيص ترويسة البابل شيت</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('bubbleHeaderSettingsPanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>تفعيل وإخفاء الترويسة</label><select id="bHdrStyle">
+            <option value="advanced">متقدمة (مع شبكة)</option>
+            <option value="basic">بسيطة</option>
+            <option value="none">بدون ترويسة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الحقل الأول</label><input type="text" id="bHdrField1"
+            value="اسم الطالب: ..........................................................." />
+        </div>
+        <div class="form-group">
+          <label>الحقل الثاني</label><input type="text" id="bHdrField2"
+            value="المادة: ........................................." />
+        </div>
+        <div class="form-group">
+          <label>الحقل الثالث</label><input type="text" id="bHdrField3"
+            value="الفرقة/الصف: ........................." />
+        </div>
+        <div class="form-group">
+          <label>عنوان شبكة التظليل</label><input type="text" id="bHdrIdTitle" value="رقم الجلوس" />
+        </div>
+        <div class="form-group">
+          <label>ملاحظات</label><input type="text" id="bHdrNote" value="* التظليل بالقلم الرصاص." />
+        </div>
+        <div class="form-group">
+          <label>حجم الخط</label><input type="number" id="bHdrSize" value="16" />
+        </div>
+        <div class="form-group">
+          <label>لون النصوص</label><input type="color" id="bHdrColor" value="#1e293b" />
+        </div>
+        <div class="form-group">
+          <label>لون الإطار</label><input type="color" id="bHdrBorderColor" value="#4A00E0" />
+        </div>
+        <div class="form-group">
+          <label>لون الخلفية</label><input type="color" id="bHdrBgColor" value="#f8fafc" />
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="examSettingsPanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>🏛️ هندسة الترويسة العلوية للامتحان</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('examSettingsPanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>الترويسة</label
-            ><select id="enableHdr">
-              <option value="yes">مفعلة</option>
-              <option value="no">مخفية</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>النص الأيمن</label
-            ><input type="text" id="hdrRight" value="وزارة التربية والتعليم" />
-          </div>
-          <div class="form-group">
-            <label>النص الأوسط</label
-            ><input type="text" id="hdrCenter" value="امتحان دوري شامل" />
-          </div>
-          <div class="form-group">
-            <label>النص الأيسر</label
-            ><input type="text" id="hdrLeft" value="الزمن: ساعتان" />
-          </div>
-          <div class="form-group">
-            <label>حجم الخط</label
-            ><input type="number" id="hdrSize" value="16" />
-          </div>
-          <div class="form-group">
-            <label>لون النص</label
-            ><input type="color" id="hdrTextColor" value="#1a237e" />
-          </div>
-          <div class="form-group">
-            <label>لون الخلفية</label
-            ><input type="color" id="hdrBgColor" value="#ffffff" />
-          </div>
-          <div class="form-group">
-            <label>مربع بيانات الطالب</label
-            ><select id="enableStudentBox">
-              <option value="yes">إظهار</option>
-              <option value="no">إخفاء</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>تصميم الإطار</label
-            ><select id="hdrBorderType">
-              <option value="bottom">خط سفلي</option>
-              <option value="box">مربع كامل</option>
-              <option value="none">بدون</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>الزوايا</label
-            ><input type="number" id="hdrRadius" value="0" />
-          </div>
+  <div id="examSettingsPanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>🏛️ هندسة الترويسة العلوية للامتحان</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('examSettingsPanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>الترويسة</label><select id="enableHdr">
+            <option value="yes">مفعلة</option>
+            <option value="no">مخفية</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>النص الأيمن</label><input type="text" id="hdrRight" value="وزارة التربية والتعليم" />
+        </div>
+        <div class="form-group">
+          <label>النص الأوسط</label><input type="text" id="hdrCenter" value="امتحان دوري شامل" />
+        </div>
+        <div class="form-group">
+          <label>النص الأيسر</label><input type="text" id="hdrLeft" value="الزمن: ساعتان" />
+        </div>
+        <div class="form-group">
+          <label>حجم الخط</label><input type="number" id="hdrSize" value="16" />
+        </div>
+        <div class="form-group">
+          <label>لون النص</label><input type="color" id="hdrTextColor" value="#1a237e" />
+        </div>
+        <div class="form-group">
+          <label>لون الخلفية</label><input type="color" id="hdrBgColor" value="#ffffff" />
+        </div>
+        <div class="form-group">
+          <label>مربع بيانات الطالب</label><select id="enableStudentBox">
+            <option value="yes">إظهار</option>
+            <option value="no">إخفاء</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>تصميم الإطار</label><select id="hdrBorderType">
+            <option value="bottom">خط سفلي</option>
+            <option value="box">مربع كامل</option>
+            <option value="none">بدون</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الزوايا</label><input type="number" id="hdrRadius" value="0" />
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="questionSettingsPanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>📝 التحكم في بنيوية الأسئلة</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('questionSettingsPanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>النمط</label
-            ><select id="qDisplayMode">
-              <option value="card">كروت</option>
-              <option value="text">نص حر</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>الخيارات</label
-            ><select id="optionsLayout">
-              <option value="row">أفقي</option>
-              <option value="grid">شبكة</option>
-              <option value="col">عمودي</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>حجم السؤال</label
-            ><input type="number" id="qFontSize" value="20" />
-          </div>
-          <div class="form-group">
-            <label>لون السؤال</label
-            ><input type="color" id="qColor" value="#1e293b" />
-          </div>
-          <div class="form-group">
-            <label>حجم الخيارات</label
-            ><input type="number" id="optFontSize" value="16" />
-          </div>
-          <div class="form-group">
-            <label>لون الخيارات</label
-            ><input type="color" id="optColor" value="#334155" />
-          </div>
-          <div class="form-group">
-            <label>لون الإجابة</label
-            ><input type="color" id="correctColor" value="#10b981" />
-          </div>
-          <div class="form-group">
-            <label>الأعمدة</label
-            ><select id="columnsLayout">
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </div>
+  <div id="questionSettingsPanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>📝 التحكم في بنيوية الأسئلة</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('questionSettingsPanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>النمط</label><select id="qDisplayMode">
+            <option value="card">كروت</option>
+            <option value="text">نص حر</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الخيارات</label><select id="optionsLayout">
+            <option value="row">أفقي</option>
+            <option value="grid">شبكة</option>
+            <option value="col">عمودي</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>حجم السؤال</label><input type="number" id="qFontSize" value="20" />
+        </div>
+        <div class="form-group">
+          <label>لون السؤال</label><input type="color" id="qColor" value="#1e293b" />
+        </div>
+        <div class="form-group">
+          <label>حجم الخيارات</label><input type="number" id="optFontSize" value="16" />
+        </div>
+        <div class="form-group">
+          <label>لون الخيارات</label><input type="color" id="optColor" value="#334155" />
+        </div>
+        <div class="form-group">
+          <label>لون الإجابة</label><input type="color" id="correctColor" value="#10b981" />
+        </div>
+        <div class="form-group">
+          <label>الأعمدة</label><select id="columnsLayout">
+            <option value="1">1</option>
+            <option value="2">2</option>
+          </select>
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="generalSettingsPanel" class="settings-panel floating-panel">
-      <div class="panel-header">
-        <h3>🎨 التنسيق العام والطباعة للورقة</h3>
-        <button
-          class="close-panel-btn"
-          onclick="closeFloatingPanel('generalSettingsPanel')"
-        >
-          ✖
-        </button>
-      </div>
-      <div class="panel-body">
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>البرواز</label
-            ><select id="enableBorder">
-              <option value="yes">تفعيل</option>
-              <option value="no">إلغاء</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>النمط</label
-            ><select id="borderStyle">
-              <option value="solid">متصل</option>
-              <option value="double">مزدوج</option>
-              <option value="dashed">متقطع</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>سُمك</label
-            ><input type="number" id="borderWidth" value="8" />
-          </div>
-          <div class="form-group">
-            <label>اللون</label
-            ><input type="color" id="borderColor" value="#4A00E0" />
-          </div>
-          <div class="form-group">
-            <label>خلفية الورقة</label
-            ><input type="color" id="pageBgColor" value="#ffffff" />
-          </div>
-          <div class="form-group">
-            <label>الخط</label
-            ><select id="userFont">
-              <option value="'Cairo', sans-serif">Cairo</option>
-              <option value="'Tajawal', sans-serif">Tajawal</option>
-              <option value="'Almarai', sans-serif">Almarai</option>
-              <option value="'Readex Pro', sans-serif">Readex Pro</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>المحاذاة</label
-            ><select id="textAlign">
-              <option value="right">يمين</option>
-              <option value="center">وسط</option>
-              <option value="left">يسار</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>لون النصوص</label
-            ><input type="color" id="textColor" value="#1e293b" />
-          </div>
-          <div class="form-group">
-            <label>الالون الرئيسي</label
-            ><input type="color" id="userPrimaryColor" value="#4A00E0" />
-          </div>
-          <div class="form-group">
-            <label>خلفية الكروت</label
-            ><select id="textBgToggle">
-              <option value="color">تلوين</option>
-              <option value="transparent">شفافة</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>لون الكروت</label
-            ><input type="color" id="textBgColor" value="#ffffff" />
-          </div>
-          <div class="form-group">
-            <label>انحناء الكروت</label
-            ><input type="number" id="cardRadius" value="8" />
-          </div>
-          <div class="form-group">
-            <label>المائية</label
-            ><input type="text" id="wmText" placeholder="العلامة المائية" />
-          </div>
-          <div class="form-group">
-            <label>لون المائية</label
-            ><input type="color" id="wmColor" value="#4a00e0" />
-          </div>
-          <div class="form-group">
-            <label>نوع المائية</label
-            ><select id="wmType">
-              <option value="repeat">تكرار</option>
-              <option value="single">مركزية</option>
-            </select>
-          </div>
+  <div id="generalSettingsPanel" class="settings-panel floating-panel">
+    <div class="panel-header">
+      <h3>🎨 التنسيق العام والطباعة للورقة</h3>
+      <button class="close-panel-btn" onclick="closeFloatingPanel('generalSettingsPanel')">
+        ✖
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="settings-grid">
+        <div class="form-group">
+          <label>البرواز</label><select id="enableBorder">
+            <option value="yes">تفعيل</option>
+            <option value="no">إلغاء</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>النمط</label><select id="borderStyle">
+            <option value="solid">متصل</option>
+            <option value="double">مزدوج</option>
+            <option value="dashed">متقطع</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>سُمك</label><input type="number" id="borderWidth" value="8" />
+        </div>
+        <div class="form-group">
+          <label>اللون</label><input type="color" id="borderColor" value="#4A00E0" />
+        </div>
+        <div class="form-group">
+          <label>خلفية الورقة</label><input type="color" id="pageBgColor" value="#ffffff" />
+        </div>
+        <div class="form-group">
+          <label>الخط</label><select id="userFont">
+            <option value="'Cairo', sans-serif">Cairo</option>
+            <option value="'Tajawal', sans-serif">Tajawal</option>
+            <option value="'Almarai', sans-serif">Almarai</option>
+            <option value="'Readex Pro', sans-serif">Readex Pro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المحاذاة</label><select id="textAlign">
+            <option value="right">يمين</option>
+            <option value="center">وسط</option>
+            <option value="left">يسار</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>لون النصوص</label><input type="color" id="textColor" value="#1e293b" />
+        </div>
+        <div class="form-group">
+          <label>الالون الرئيسي</label><input type="color" id="userPrimaryColor" value="#4A00E0" />
+        </div>
+        <div class="form-group">
+          <label>خلفية الكروت</label><select id="textBgToggle">
+            <option value="color">تلوين</option>
+            <option value="transparent">شفافة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>لون الكروت</label><input type="color" id="textBgColor" value="#ffffff" />
+        </div>
+        <div class="form-group">
+          <label>انحناء الكروت</label><input type="number" id="cardRadius" value="8" />
+        </div>
+        <div class="form-group">
+          <label>المائية</label><input type="text" id="wmText" placeholder="العلامة المائية" />
+        </div>
+        <div class="form-group">
+          <label>لون المائية</label><input type="color" id="wmColor" value="#4a00e0" />
+        </div>
+        <div class="form-group">
+          <label>نوع المائية</label><select id="wmType">
+            <option value="repeat">تكرار</option>
+            <option value="single">مركزية</option>
+          </select>
         </div>
       </div>
     </div>
-<!-- نافذة تسجيل الدخول وإنشاء الحساب فقط -->
-    <div id="authModal" class="custom-modal">
-        <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
-            <div id="accountHistoryPanel">
-                <h3 style="color: var(--primary-color); margin-top: 0;">🔐 نظام الحسابات السحابي</h3>
-                <div id="authSection">
-                    <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">قم بتسجيل الدخول لحفظ بياناتك في السحابة ومزامنة تراخيص الـ VIP.</p>
-                    <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px; text-align: right;">
-                        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="emailInput" placeholder="أدخل البريد الإلكتروني"></div>
-                        <div class="form-group"><label>كلمة المرور</label><input type="password" id="passwordInput" placeholder="******"></div>
-                        <div style="display: flex; gap: 10px; margin-top: 15px;">
-                            <button class="btn-tool" onclick="handleLoginCloud()" style="flex: 1; justify-content: center; border-color: var(--primary-color); color: var(--primary-color);">تسجيل الدخول</button>
-                            <button class="btn-tool" onclick="handleSignupCloud()" style="flex: 1; justify-content: center; background: var(--primary-color); color: white;">إنشاء حساب</button>
-                        </div>
-                    </div>
-                </div>
+  </div>
+  <!-- نافذة تسجيل الدخول وإنشاء الحساب فقط -->
+  <div id="authModal" class="custom-modal">
+    <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
+      <div id="accountHistoryPanel">
+        <h3 style="color: var(--primary-color); margin-top: 0;">🔐 نظام الحسابات السحابي</h3>
+        <div id="authSection">
+          <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">قم بتسجيل الدخول لحفظ بياناتك في السحابة
+            ومزامنة تراخيص الـ VIP.</p>
+          <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px; text-align: right;">
+            <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="emailInput"
+                placeholder="أدخل البريد الإلكتروني"></div>
+            <div class="form-group"><label>كلمة المرور</label><input type="password" id="passwordInput"
+                placeholder="******"></div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn-tool" onclick="handleLoginCloud()"
+                style="flex: 1; justify-content: center; border-color: var(--primary-color); color: var(--primary-color);">تسجيل
+                الدخول</button>
+              <button class="btn-tool" onclick="handleSignupCloud()"
+                style="flex: 1; justify-content: center; background: var(--primary-color); color: white;">إنشاء
+                حساب</button>
             </div>
-            <button onclick="document.getElementById('authModal').style.display='none'" style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق</button>
+          </div>
         </div>
+      </div>
+      <button onclick="document.getElementById('authModal').style.display='none'"
+        style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق</button>
     </div>
+  </div>
 
-          <div id="userProfileSection" style="display: none; text-align: right">
-            <div
-              style="
+  <div id="userProfileSection" style="display: none; text-align: right">
+    <div style="
                 margin-bottom: 15px;
                 background: var(--ui-input-bg);
                 padding: 15px;
                 border-radius: 8px;
-              "
-            >
-              <span
-                style="
+              ">
+      <span style="
                   font-weight: 900;
                   color: var(--primary-color);
                   font-size: 16px;
-                "
-                >مرحباً بك: <span id="currentLoggedInUser"></span> 🟢</span
-              ><br />
-              <span style="font-size: 13px; color: #64748b; font-weight: bold"
-                >(الأجهزة النشطة: <span id="activeDevicesCount">0</span> /
-                3)</span
-              >
-            </div>
-            <div
-              style="
+                ">مرحباً بك: <span id="currentLoggedInUser"></span> 🟢</span><br />
+      <span style="font-size: 13px; color: #64748b; font-weight: bold">(الأجهزة النشطة: <span
+          id="activeDevicesCount">0</span> /
+        3)</span>
+    </div>
+    <div style="
                 display: flex;
                 gap: 10px;
                 flex-wrap: wrap;
                 justify-content: center;
-              "
-            >
-              <button
-                id="adminPanelBtn"
-                class="btn-tool btn-danger"
-                onclick="
+              ">
+      <button id="adminPanelBtn" class="btn-tool btn-danger" onclick="
                   document.getElementById('adminModal').style.display = 'flex';
                   document.getElementById('authModal').style.display = 'none';
-                "
-                style="display: none"
-              >
-                ⚙️ الإدارة
-              </button>
-              <button
-                class="btn-tool btn-danger"
-                onclick="
+                " style="display: none">
+        ⚙️ الإدارة
+      </button>
+      <button class="btn-tool btn-danger" onclick="
                   handleLogoutCloud();
                   document.getElementById('authModal').style.display = 'none';
-                "
-              >
-                🚪 خروج
-              </button>
-              <button
-                class="btn-tool"
-                onclick="
+                ">
+        🚪 خروج
+      </button>
+      <button class="btn-tool" onclick="
                   deleteUserAccount();
                   document.getElementById('authModal').style.display = 'none';
-                "
-                style="
+                " style="
                   background: #fee2e2;
                   color: #b91c1c;
                   border-color: #f87171;
-                "
-              >
-                🗑️ حذف حسابي
-              </button>
-            </div>
-            <h4
-              style="
+                ">
+        🗑️ حذف حسابي
+      </button>
+    </div>
+    <h4 style="
                 margin: 15px 0 10px;
                 font-weight: 900;
                 color: var(--ui-text);
-              "
-            >
-              🗂️ سجل المستندات السحابي:
-            </h4>
-            <div
-              id="historyListContainer"
-              style="
+              ">
+      🗂️ سجل المستندات السحابي:
+    </h4>
+    <div id="historyListContainer" style="
                 max-height: 150px;
                 overflow-y: auto;
                 background: var(--ui-bg);
                 padding: 10px;
                 border-radius: 8px;
                 border: 1px solid var(--ui-border);
-              "
-            ></div>
-          </div>
-        </div>
-        <button
-          onclick="document.getElementById('authModal').style.display = 'none'"
-          style="
+              "></div>
+  </div>
+  </div>
+  <button onclick="document.getElementById('authModal').style.display = 'none'" style="
             margin-top: 20px;
             background: #e2e8f0;
             color: #1e293b;
@@ -1665,43 +1153,32 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-          "
-        >
-          إغلاق
-        </button>
-      </div>
-    </div>
+          ">
+    إغلاق
+  </button>
+  </div>
+  </div>
 
-    <div id="toastContainer"></div>
+  <div id="toastContainer"></div>
 
-    <div id="vipModal" class="custom-modal">
-      <div class="modal-content" style="border-top: 5px solid #f59e0b">
-        <h3 style="color: #f59e0b; margin-top: 0">
-          👑 تفعيل النسخة الاحترافية (VIP)
-        </h3>
-        <p
-          id="vipModalText"
-          style="color: var(--ui-text); margin-bottom: 20px; line-height: 1.6"
-        >
-          يرجى إدخال كود التفعيل الفريد للاستمرار.
-        </p>
-        <input
-          type="text"
-          id="vipCodeInput"
-          placeholder="أدخل كود التفعيل هنا..."
-          style="
+  <div id="vipModal" class="custom-modal">
+    <div class="modal-content" style="border-top: 5px solid #f59e0b">
+      <h3 style="color: #f59e0b; margin-top: 0">
+        👑 تفعيل النسخة الاحترافية (VIP)
+      </h3>
+      <p id="vipModalText" style="color: var(--ui-text); margin-bottom: 20px; line-height: 1.6">
+        يرجى إدخال كود التفعيل الفريد للاستمرار.
+      </p>
+      <input type="text" id="vipCodeInput" placeholder="أدخل كود التفعيل هنا..." style="
             text-align: center;
             font-weight: bold;
             font-size: 18px;
             margin-bottom: 20px;
             letter-spacing: 2px;
             text-transform: uppercase;
-          "
-        />
-        <div style="display: flex; gap: 15px; justify-content: center">
-          <button
-            onclick="verifyVIPCode()"
-            style="
+          " />
+      <div style="display: flex; gap: 15px; justify-content: center">
+        <button onclick="verifyVIPCode()" style="
               background: #10b981;
               color: white;
               border: none;
@@ -1709,13 +1186,10 @@
               border-radius: 8px;
               font-weight: bold;
               cursor: pointer;
-            "
-          >
-            تفعيل الكود ✓
-          </button>
-          <button
-            onclick="document.getElementById('vipModal').style.display = 'none'"
-            style="
+            ">
+          تفعيل الكود ✓
+        </button>
+        <button onclick="document.getElementById('vipModal').style.display = 'none'" style="
               background: #e2e8f0;
               color: #1e293b;
               border: none;
@@ -1723,65 +1197,48 @@
               border-radius: 8px;
               font-weight: bold;
               cursor: pointer;
-            "
-          >
-            إلغاء
-          </button>
-        </div>
-        <div
-          style="
+            ">
+          إلغاء
+        </button>
+      </div>
+      <div style="
             margin-top: 25px;
             padding-top: 15px;
             border-top: 1px solid var(--ui-border);
             font-size: 14px;
             color: #64748b;
-          "
-        >
-          للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر واتساب:<br /><strong
-            style="
+          ">
+        للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر واتساب:<br /><strong style="
               color: #10b981;
               font-size: 18px;
               display: block;
               margin-top: 5px;
-            "
-            >01155324374</strong
-          >
-        </div>
+            ">01155324374</strong>
       </div>
     </div>
+  </div>
 
-    <div id="adminModal" class="custom-modal">
-      <div
-        class="modal-content"
-        style="border-top: 5px solid #ef4444; text-align: right"
-      >
-        <h3 style="color: #ef4444; margin-top: 0; font-weight: 900">
-          ⚙️ مصنع الأكواد السحابي
-        </h3>
-        <div style="display: flex; gap: 10px; margin-bottom: 15px">
-          <div class="form-group" style="flex: 1">
-            <label>نوع الباقة</label>
-            <select id="adminCodeType">
-              <option value="7">أسبوع (7 أيام)</option>
-              <option value="30">شهر (30 يوماً)</option>
-              <option value="365">سنة (365 يوماً)</option>
-              <option value="9999">مدى الحياة</option>
-            </select>
-          </div>
-          <div class="form-group" style="width: 100px">
-            <label>العدد</label>
-            <input
-              type="number"
-              id="adminCodeCount"
-              value="5"
-              min="1"
-              max="100"
-            />
-          </div>
+  <div id="adminModal" class="custom-modal">
+    <div class="modal-content" style="border-top: 5px solid #ef4444; text-align: right">
+      <h3 style="color: #ef4444; margin-top: 0; font-weight: 900">
+        ⚙️ مصنع الأكواد السحابي
+      </h3>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px">
+        <div class="form-group" style="flex: 1">
+          <label>نوع الباقة</label>
+          <select id="adminCodeType">
+            <option value="7">أسبوع (7 أيام)</option>
+            <option value="30">شهر (30 يوماً)</option>
+            <option value="365">سنة (365 يوماً)</option>
+            <option value="9999">مدى الحياة</option>
+          </select>
         </div>
-        <button
-          onclick="generateDynamicCodes()"
-          style="
+        <div class="form-group" style="width: 100px">
+          <label>العدد</label>
+          <input type="number" id="adminCodeCount" value="5" min="1" max="100" />
+        </div>
+      </div>
+      <button onclick="generateDynamicCodes()" style="
             background: #ef4444;
             color: white;
             width: 100%;
@@ -1791,14 +1248,10 @@
             font-weight: bold;
             cursor: pointer;
             font-size: 16px;
-          "
-        >
-          🔥 توليد الأكواد وحفظها
-        </button>
-        <textarea
-          id="generatedCodesOutput"
-          rows="6"
-          style="
+          ">
+        🔥 توليد الأكواد وحفظها
+      </button>
+      <textarea id="generatedCodesOutput" rows="6" style="
             width: 100%;
             margin-top: 15px;
             padding: 10px;
@@ -1808,15 +1261,11 @@
             border: 1px solid #cbd5e1;
             font-family: monospace;
             font-size: 14px;
-          "
-          readonly
-        ></textarea>
-        <div style="text-align: center; margin-top: 15px">
-          <button
-            onclick="
+          " readonly></textarea>
+      <div style="text-align: center; margin-top: 15px">
+        <button onclick="
               document.getElementById('adminModal').style.display = 'none'
-            "
-            style="
+            " style="
               background: #e2e8f0;
               border: none;
               padding: 10px 40px;
@@ -1824,122 +1273,93 @@
               cursor: pointer;
               font-weight: bold;
               color: #1e293b;
-            "
-          >
-            إغلاق
-          </button>
-        </div>
+            ">
+          إغلاق
+        </button>
       </div>
     </div>
+  </div>
 
-    <div id="analyticsModal" class="custom-modal">
-      <div class="modal-content" style="text-align: right">
-        <h3
-          style="
+  <div id="analyticsModal" class="custom-modal">
+    <div class="modal-content" style="text-align: right">
+      <h3 style="
             color: var(--primary-color);
             margin-top: 0;
             border-bottom: 2px solid var(--primary-color);
             padding-bottom: 10px;
-          "
-        >
-          📊 التقرير التحليلي
-        </h3>
-        <div class="stat-box">
-          <span>العدد الإجمالي للمفردات:</span
-          ><span class="stat-value" id="statTotal">0</span>
-        </div>
-        <div style="margin-bottom: 20px">
-          <div
-            style="
+          ">
+        📊 التقرير التحليلي
+      </h3>
+      <div class="stat-box">
+        <span>العدد الإجمالي للمفردات:</span><span class="stat-value" id="statTotal">0</span>
+      </div>
+      <div style="margin-bottom: 20px">
+        <div style="
               display: flex;
               justify-content: space-between;
               font-weight: bold;
               font-size: 14px;
-            "
-          >
-            <span>اختيار من متعدد (MCQ)</span><span id="statMcqCount">0</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div
-              class="progress-bar-fill"
-              id="statMcqBar"
-              style="width: 0%; background: var(--primary-color)"
-            ></div>
-          </div>
+            ">
+          <span>اختيار من متعدد (MCQ)</span><span id="statMcqCount">0</span>
         </div>
-        <div style="margin-bottom: 20px">
-          <div
-            style="
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="statMcqBar" style="width: 0%; background: var(--primary-color)"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 20px">
+        <div style="
               display: flex;
               justify-content: space-between;
               font-weight: bold;
               font-size: 14px;
-            "
-          >
-            <span>صواب وخطأ (T/F)</span><span id="statTfCount">0</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div
-              class="progress-bar-fill"
-              id="statTfBar"
-              style="width: 0%; background: #f59e0b"
-            ></div>
-          </div>
+            ">
+          <span>صواب وخطأ (T/F)</span><span id="statTfCount">0</span>
         </div>
-        <div style="margin-bottom: 20px">
-          <div
-            style="
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="statTfBar" style="width: 0%; background: #f59e0b"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 20px">
+        <div style="
               display: flex;
               justify-content: space-between;
               font-weight: bold;
               font-size: 14px;
-            "
-          >
-            <span>أسئلة مقالية (Essay)</span><span id="statEssayCount">0</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div
-              class="progress-bar-fill"
-              id="statEssayBar"
-              style="width: 0%; background: #8b5cf6"
-            ></div>
-          </div>
+            ">
+          <span>أسئلة مقالية (Essay)</span><span id="statEssayCount">0</span>
         </div>
-        <div style="text-align: center; margin-top: 30px">
-          <button
-            onclick="
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="statEssayBar" style="width: 0%; background: #8b5cf6"></div>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 30px">
+        <button onclick="
               document.getElementById('analyticsModal').style.display = 'none'
-            "
-            style="
+            " style="
               background: #e2e8f0;
               border: none;
               padding: 12px 30px;
               border-radius: 8px;
               cursor: pointer;
               font-weight: bold;
-            "
-          >
-            إغلاق
-          </button>
-        </div>
+            ">
+          إغلاق
+        </button>
       </div>
     </div>
+  </div>
 
-    <div id="aiModal" class="custom-modal">
-      <div class="modal-content" style="text-align: right; max-width: 700px">
-        <h3
-          style="
+  <div id="aiModal" class="custom-modal">
+    <div class="modal-content" style="text-align: right; max-width: 700px">
+      <h3 style="
             color: #8b5cf6;
             margin-top: 0;
             border-bottom: 2px solid #8b5cf6;
             padding-bottom: 10px;
-          "
-        >
-          🤖 مساعد التوليد المعرفي الذكي
-        </h3>
-        <div
-          id="aiChatOutput"
-          style="
+          ">
+        🤖 مساعد التوليد المعرفي الذكي
+      </h3>
+      <div id="aiChatOutput" style="
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
@@ -1951,12 +1371,8 @@
             text-align: right;
             font-size: 15px;
             line-height: 1.6;
-          "
-        ></div>
-        <textarea
-          id="aiTextInput"
-          placeholder="اكتب سؤالك، أو ضع النص المراد تحويله لأسئلة هنا..."
-          style="
+          "></div>
+      <textarea id="aiTextInput" placeholder="اكتب سؤالك، أو ضع النص المراد تحويله لأسئلة هنا..." style="
             height: 100px;
             margin-bottom: 15px;
             border: 1px solid #cbd5e1;
@@ -1966,36 +1382,24 @@
             font-family: inherit;
             resize: vertical;
             box-sizing: border-box;
-          "
-        ></textarea>
-        <div
-          style="
+          "></textarea>
+      <div style="
             background: #f8fafc;
             border: 2px dashed #8b5cf6;
             border-radius: 8px;
             padding: 15px;
             text-align: center;
             margin-bottom: 20px;
-          "
-        >
-          <input
-            type="file"
-            id="aiFileInput"
-            accept="image/*,.pdf,.txt"
-            multiple
-            style="display: none"
-            onchange="
+          ">
+        <input type="file" id="aiFileInput" accept="image/*,.pdf,.txt" multiple style="display: none" onchange="
               document.getElementById('aiFileName').innerText =
                 this.files.length > 1
                   ? 'تم تحديد ' + this.files.length + ' ملفات 📁'
                   : this.files[0]
                     ? this.files[0].name
                     : 'لم يتم التحديد'
-            "
-          />
-          <button
-            onclick="document.getElementById('aiFileInput').click()"
-            style="
+            " />
+        <button onclick="document.getElementById('aiFileInput').click()" style="
               background: white;
               border: 1px solid #8b5cf6;
               color: #8b5cf6;
@@ -2004,28 +1408,20 @@
               cursor: pointer;
               font-weight: bold;
               font-family: inherit;
-            "
-          >
-            📂 إرفاق ملف للتحليل
-          </button>
-          <div
-            id="aiFileName"
-            style="margin-top: 10px; font-size: 12px; color: #64748b"
-          >
-            لم يتم تحديد ملف
-          </div>
+            ">
+          📂 إرفاق ملف للتحليل
+        </button>
+        <div id="aiFileName" style="margin-top: 10px; font-size: 12px; color: #64748b">
+          لم يتم تحديد ملف
         </div>
-        <div
-          style="
+      </div>
+      <div style="
             display: flex;
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
-          "
-        >
-          <button
-            onclick="generateAIQuestions('general')"
-            style="
+          ">
+        <button onclick="generateAIQuestions('general')" style="
               background: linear-gradient(135deg, #3b82f6, #2563eb);
               color: white;
               border: none;
@@ -2034,13 +1430,10 @@
               cursor: pointer;
               font-weight: bold;
               font-family: inherit;
-            "
-          >
-            💬 إرسال
-          </button>
-          <button
-            onclick="generateAIQuestions('quiz')"
-            style="
+            ">
+          💬 إرسال
+        </button>
+        <button onclick="generateAIQuestions('quiz')" style="
               background: linear-gradient(135deg, #8b5cf6, #6d28d9);
               color: white;
               border: none;
@@ -2049,13 +1442,10 @@
               cursor: pointer;
               font-weight: bold;
               font-family: inherit;
-            "
-          >
-            ✨ توليد أسئلة
-          </button>
-          <button
-            onclick="document.getElementById('aiModal').style.display = 'none'"
-            style="
+            ">
+          ✨ توليد أسئلة
+        </button>
+        <button onclick="document.getElementById('aiModal').style.display = 'none'" style="
               background: #e2e8f0;
               color: #1e293b;
               border: none;
@@ -2064,119 +1454,111 @@
               font-weight: bold;
               cursor: pointer;
               font-family: inherit;
-            "
-          >
-            إغلاق
-          </button>
-        </div>
+            ">
+          إغلاق
+        </button>
       </div>
     </div>
+  </div>
 
-    <div id="confirmModal" class="custom-modal">
-      <div class="modal-content">
-        <h3 style="color: #ef4444; margin-top: 0">⚠️ تأكيد الإجراء</h3>
-        <p>هل أنت متأكد من مسح البيانات والبدء بمشروع جديد؟</p>
-        <div
-          style="
+  <div id="confirmModal" class="custom-modal">
+    <div class="modal-content">
+      <h3 style="color: #ef4444; margin-top: 0">⚠️ تأكيد الإجراء</h3>
+      <p>هل أنت متأكد من مسح البيانات والبدء بمشروع جديد؟</p>
+      <div style="
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-top: 30px;
-          "
-        >
-          <button
-            onclick="
+          ">
+        <button onclick="
               executeClearData();
               document.getElementById('confirmModal').style.display = 'none';
-            "
-            style="
+            " style="
               background: #ef4444;
               color: white;
               border: none;
               padding: 12px 30px;
               border-radius: 8px;
-            "
-          >
-            تأكيد المسح
-          </button>
-          <button
-            onclick="
+            ">
+          تأكيد المسح
+        </button>
+        <button onclick="
               document.getElementById('confirmModal').style.display = 'none'
-            "
-            style="
+            " style="
               background: #e2e8f0;
               border: none;
               padding: 12px 30px;
               border-radius: 8px;
-            "
-          >
-            إلغاء
-          </button>
-        </div>
+            ">
+          إلغاء
+        </button>
       </div>
     </div>
+  </div>
 
-    <div id="printArea"></div>
+  <div id="printArea"></div>
 
-    <script src="script.js"></script>
-    <!-- <script src="main.js"></script> -->
+  <script src="script.js"></script>
+  <!-- <script src="main.js"></script> -->
 
-    <!-- سكريبت القوائم العائمة والمراقب الذكي (Observer) -->
-    <script>
-        function toggleFloatingPanel(panelId) {
-            const panel = document.getElementById(panelId);
-            document.querySelectorAll('.floating-panel').forEach(p => {
-                if(p.id !== panelId) p.style.display = 'none';
-            });
-            panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
-        }
-        function closeFloatingPanel(panelId) {
-            document.getElementById(panelId).style.display = 'none';
-        }
-        function toggleCustomDropdown(menuId) {
-            const menu = document.getElementById(menuId);
-            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'flex' : 'none';
-        }
-        function closeCustomDropdown(menuId) {
-            document.getElementById(menuId).style.display = 'none';
-        }
-        
-        // إغلاق القوائم عند الضغط خارجها
-        document.addEventListener('click', function(event) {
-            const insertMenu = document.getElementById('insertMenu');
-            const profileMenu = document.getElementById('profileDropdownMenu');
-            const toggleBtnInsert = event.target.closest('button[onclick*="toggleCustomDropdown(\'insertMenu\')"]');
-            const toggleBtnProfile = event.target.closest('button[onclick*="toggleCustomDropdown(\'profileDropdownMenu\')"]');
-            
-            if (insertMenu && insertMenu.style.display === 'flex' && !toggleBtnInsert && !insertMenu.contains(event.target)) {
-                insertMenu.style.display = 'none';
-            }
-            if (profileMenu && profileMenu.style.display === 'flex' && !toggleBtnProfile && !profileMenu.contains(event.target)) {
-                profileMenu.style.display = 'none';
-            }
+  <!-- سكريبت القوائم العائمة والمراقب الذكي (Observer) -->
+  <script>
+    function toggleFloatingPanel(panelId) {
+      const panel = document.getElementById(panelId);
+      document.querySelectorAll('.floating-panel').forEach(p => {
+        if (p.id !== panelId) p.style.display = 'none';
+      });
+      panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+    }
+    function closeFloatingPanel(panelId) {
+      document.getElementById(panelId).style.display = 'none';
+    }
+    function toggleCustomDropdown(menuId) {
+      const menu = document.getElementById(menuId);
+      menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'flex' : 'none';
+    }
+    function closeCustomDropdown(menuId) {
+      document.getElementById(menuId).style.display = 'none';
+    }
+
+    // إغلاق القوائم عند الضغط خارجها
+    document.addEventListener('click', function (event) {
+      const insertMenu = document.getElementById('insertMenu');
+      const profileMenu = document.getElementById('profileDropdownMenu');
+      const toggleBtnInsert = event.target.closest('button[onclick*="toggleCustomDropdown(\'insertMenu\')"]');
+      const toggleBtnProfile = event.target.closest('button[onclick*="toggleCustomDropdown(\'profileDropdownMenu\')"]');
+
+      if (insertMenu && insertMenu.style.display === 'flex' && !toggleBtnInsert && !insertMenu.contains(event.target)) {
+        insertMenu.style.display = 'none';
+      }
+      if (profileMenu && profileMenu.style.display === 'flex' && !toggleBtnProfile && !profileMenu.contains(event.target)) {
+        profileMenu.style.display = 'none';
+      }
+    });
+
+    // المراقب السحري: يقوم بتبديل أزرار الناف بار وإغلاق نافذة الدخول تلقائياً بمجرد تسجيل الدخول
+    window.addEventListener('DOMContentLoaded', () => {
+      const profileSec = document.getElementById('userProfileSection');
+      if (profileSec) {
+        const observer = new MutationObserver(() => {
+          const guestNav = document.getElementById('guestNavButtons');
+          const loggedInNav = document.getElementById('loggedInNav');
+          const authModal = document.getElementById('authModal');
+
+          if (profileSec.style.display !== 'none') {
+            guestNav.style.display = 'none';
+            loggedInNav.style.display = 'block';
+            authModal.style.display = 'none'; // يغلق المربع المنبثق فور الدخول
+          } else {
+            guestNav.style.display = 'flex';
+            loggedInNav.style.display = 'none';
+          }
         });
+        observer.observe(profileSec, { attributes: true, attributeFilter: ['style'] });
+      }
+    });
+  </script>
+</body>
 
-        // المراقب السحري: يقوم بتبديل أزرار الناف بار وإغلاق نافذة الدخول تلقائياً بمجرد تسجيل الدخول
-        window.addEventListener('DOMContentLoaded', () => {
-            const profileSec = document.getElementById('userProfileSection');
-            if(profileSec) {
-                const observer = new MutationObserver(() => {
-                    const guestNav = document.getElementById('guestNavButtons');
-                    const loggedInNav = document.getElementById('loggedInNav');
-                    const authModal = document.getElementById('authModal');
-                    
-                    if (profileSec.style.display !== 'none') {
-                        guestNav.style.display = 'none';
-                        loggedInNav.style.display = 'block';
-                        authModal.style.display = 'none'; // يغلق المربع المنبثق فور الدخول
-                    } else {
-                        guestNav.style.display = 'flex';
-                        loggedInNav.style.display = 'none';
-                    }
-                });
-                observer.observe(profileSec, { attributes: true, attributeFilter: ['style'] });
-            }
-        });
-    </script>
-  </body>
 </html>
