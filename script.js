@@ -1516,6 +1516,7 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
     let std = '';
     let cols = '';
 
+    // التحقق من النظام المختار للتحويل التلقائي للإنجليزية
     let isForeign = (currentQuestionSystem === 'foreign');
     let dir = isForeign ? 'ltr' : 'rtl';
     let align = isForeign ? 'left' : 'right';
@@ -1526,8 +1527,10 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
                  <div class="${isForeign ? 'left' : 'right'}">${document.getElementById('hdrRight').value}</div>
                  <div class="center">${document.getElementById('hdrCenter').value}</div>
                  <div class="${isForeign ? 'right' : 'left'}">${document.getElementById('hdrLeft').value}</div>
-               </div>` : '';
+               </div>` :
+            '';
 
+        // ترجمة بيانات الطالب التلقائية
         let stdText = isForeign ?
             `<div>Student Name: ....................................................</div><div>Seat No: .........................</div>` :
             `<div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div>`;
@@ -1540,7 +1543,7 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
     <div class="pdf-page" style="background:${bgCSS}; direction:${dir}; text-align:${align};">
         <table style="width: 100%; border-collapse: collapse; border: none; direction:${dir};">
             <thead style="display: table-header-group;">
-                <tr><td style="height: 15mm; border: none; padding: 0;"></td></tr>
+                <tr><td style="height: 30mm; border: none; padding: 0;"></td></tr>
             </thead>
             <tbody>
                 <tr><td style="border: none; padding: 0;">
@@ -1549,7 +1552,7 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
                 </td></tr>
             </tbody>
             <tfoot style="display: table-footer-group;">
-                <tr><td style="height: 15mm; border: none; padding: 0;"></td></tr>
+                <tr><td style="height: 25mm; border: none; padding: 0;"></td></tr>
             </tfoot>
         </table>
     </div>`;
@@ -1915,7 +1918,6 @@ function applySystemLanguageSettings() {
 
 window.addEventListener('DOMContentLoaded', applySystemLanguageSettings);
 
-// الدالة الثانية: نظام الطباعة الإجباري (يمنع القص نهائياً بقوة !important)
 function applyGlobalPaperFormatting() {
     try {
         const borderEl = document.getElementById('enableBorder');
@@ -1936,12 +1938,17 @@ function applyGlobalPaperFormatting() {
         let styleStr = "";
         styleStr += "#wordPrintPreviewArea { font-family: " + fontFamily + " !important; color: " + textColor + " !important; text-align: " + textAlign + " !important; } ";
 
-        styleStr += "#wordPrintPreviewArea .pdf-page * { line-height: 1.5 !important; } ";
+        styleStr += "#wordPrintPreviewArea .pdf-page * { line-height: 1 !important; } ";
         styleStr += "#wordPrintPreviewArea .pdf-page br { display: none !important; } ";
         styleStr += "#wordPrintPreviewArea .pdf-page table { margin: 0 !important; padding: 0 !important; border-collapse: collapse !important; width: 100% !important; } ";
+        styleStr += "#wordPrintPreviewArea .pdf-page th, #wordPrintPreviewArea .pdf-page td { padding: 0px 2px !important; margin: 0 !important; } ";
+
         styleStr += "#wordPrintPreviewArea h1, #wordPrintPreviewArea h2, #wordPrintPreviewArea h3, #wordPrintPreviewArea h4, #wordPrintPreviewArea .bubble-advanced-header { color: " + primaryColor + " !important; position: relative; z-index: 5; margin: 0 !important; padding: 0 !important; } ";
 
-        styleStr += "#wordPrintPreviewArea .question-card { background-color: " + (cardBgToggle === 'color' ? cardBgColor : 'transparent') + " !important; border-radius: " + cardRadius + " !important; border: 1px solid " + borderColor + " !important; position: relative; z-index: 5; margin-top: 0 !important; margin-bottom: 0px !important; padding: 5px 10px !important; page-break-inside: avoid !important; } ";
+        styleStr += "#wordPrintPreviewArea .pdf-page > *:first-child { margin-top: -4px !important; padding-top: 0 !important; } ";
+        styleStr += "#wordPrintPreviewArea .pdf-page > *:last-child { margin-bottom: 0 !important; padding-bottom: 0 !important; } ";
+
+        styleStr += "#wordPrintPreviewArea .question-card { background-color: " + (cardBgToggle === 'color' ? cardBgColor : 'transparent') + " !important; border-radius: " + cardRadius + " !important; border: 1px solid " + borderColor + " !important; position: relative; z-index: 5; margin-top: 0 !important; margin-bottom: 0px !important; padding: 1px 4px !important; page-break-inside: avoid !important; } ";
 
         styleStr += "#wordPrintPreviewArea .pdf-page { ";
         styleStr += "position: relative !important; ";
@@ -1956,19 +1963,26 @@ function applyGlobalPaperFormatting() {
         styleStr += "margin: 0 auto 15px auto !important; ";
         styleStr += "width: 210mm !important; ";
         styleStr += "min-height: 297mm !important; ";
-        styleStr += "overflow: visible !important; ";
+        styleStr += "-webkit-box-decoration-break: clone !important; ";
+        styleStr += "box-decoration-break: clone !important; ";
+        styleStr += "overflow: hidden !important; ";
         styleStr += "-webkit-print-color-adjust: exact !important; ";
         styleStr += "print-color-adjust: exact !important; ";
         styleStr += "} ";
 
         styleStr += "@media print { ";
         styleStr += "@page { size: A4 portrait; margin: 0 !important; } ";
-        styleStr += "html, body { width: 100% !important; height: auto !important; min-height: 100% !important; display: block !important; overflow: visible !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; } ";
+        styleStr += "html, body { width: 210mm !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; } ";
         styleStr += "body * { visibility: hidden !important; } ";
         styleStr += "#wordPrintModal, #wordPrintModal * { visibility: visible !important; } ";
-        styleStr += "#wordPrintModal { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: transparent !important; } ";
-        styleStr += "#wordPrintPreviewArea { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; } ";
-        styleStr += "#wordPrintPreviewArea .pdf-page { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0px 4mm 0px 4mm !important; box-shadow: none !important; page-break-after: always !important; } ";
+        styleStr += "#wordPrintModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 210mm !important; margin: 0 !important; padding: 0 !important; background: transparent !important; } ";
+        styleStr += "#wordPrintPreviewArea { width: 210mm !important; margin: 0 !important; padding: 0 !important; } ";
+
+        styleStr += "#wordPrintPreviewArea .pdf-page { ";
+        styleStr += "margin: 0 !important; ";
+        styleStr += "padding: 0px 4mm 0px 4mm !important; ";
+        styleStr += "box-shadow: none !important; ";
+        styleStr += "} ";
         styleStr += ".word-sidebar, .btn-print, .btn-close { display: none !important; } ";
         styleStr += "} ";
 
@@ -1981,7 +1995,6 @@ function applyGlobalPaperFormatting() {
         styleTag.innerHTML = styleStr;
     } catch (error) { }
 }
-
 const myPanel = document.getElementById('generalSettingsPanel');
 if (myPanel) {
     myPanel.addEventListener('input', applyGlobalPaperFormatting);
@@ -2457,3 +2470,135 @@ function runSmartOnboardingTour() {
 
 window.addEventListener('load', runSmartOnboardingTour);
 
+// 1. الدالة الأساسية لتوليد وعرض النماذج المضغوطة
+function generateCompactEmptyBubbleSheet() {
+    const lType = document.getElementById('compactLettersType').value;
+    const sColor = document.getElementById('compactColor').value;
+
+    // قراءة إعدادات النماذج المتعددة الجديدة الخاصة بالنظام المضغوط
+    const mCount = parseInt(document.getElementById('compactModelsCount').value) || 1;
+    const mType = document.getElementById('compactModelNaming').value;
+    const placement = document.getElementById('compactModelPlacement').value;
+
+    const pA = { 'arabic_letters': ['أ', 'ب', 'ج', 'د', 'هـ', 'و'], 'english_letters': ['A', 'B', 'C', 'D', 'E', 'F'], 'numbers': ['1', '2', '3', '4', '5', '6'] }[mType] || ['أ', 'ب', 'ج', 'د'];
+
+    let finalHtml = '';
+    const isForeign = (currentQuestionSystem === 'foreign');
+
+    for (let i = 0; i < mCount; i++) {
+        let modelName = '';
+        if (mCount > 1) {
+            let mLetter = pA[i] || (i + 1);
+            modelName = isForeign ? `Model (${mLetter})` : `نموذج الاختبار (${mLetter})`;
+        }
+
+        finalHtml += `<div class="pdf-page" style="position: relative; padding: 10mm; background: white; margin: 0 auto 20px auto; width: 210mm; min-height: 297mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); page-break-after: always; overflow: hidden;">`;
+        if (typeof getWatermarkHTML === "function") finalHtml += getWatermarkHTML();
+        finalHtml += getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement);
+        finalHtml += `</div>`;
+    }
+
+    document.getElementById('wordPrintPreviewArea').innerHTML = finalHtml;
+    document.getElementById('wordPrintModal').style.display = 'flex';
+    showToast('تم تجهيز النموذج المضغوط بنجاح!', 'success');
+}
+
+// 2. الكود الهندسي الصارم للـ 110 سؤال مع التحكم بالترتيب
+// الكود الهندسي الصارم المطور (يدعم الترويسات الديناميكية)
+function getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement) {
+    let isForeign = (currentQuestionSystem === 'foreign');
+    let dir = isForeign ? 'ltr' : 'rtl';
+    let align = isForeign ? 'left' : 'right';
+
+    const lA = { 'arabic': ['أ', 'ب', 'ج', 'د'], 'english': ['A', 'B', 'C', 'D'], 'numbers': ['1', '2', '3', '4'] }[lType];
+    const tfLetters = isForeign ? ['T', 'F'] : ['ص', 'خ'];
+
+    // 1. قراءة النصوص المخصصة من اللوحة الخضراء (أو وضع قيم افتراضية)
+    let f1 = document.getElementById('compactField1') ? document.getElementById('compactField1').value : 'اسم الطالب:';
+    let f2 = document.getElementById('compactField2') ? document.getElementById('compactField2').value : 'المادة:';
+    let f3 = document.getElementById('compactField3') ? document.getElementById('compactField3').value : 'الفرقة/الصف:';
+    let hStyle = document.getElementById('compactHeaderStyle') ? document.getElementById('compactHeaderStyle').value : 'basic';
+    let seatTitle = isForeign ? 'Seat No.' : 'رقم الجلوس';
+
+    // 2. تصميم الترويسة بناءً على اختيار المستخدم
+    let headerInfoHtml = '';
+
+    if (hStyle === 'basic') {
+        // التصميم الأول: صندوق كلاسيكي
+        headerInfoHtml = `
+            <div style="border: 2px solid ${sColor}; padding: 8px 12px; margin-bottom: 8px; border-radius: 6px; direction:${dir}; text-align:${align}; font-size: 13px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between;">
+                <div style="flex:1;"><div>${f3} ........................</div></div>
+                <div style="flex:1; text-align:center;"><div>${f2} ........................</div></div>
+                <div style="flex:2; text-align:${isForeign ? 'right' : 'left'};"><div>${f1} ....................................................</div></div>
+            </div>`;
+    }
+    else if (hStyle === 'lines') {
+        // التصميم الثاني: خطوط حرة بدون إطار
+        headerInfoHtml = `
+            <div style="padding: 4px 12px; margin-bottom: 12px; direction:${dir}; text-align:${align}; font-size: 14px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between;">
+                <div style="flex:1; border-bottom: 1px dashed ${sColor}; margin-inline-end: 15px;">${f3} </div>
+                <div style="flex:1; border-bottom: 1px dashed ${sColor}; margin-inline-end: 15px; text-align:center;">${f2} </div>
+                <div style="flex:2; border-bottom: 1px dashed ${sColor}; text-align:${isForeign ? 'right' : 'left'};">${f1} </div>
+            </div>`;
+    }
+    else if (hStyle === 'advanced') {
+        // التصميم الثالث: متقدم مع شبكة بابل شيت صغيرة لرقم الجلوس (لا تؤثر على مساحة الصفحة)
+        let ig = '';
+        for (let c = 0; c < 6; c++) {
+            let cb = `<div style="border:1px solid ${sColor}; height:14px; margin-bottom:2px; background:#fff;"></div>`;
+            for (let r = 0; r <= 9; r++) {
+                cb += `<div style="width:11px;height:11px;font-size:8px;border:1px solid ${sColor};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1px auto;">${r}</div>`;
+            }
+            ig += `<div style="display:flex;flex-direction:column;width:14px;gap:1px;">${cb}</div>`;
+        }
+        headerInfoHtml = `
+            <div style="border: 2px solid ${sColor}; padding: 6px 12px; margin-bottom: 8px; border-radius: 6px; direction:${dir}; text-align:${align}; font-size: 13px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.7);">
+                <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
+                    <div>${f1} ....................................................................</div>
+                    <div style="display:flex; gap: 20px;">
+                        <div style="flex:1;">${f2} ......................................</div>
+                        <div style="flex:1;">${f3} ......................................</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center; border-inline-start: 2px dashed ${sColor}; padding-inline-start: 15px; margin-inline-start: 15px;">
+                    <div style="font-size:11px; margin-bottom:4px;">${seatTitle}</div>
+                    <div style="display:flex; gap: 2px;">${ig}</div>
+                </div>
+            </div>`;
+    }
+
+    let modelHeaderHtml = modelName ? `<div style="text-align:center; margin-bottom: 8px;"><span style="border: 2px dashed ${sColor}; padding: 4px 20px; font-weight: 900; border-radius: 8px; color: ${sColor}; font-size: 15px;">${modelName}</span></div>` : '';
+
+    // ترتيب ظهور الترويسة مع اسم النموذج (Top or Above Student)
+    let topSection = placement === 'top' ? (modelHeaderHtml + headerInfoHtml) : (headerInfoHtml + modelHeaderHtml);
+
+    const renderSection = (title, startNum, totalQs, cols, options) => {
+        let html = `<div style="border: 2px solid ${sColor}; padding: 6px; margin-bottom: 6px; border-radius: 6px; direction:${dir}; text-align:${align}; color: ${sColor};">`;
+        html += `<div style="text-align: center; font-weight: 900; font-size: 12px; border-bottom: 1px dashed ${sColor}; margin-bottom: 6px; padding-bottom: 4px;">${title}</div>`;
+        html += `<div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 4px 8px;">`;
+
+        for (let i = 0; i < totalQs; i++) {
+            let num = startNum + i;
+            html += `<div style="display: flex; align-items: center; justify-content: flex-start; font-size: 11px; margin-bottom: 2px;">`;
+            html += `<div style="width: 22px; font-weight: bold; text-align: ${align};">${num}.</div>`;
+            html += `<div style="display: flex; gap: 6px; flex: 1;">`;
+            options.forEach(opt => {
+                html += `<div style="display: flex; align-items: center; gap: 3px;">`;
+                html += `<span style="font-size: 11px;">${opt}</span>`;
+                html += `<div style="width: 14px; height: 14px; border: 1px solid ${sColor}; border-radius: 50%;"></div>`;
+                html += `</div>`;
+            });
+            html += `</div></div>`;
+        }
+        html += `</div></div>`;
+        return html;
+    };
+
+    let mcqTitle = isForeign ? 'Multiple Choice Questions' : 'قسم أسئلة الاختيار من متعدد';
+    let tfTitle = isForeign ? 'True/False Questions' : 'قسم أسئلة الصواب والخطأ';
+
+    let mcqHtml = renderSection(mcqTitle, 1, 60, 4, lA);
+    let tfHtml = renderSection(tfTitle, 1, 50, 4, tfLetters);
+
+    return topSection + mcqHtml + tfHtml;
+}
