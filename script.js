@@ -1526,8 +1526,7 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
                  <div class="${isForeign ? 'left' : 'right'}">${document.getElementById('hdrRight').value}</div>
                  <div class="center">${document.getElementById('hdrCenter').value}</div>
                  <div class="${isForeign ? 'right' : 'left'}">${document.getElementById('hdrLeft').value}</div>
-               </div>` :
-            '';
+               </div>` : '';
 
         let stdText = isForeign ?
             `<div>Student Name: ....................................................</div><div>Seat No: .........................</div>` :
@@ -1541,7 +1540,7 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
     <div class="pdf-page" style="background:${bgCSS}; direction:${dir}; text-align:${align};">
         <table style="width: 100%; border-collapse: collapse; border: none; direction:${dir};">
             <thead style="display: table-header-group;">
-                <tr><td style="height: 30mm; border: none; padding: 0;"></td></tr>
+                <tr><td style="height: 15mm; border: none; padding: 0;"></td></tr>
             </thead>
             <tbody>
                 <tr><td style="border: none; padding: 0;">
@@ -1550,7 +1549,7 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
                 </td></tr>
             </tbody>
             <tfoot style="display: table-footer-group;">
-                <tr><td style="height: 25mm; border: none; padding: 0;"></td></tr>
+                <tr><td style="height: 15mm; border: none; padding: 0;"></td></tr>
             </tfoot>
         </table>
     </div>`;
@@ -1916,6 +1915,7 @@ function applySystemLanguageSettings() {
 
 window.addEventListener('DOMContentLoaded', applySystemLanguageSettings);
 
+// الدالة الثانية: نظام الطباعة الإجباري (يمنع القص نهائياً بقوة !important)
 function applyGlobalPaperFormatting() {
     try {
         const borderEl = document.getElementById('enableBorder');
@@ -1936,17 +1936,12 @@ function applyGlobalPaperFormatting() {
         let styleStr = "";
         styleStr += "#wordPrintPreviewArea { font-family: " + fontFamily + " !important; color: " + textColor + " !important; text-align: " + textAlign + " !important; } ";
 
-        styleStr += "#wordPrintPreviewArea .pdf-page * { line-height: 1 !important; } ";
+        styleStr += "#wordPrintPreviewArea .pdf-page * { line-height: 1.5 !important; } ";
         styleStr += "#wordPrintPreviewArea .pdf-page br { display: none !important; } ";
         styleStr += "#wordPrintPreviewArea .pdf-page table { margin: 0 !important; padding: 0 !important; border-collapse: collapse !important; width: 100% !important; } ";
-        styleStr += "#wordPrintPreviewArea .pdf-page th, #wordPrintPreviewArea .pdf-page td { padding: 0px 2px !important; margin: 0 !important; } ";
-
         styleStr += "#wordPrintPreviewArea h1, #wordPrintPreviewArea h2, #wordPrintPreviewArea h3, #wordPrintPreviewArea h4, #wordPrintPreviewArea .bubble-advanced-header { color: " + primaryColor + " !important; position: relative; z-index: 5; margin: 0 !important; padding: 0 !important; } ";
 
-        styleStr += "#wordPrintPreviewArea .pdf-page > *:first-child { margin-top: -4px !important; padding-top: 0 !important; } ";
-        styleStr += "#wordPrintPreviewArea .pdf-page > *:last-child { margin-bottom: 0 !important; padding-bottom: 0 !important; } ";
-
-        styleStr += "#wordPrintPreviewArea .question-card { background-color: " + (cardBgToggle === 'color' ? cardBgColor : 'transparent') + " !important; border-radius: " + cardRadius + " !important; border: 1px solid " + borderColor + " !important; position: relative; z-index: 5; margin-top: 0 !important; margin-bottom: 0px !important; padding: 1px 4px !important; page-break-inside: avoid !important; } ";
+        styleStr += "#wordPrintPreviewArea .question-card { background-color: " + (cardBgToggle === 'color' ? cardBgColor : 'transparent') + " !important; border-radius: " + cardRadius + " !important; border: 1px solid " + borderColor + " !important; position: relative; z-index: 5; margin-top: 0 !important; margin-bottom: 0px !important; padding: 5px 10px !important; page-break-inside: avoid !important; } ";
 
         styleStr += "#wordPrintPreviewArea .pdf-page { ";
         styleStr += "position: relative !important; ";
@@ -1961,27 +1956,28 @@ function applyGlobalPaperFormatting() {
         styleStr += "margin: 0 auto 15px auto !important; ";
         styleStr += "width: 210mm !important; ";
         styleStr += "min-height: 297mm !important; ";
-        styleStr += "-webkit-box-decoration-break: clone !important; ";
-        styleStr += "box-decoration-break: clone !important; ";
-        styleStr += "overflow: hidden !important; ";
-        styleStr += "-webkit-print-color-adjust: exact !important; ";
-        styleStr += "print-color-adjust: exact !important; ";
+        styleStr += "overflow: visible !important; ";
         styleStr += "} ";
 
+        /* =======================================================
+           السر الجذري: أمر طباعة عالي القوة يقهر أي أكواد سابقة
+           ======================================================= */
         styleStr += "@media print { ";
         styleStr += "@page { size: A4 portrait; margin: 0 !important; } ";
-        styleStr += "html, body { width: 210mm !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; } ";
-        styleStr += "body * { visibility: hidden !important; } ";
-        styleStr += "#wordPrintModal, #wordPrintModal * { visibility: visible !important; } ";
-        styleStr += "#wordPrintModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 210mm !important; margin: 0 !important; padding: 0 !important; background: transparent !important; } ";
-        styleStr += "#wordPrintPreviewArea { width: 210mm !important; margin: 0 !important; padding: 0 !important; } ";
-
-        styleStr += "#wordPrintPreviewArea .pdf-page { ";
-        styleStr += "margin: 0 !important; ";
-        styleStr += "padding: 0px 4mm 0px 4mm !important; ";
-        styleStr += "box-shadow: none !important; ";
-        styleStr += "} ";
-        styleStr += ".word-sidebar, .btn-print, .btn-close { display: none !important; } ";
+        
+        styleStr += "html, body { width: 100% !important; height: auto !important; min-height: 100% !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; display: block !important; overflow: visible !important; } ";
+        
+        /* إخفاء كل ما هو خارج شاشة الطباعة */
+        styleStr += "body > *:not(#wordPrintModal) { display: none !important; } ";
+        
+        /* استخدام تحديد قوي جداً (body #id) لإلغاء الـ Absolute القديم */
+        styleStr += "body #wordPrintModal, html body div#wordPrintModal { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; background: transparent !important; margin: 0 !important; padding: 0 !important; } ";
+        
+        styleStr += "body #wordPrintPreviewArea { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; } ";
+        
+        styleStr += "body #wordPrintPreviewArea .pdf-page { display: block !important; position: static !important; width: 100% !important; height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0px 4mm 0px 4mm !important; box-shadow: none !important; border: none !important; page-break-after: always !important; break-after: page !important; } ";
+        
+        styleStr += "body .word-sidebar, body .btn-print, body .btn-close { display: none !important; } ";
         styleStr += "} ";
 
         let styleTag = document.getElementById('dynamicGlobalPaperStyles');
