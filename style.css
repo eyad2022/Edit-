@@ -2048,3 +2048,61 @@ body.dark-mode .setup-container {
 .hide-in-text-mode {
     display: none !important;
 }
+
+
+/* ========================================================
+   إصلاح ظهور رسالة "جاري الحفظ" المنبثقة
+   ======================================================== */
+#autosaveIndicator {
+    position: fixed;
+    bottom: 25px;
+    left: 25px; /* تظهر على اليسار لكي لا تغطي على أزرار الدعم */
+    background: #ffffff;
+    border: 2px solid var(--primary-color);
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: bold;
+    color: var(--primary-color);
+    z-index: 9999999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+
+#autosaveIndicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ========================================================
+   إصلاح تمدد الصندوق والكلمات الطويلة في المحرر والطباعة
+   ======================================================== */
+.rich-textarea, 
+.editor-area, 
+.content-card, 
+.q-text, 
+.option-item, 
+.print-heading-block {
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important; /* يجبر الحروف المتصلة بدون مسافات على النزول لسطر جديد */
+    white-space: pre-wrap !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media print {
+    .content-card, 
+    .q-text, 
+    .option-item, 
+    .print-heading-block {
+        word-wrap: break-word !important;
+        overflow-wrap: anywhere !important;
+        white-space: pre-wrap !important;
+        max-width: 100% !important;
+    }
+}
