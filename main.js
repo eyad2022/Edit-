@@ -1,4 +1,9 @@
 (function () {
+    // التحقق: هل الجهاز يدعم اللمس؟ (إذا نعم، نخرج من الكود ولا نفعل القائمة)
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        return;
+    }
+
     // 1. حماية النطاقات (Domains)
     var allowedDomains = ["eyad2022.github.io", "localhost", "127.0.0.1", "editorpro-blush.vercel.app"];
     var currentDomain = window.location.hostname;
@@ -9,7 +14,7 @@
         throw new Error('Unauthorized Access');
     }
 
-    // 2. منع اختصارات لوحة المفاتيح لفتح أدوات الفحص
+    // 2. منع اختصارات لوحة المفاتيح
     document.addEventListener('keydown', function (e) {
         if (e.key === 'F12' ||
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
@@ -21,7 +26,7 @@
         }
     });
 
-    // 3. تصميم وبناء القائمة المخصصة
+    // 3. تصميم القائمة (نفس التصميم السابق)
     var style = document.createElement('style');
     style.innerHTML = `
         #custom-context-menu {
@@ -81,51 +86,33 @@
     `;
     document.body.appendChild(menu);
 
-    // 4. التحكم في إظهار القائمة تحت مؤشر الماوس مباشرة
+    // 4. التحكم في ظهور القائمة (للكمبيوتر فقط)
     document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
-        
         menu.style.display = 'block';
-        
         var mouseX = e.clientX;
         var mouseY = e.clientY;
-        var menuWidth = menu.offsetWidth;
-        var menuHeight = menu.offsetHeight;
-        
-        if (mouseX + menuWidth > window.innerWidth) {
-            mouseX = window.innerWidth - menuWidth - 5;
-        }
-        if (mouseY + menuHeight > window.innerHeight) {
-            mouseY = window.innerHeight - menuHeight - 5;
-        }
-        
+        if (mouseX + menu.offsetWidth > window.innerWidth) mouseX = window.innerWidth - menu.offsetWidth - 5;
+        if (mouseY + menu.offsetHeight > window.innerHeight) mouseY = window.innerHeight - menu.offsetHeight - 5;
         menu.style.left = mouseX + 'px';
         menu.style.top = mouseY + 'px';
     });
 
-    // إخفاء القائمة عند الضغط بالزر الأيسر في أي مكان
     document.addEventListener('click', function (e) {
-        if (e.target.offsetParent !== menu) {
-            menu.style.display = 'none';
-        }
+        if (e.target.offsetParent !== menu) menu.style.display = 'none';
     });
 
-    // 5. تفعيل الأزرار المتبقية
-    document.getElementById('mh-reload').addEventListener('click', function() { window.location.reload(); menu.style.display = 'none'; });
-    
+    // 5. تفعيل الأزرار
+    document.getElementById('mh-reload').addEventListener('click', function() { window.location.reload(); });
     document.getElementById('mh-cut').addEventListener('click', function() { document.execCommand('cut'); menu.style.display = 'none'; });
     document.getElementById('mh-copy').addEventListener('click', function() { document.execCommand('copy'); menu.style.display = 'none'; });
-    
     document.getElementById('mh-paste').addEventListener('click', async function() { 
         try {
             const text = await navigator.clipboard.readText();
             document.execCommand('insertText', false, text);
-        } catch (err) {
-            alert('المتصفح يمنع لصق النصوص عبر الماوس لدواعي أمنية. يرجى استخدام اختصار لوحة المفاتيح Ctrl + V');
-        }
+        } catch (err) { alert('يرجى استخدام Ctrl+V'); }
         menu.style.display = 'none'; 
     });
-
     document.getElementById('mh-select-all').addEventListener('click', function() { document.execCommand('selectAll'); menu.style.display = 'none'; });
 
 })();

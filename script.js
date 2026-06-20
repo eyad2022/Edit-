@@ -248,35 +248,51 @@ auth.onAuthStateChanged(async (user) => {
             if (data.trialStart) localStorage.setItem('elalfey_trial_start', data.trialStart);
 
             if (sessionListener) sessionListener();
-            sessionListener = docRef.onSnapshot((snap) => {
-                if (snap.exists) {
-                    let liveData = snap.data();
+           sessionListener = docRef.onSnapshot((snap) => {
+    if (snap.exists) {
+        let liveData = snap.data();
 
-                    if (liveData.deleted) {
-                        showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
-                        handleLogoutCloud();
-                        return;
-                    }
-                    if (liveData.banned) {
-                        showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
-                        handleLogoutCloud();
-                        return;
-                    }
-                    if (liveData.vipExpiry === 'expired' && localStorage.getItem('elalfey_vip_expiry')) {
-                        localStorage.removeItem('elalfey_vip_expiry');
-                        showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من قبل الإدارة!', 'error');
-                    }
+        // 1. نظام الحماية ضد الحذف أو الحظر
+        if (liveData.deleted) {
+            showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
+            handleLogoutCloud();
+            return;
+        }
+        if (liveData.banned) {
+            showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
+            handleLogoutCloud();
+            return;
+        }
 
-                    let liveDevices = liveData.devices || [];
-                    const countEl = document.getElementById('activeDevicesCount');
-                    if (countEl) countEl.innerText = liveDevices.length;
+        // 2. التحديث الأمني: مزامنة حالة VIP إجبارياً مع السحابة
+        let localVipExpiry = localStorage.getItem('elalfey_vip_expiry');
 
-                    if (!liveDevices.includes(localDeviceId)) {
-                        showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
-                        handleLogoutCloud();
-                    }
-                }
-            });
+        if (liveData.vipExpiry === 'expired') {
+            if (localVipExpiry) {
+                localStorage.removeItem('elalfey_vip_expiry');
+                showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من قبل الإدارة!', 'error');
+            }
+        } else if (liveData.vipExpiry) {
+            // مزامنة إجبارية إذا حاول المستخدم التلاعب بالقيمة محلياً
+            if (localVipExpiry !== String(liveData.vipExpiry)) {
+                localStorage.setItem('elalfey_vip_expiry', liveData.vipExpiry);
+            }
+        } else if (!liveData.vipExpiry && localVipExpiry) {
+            // تنظيف القيمة إذا لم يكن هناك اشتراك في السحابة
+            localStorage.removeItem('elalfey_vip_expiry');
+        }
+
+        // 3. التحقق من الأجهزة النشطة
+        let liveDevices = liveData.devices || [];
+        const countEl = document.getElementById('activeDevicesCount');
+        if (countEl) countEl.innerText = liveDevices.length;
+
+        if (!liveDevices.includes(localDeviceId)) {
+            showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
+            handleLogoutCloud();
+        }
+    }
+});
         }
     } else {
         if (sessionListener) {
@@ -321,12 +337,17 @@ async function handleSignupCloud() {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
-        await db.collection('users').doc(cred.user.uid).set({
-            email: email,
-            devices: [localDeviceId],
-            history: [],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+       // جلب تاريخ بداية الفترة التجريبية من الجهاز إن وجد
+let existingTrial = localStorage.getItem('elalfey_trial_start');
+
+await db.collection('users').doc(cred.user.uid).set({
+    email: email,
+    devices: [localDeviceId],
+    history: [],
+    // إضافة هذا السطر لحفظ الفترة التجريبية المستهلكة
+    trialStart: existingTrial ? existingTrial : null, 
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
 
         await deviceRegRef.set({
             email: email,
@@ -353,7 +374,7 @@ async function handleLogoutCloud() {
 
         // مسح جميع الصلاحيات
         localStorage.removeItem('elalfey_vip_expiry');
-        localStorage.removeItem('elalfey_trial_start');
+        //localStorage.removeItem('elalfey_trial_start');
         localStorage.removeItem('elalfey_q_input');
         localStorage.removeItem('elalfey_a_input');
         localStorage.removeItem('elalfey_general_text');
