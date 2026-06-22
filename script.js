@@ -213,10 +213,27 @@ auth.onAuthStateChanged(async (user) => {
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
 
+        // === 1. النظام السحابي: منح 7 أيام للحسابات الجديدة ===
+        if (!docSnap.exists || !docSnap.data().trialStart) {
+            const trialStart = Date.now();
+            const trialDays = 7;
+            const trialExpiryDate = trialStart + (trialDays * 24 * 60 * 60 * 1000);
+
+            await docRef.set({
+                email: user.email,
+                trialStart: trialStart,
+                vipExpiry: trialExpiryDate, // نعطيه 7 أيام كأنه VIP
+                joinDate: Date.now()
+            }, { merge: true });
+
+            showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success');
+        }
+
         if (docSnap.exists) {
             let data = docSnap.data();
             let devices = data.devices || [];
 
+            // === 2. التحقق من عدد الأجهزة (3 أجهزة كحد أقصى) ===
             if (!devices.includes(localDeviceId)) {
                 if (devices.length >= 3) {
                     let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (3 أجهزة).\n\n- اضغط [إلغاء/Cancel] للذهاب وتسجيل الخروج يدوياً من أحد أجهزتك.\n- اضغط [موافق/OK] لتصفير الأجهزة وطرد جميع الأجهزة الأخرى إجبارياً الآن.");
@@ -233,6 +250,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
 
+            // === 3. إظهار بيانات المستخدم في الواجهة ===
             document.getElementById('currentLoggedInUser').innerText = user.email;
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('userProfileSection').style.display = 'block';
@@ -244,57 +262,55 @@ auth.onAuthStateChanged(async (user) => {
             }
 
             if (data.history) loadHistoryUI(data.history);
+            
+            // تحديث الصلاحية محلياً من السحابة
             if (data.vipExpiry) localStorage.setItem('elalfey_vip_expiry', data.vipExpiry);
-            if (data.trialStart) localStorage.setItem('elalfey_trial_start', data.trialStart);
 
+            // === 4. الاستماع الحي للتغيرات (Live Snapshot) ===
             if (sessionListener) sessionListener();
-           sessionListener = docRef.onSnapshot((snap) => {
-    if (snap.exists) {
-        let liveData = snap.data();
+            sessionListener = docRef.onSnapshot((snap) => {
+                if (snap.exists) {
+                    let liveData = snap.data();
 
-        // 1. نظام الحماية ضد الحذف أو الحظر
-        if (liveData.deleted) {
-            showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
-            handleLogoutCloud();
-            return;
-        }
-        if (liveData.banned) {
-            showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
-            handleLogoutCloud();
-            return;
-        }
+                    if (liveData.deleted) {
+                        showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
+                        handleLogoutCloud();
+                        return;
+                    }
+                    if (liveData.banned) {
+                        showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
+                        handleLogoutCloud();
+                        return;
+                    }
 
-        // 2. التحديث الأمني: مزامنة حالة VIP إجبارياً مع السحابة
-        let localVipExpiry = localStorage.getItem('elalfey_vip_expiry');
+                    // المزامنة الأمنية لمنع التلاعب عبر المتصفح
+                    let localVipExpiry = localStorage.getItem('elalfey_vip_expiry');
+                    if (liveData.vipExpiry === 'expired') {
+                        if (localVipExpiry) {
+                            localStorage.removeItem('elalfey_vip_expiry');
+                            showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من قبل الإدارة!', 'error');
+                        }
+                    } else if (liveData.vipExpiry) {
+                        if (localVipExpiry !== String(liveData.vipExpiry)) {
+                            localStorage.setItem('elalfey_vip_expiry', liveData.vipExpiry);
+                        }
+                    } else if (!liveData.vipExpiry && localVipExpiry) {
+                        localStorage.removeItem('elalfey_vip_expiry');
+                    }
 
-        if (liveData.vipExpiry === 'expired') {
-            if (localVipExpiry) {
-                localStorage.removeItem('elalfey_vip_expiry');
-                showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من قبل الإدارة!', 'error');
-            }
-        } else if (liveData.vipExpiry) {
-            // مزامنة إجبارية إذا حاول المستخدم التلاعب بالقيمة محلياً
-            if (localVipExpiry !== String(liveData.vipExpiry)) {
-                localStorage.setItem('elalfey_vip_expiry', liveData.vipExpiry);
-            }
-        } else if (!liveData.vipExpiry && localVipExpiry) {
-            // تنظيف القيمة إذا لم يكن هناك اشتراك في السحابة
-            localStorage.removeItem('elalfey_vip_expiry');
-        }
+                    let liveDevices = liveData.devices || [];
+                    const countEl = document.getElementById('activeDevicesCount');
+                    if (countEl) countEl.innerText = liveDevices.length;
 
-        // 3. التحقق من الأجهزة النشطة
-        let liveDevices = liveData.devices || [];
-        const countEl = document.getElementById('activeDevicesCount');
-        if (countEl) countEl.innerText = liveDevices.length;
-
-        if (!liveDevices.includes(localDeviceId)) {
-            showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
-            handleLogoutCloud();
-        }
-    }
-});
+                    if (!liveDevices.includes(localDeviceId)) {
+                        showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
+                        handleLogoutCloud();
+                    }
+                }
+            });
         }
     } else {
+        // === 5. حالة تسجيل الخروج ===
         if (sessionListener) {
             sessionListener();
             sessionListener = null;
@@ -302,6 +318,9 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById('authSection').style.display = 'block';
         document.getElementById('userProfileSection').style.display = 'none';
         document.getElementById('adminPanelBtn').style.display = 'none';
+        
+        // مسح صلاحية الـ VIP من المتصفح عند الخروج
+        localStorage.removeItem('elalfey_vip_expiry');
     }
 });
 
@@ -501,31 +520,32 @@ function restoreFromCloudHistory(idx) {
 }
 
 function requireVIP(actionType, param) {
-    let expiry = localStorage.getItem('elalfey_vip_expiry');
-    let isVIP = false;
-    if (expiry === 'lifetime') isVIP = true;
-    else if (expiry && parseInt(expiry) > Date.now()) isVIP = true;
-
-    if (isVIP) { proceedWithAction(actionType, param); return; }
-
-    let trialStart = localStorage.getItem('elalfey_trial_start');
-    if (!trialStart) {
-        trialStart = Date.now();
-        localStorage.setItem('elalfey_trial_start', trialStart);
-        const user = auth.currentUser;
-        if (user) db.collection('users').doc(user.uid).update({ trialStart: trialStart });
+    // 1. التحقق من تسجيل الدخول أولاً (منع الزوار)
+    if (!auth.currentUser) {
+        showToast('⚠️ يرجى إنشاء حساب مجاني أو تسجيل الدخول أولاً!', 'error');
+        const authModal = document.getElementById('authModal');
+        if (authModal) authModal.style.display = 'flex';
+        return;
     }
 
-    const daysElapsed = (Date.now() - parseInt(trialStart)) / (1000 * 60 * 60 * 24);
-    const daysLeft = Math.ceil(7 - daysElapsed);
+    // 2. التحقق من صلاحية الاشتراك أو الفترة التجريبية في السحابة
+    let expiry = localStorage.getItem('elalfey_vip_expiry');
+    let isVIP = false;
+    
+    if (expiry === 'lifetime') {
+        isVIP = true;
+    } else if (expiry && parseInt(expiry) > Date.now()) {
+        isVIP = true;
+    }
 
-    if (daysLeft > 0) {
-        showToast(`أنت تستخدم الفترة التجريبية المفتوحة (متبقي ${daysLeft} أيام)`, 'info');
-        proceedWithAction(actionType, param);
+    // 3. السماح أو الرفض
+    if (isVIP) { 
+        proceedWithAction(actionType, param); 
+        return; 
     } else {
         pendingAction = actionType;
         pendingActionParam = param;
-        document.getElementById('vipModalText').innerText = "لقد انتهت فترة الـ 7 أيام التجريبية المجانية لإنشاء وتصدير الأسئلة. يرجى إدخال كود التفعيل المخصص لترقية حسابك الآن.";
+        document.getElementById('vipModalText').innerText = "لقد انتهت فترة الـ 7 أيام التجريبية المجانية لحسابك. يرجى إدخال كود التفعيل للاستمرار.";
         document.getElementById('vipModal').style.display = 'flex';
     }
 }
