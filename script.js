@@ -398,7 +398,9 @@ async function handleSignupCloud() {
         await auth.signOut();
 
         setTimeout(() => {
-            showToast('✅ تم إنشاء الحساب! افحص بريدك الآن (Inbox أو Spam) واضغط على الرابط.', 'success');
+            //showToast('✅ تم إنشاء الحساب! افحص بريدك الآن (Inbox أو Spam) واضغط على الرابط.', 'success');
+            // قم بتغيير هذه الرسالة فقط
+showToast('🚀 الكود الجديد يعمل! اذهب لبريدك الآن واضغط على الرابط.', 'success');
         }, 2000);
         
         document.getElementById('passwordInput').value = '';
