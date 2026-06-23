@@ -361,28 +361,33 @@ async function handleSignupCloud() {
     try {
         showToast('جاري التحقق من الجهاز...', 'info');
 
-        // 1. الدرع الأول: فحص بصمة الجهاز لمنع تكرار التسجيل من نفس المتصفح
         const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
         const deviceDoc = await deviceRegRef.get();
         
         if (deviceDoc.exists) {
-            return showToast('عذراً، لقد قمت بإنشاء حساب من هذا الجهاز مسبقاً! كل جهاز مسموح له بحساب واحد فقط.', 'error');
+            return showToast('عذراً، لقد قمت بإنشاء حساب من هذا الجهاز مسبقاً!', 'error');
         }
 
-        showToast('جاري إنشاء الحساب...', 'info');
+        showToast('جاري إنشاء الحساب السحابي...', 'info');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
-        // 2. الدرع الثاني: إرسال رابط التفعيل إجبارياً
-        await cred.user.sendEmailVerification();
+        // ==========================================
+        // تجربة الإرسال مع رسالة تأكيد للنجاح أو الفشل
+        try {
+            await cred.user.sendEmailVerification();
+            showToast('📩 تم إصدار أمر إرسال رسالة التفعيل بنجاح من فايربيز!', 'success');
+        } catch (emailError) {
+            showToast('⚠️ خطأ في إرسال رسالة التفعيل: ' + emailError.message, 'error');
+            console.error(emailError);
+        }
+        // ==========================================
 
-        // 3. تسجيل بصمة الجهاز لمنع استخدامها مجدداً
         await deviceRegRef.set({
             email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 4. حفظ بيانات المستخدم في السحابة
         await db.collection('users').doc(cred.user.uid).set({
             email: email,
             devices: [localDeviceId],
@@ -390,10 +395,11 @@ async function handleSignupCloud() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 5. تسجيل خروج المستخدم فوراً لنجبره على الذهاب للبريد وتفعيل الحساب
         await auth.signOut();
 
-        showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
+        setTimeout(() => {
+            showToast('✅ تم إنشاء الحساب! افحص بريدك الآن (Inbox أو Spam) واضغط على الرابط.', 'success');
+        }, 2000);
         
         document.getElementById('passwordInput').value = '';
         document.getElementById('authModal').style.display = 'none';
@@ -402,11 +408,10 @@ async function handleSignupCloud() {
         if (e.code === 'auth/email-already-in-use') {
             showToast('هذا البريد الإلكتروني مسجل لدينا بالفعل!', 'error');
         } else {
-            showToast('خطأ: ' + e.message, 'error');
+            showToast('خطأ عام: ' + e.message, 'error');
         }
     }
-}
-
+} 
 // 🛑 دالة الخروج المدمرة (تمحو كل شيء)
 async function handleLogoutCloud() {
     try {
