@@ -323,6 +323,7 @@ auth.onAuthStateChanged(async (user) => {
         localStorage.removeItem('elalfey_vip_expiry');
     }
 });
+
 async function handleLoginCloud() {
     const email = document.getElementById('emailInput').value.trim();
     const pass = document.getElementById('passwordInput').value.trim();
@@ -333,23 +334,17 @@ async function handleLoginCloud() {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.signInWithEmailAndPassword(email, pass);
         
-        // =========================================================
-        // حارس البوابة: التحقق مما إذا كان قد ضغط على رابط التفعيل في بريده
-        // =========================================================
+        // 🛡️ إعادة تفعيل حارس البوابة: التحقق من ضغط الطالب على الرابط
         if (!cred.user.emailVerified) {
-            // إذا لم يفعل، نطرده ونطلب منه التفعيل
             await auth.signOut();
             return showToast('⚠️ حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل أولاً.', 'error');
         }
 
         showToast('تم تسجيل الدخول بنجاح!', 'success');
-        
-        // إغلاق نافذة تسجيل الدخول بعد النجاح
         document.getElementById('authModal').style.display = 'none';
         document.getElementById('passwordInput').value = '';
-
     } catch (e) {
-        showToast('بيانات الدخول غير صحيحة أو الحساب غير موجود', 'error');
+        showToast('بيانات الدخول غير صحيحة', 'error');
     }
 }
 
@@ -359,46 +354,44 @@ async function handleSignupCloud() {
     if (!email || !pass) return showToast('يرجى ملء البيانات أولاً', 'error');
 
     try {
-        showToast('جاري التحقق من الجهاز...', 'info');
+        showToast('جاري التحقق من صلاحية الجهاز...', 'info');
 
-        // 1. الدرع الأول: فحص بصمة الجهاز لمنع تكرار التسجيل من نفس المتصفح
         const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
         const deviceDoc = await deviceRegRef.get();
-        
         if (deviceDoc.exists) {
             return showToast('عذراً، لقد قمت بإنشاء حساب من هذا الجهاز مسبقاً! كل جهاز مسموح له بحساب واحد فقط.', 'error');
         }
 
-        showToast('جاري إنشاء الحساب السحابي...', 'info');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
-        // 2. الدرع الثاني: إرسال رابط التفعيل إجبارياً للبريد الإلكتروني
+        // 🛡️ إعادة تفعيل الدرع: إرسال رابط التفعيل إجبارياً
         try {
             await cred.user.sendEmailVerification();
-            showToast('📩 تم إصدار أمر إرسال رسالة التفعيل بنجاح من فايربيز!', 'success');
+            showToast('📩 تم إصدار أمر إرسال رسالة التفعيل بنجاح!', 'success');
         } catch (emailError) {
             showToast('⚠️ خطأ في إرسال رسالة التفعيل: ' + emailError.message, 'error');
-            console.error(emailError);
         }
 
-        // 3. حرق بصمة الجهاز وتسجيلها في قاعدة البيانات حتى لا يستخدمها مجدداً
+        // جلب تاريخ بداية الفترة التجريبية من الجهاز إن وجد
+        let existingTrial = localStorage.getItem('elalfey_trial_start');
+
+        await db.collection('users').doc(cred.user.uid).set({
+            email: email,
+            devices: [localDeviceId],
+            history: [],
+            trialStart: existingTrial ? existingTrial : null, 
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
         await deviceRegRef.set({
             email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 4. حفظ بيانات المستخدم في السحابة وتحديد الـ 7 أيام التجريبية
-        await db.collection('users').doc(cred.user.uid).set({
-            email: email,
-            devices: [localDeviceId],
-            history: [],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // 5. طرد المستخدم فوراً حتى يذهب للبريد ويفعل الحساب
+        // 🛡️ إعادة تفعيل نظام الطرد لحين التفعيل
         await auth.signOut();
-
+        
         setTimeout(() => {
             showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
         }, 2000);
@@ -408,9 +401,9 @@ async function handleSignupCloud() {
 
     } catch (e) {
         if (e.code === 'auth/email-already-in-use') {
-            showToast('هذا البريد الإلكتروني مسجل لدينا بالفعل!', 'error');
+            showToast('هذا البريد الإلكتروني مسجل لدينا بالفعل! يرجى تسجيل الدخول.', 'error');
         } else {
-            showToast('خطأ عام: ' + e.message, 'error');
+            showToast('خطأ: ' + e.message, 'error');
         }
     }
 }
@@ -452,32 +445,37 @@ async function handleLogoutCloud() {
     }
 }
 
-// 🛑 دالة حذف الحساب نهائياً
+
+// 🛑 دالة حذف الحساب نهائياً (مع نظام حرق الجهاز)
 async function deleteUserAccount() {
     const user = auth.currentUser;
     if (!user) return;
 
-    const confirmation = confirm("⚠️ تحذير نهائي: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح جميع بياناتك، وسيتم تحرير جهازك لتتمكن من التسجيل به كحساب جديد.");
+    // رسالة تنبيه صارمة تتناسب مع النظام الجديد
+    const confirmation = confirm("⚠️ تحذير نهائي: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح بياناتك نهائياً، ولن تتمكن من إنشاء حساب جديد من هذا الجهاز للأبد!");
 
     if (confirmation) {
         try {
             showToast('جاري مسح بياناتك وإغلاق الحساب...', 'info');
 
-            // تحرير الجهاز ليكون قادراً على التسجيل مرة أخرى
-            const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
-            await deviceRegRef.delete();
-
+            // 1. مسح بيانات المستخدم من قاعدة البيانات (users)
             await db.collection('users').doc(user.uid).delete();
+
+            // 💡 التعديل الأمني: تم إزالة أمر حذف (device_registry) 
+            // لكي تظل بصمة الجهاز مسجلة في النظام ويُمنع من التسجيل مجدداً.
+
+            // 2. حذف الحساب من نظام المصادقة (Auth) ليصبح الإيميل حراً
             await user.delete();
 
+            // 3. محو آثار المستخدم من المتصفح بالكامل
             handleLogoutCloud();
 
-            showToast('تم حذف حسابك وجميع بياناتك بنجاح', 'success');
+            showToast('✅ تم حذف الحساب بنجاح. هذا الجهاز محظور الآن من التسجيل مجدداً.', 'success');
         } catch (error) {
             if (error.code === 'auth/requires-recent-login') {
                 showToast('لدواعي أمنية، يرجى تسجيل الخروج ثم الدخول مرة أخرى قبل محاولة الحذف.', 'error');
             } else {
-                showToast('حدث خطأ أثناء حذف الحساب: ' + error.message, 'error');
+                showToast('❌ حدث خطأ أثناء حذف الحساب: ' + error.message, 'error');
             }
         }
     }
