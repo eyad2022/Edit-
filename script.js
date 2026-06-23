@@ -323,7 +323,6 @@ auth.onAuthStateChanged(async (user) => {
         localStorage.removeItem('elalfey_vip_expiry');
     }
 });
-
 async function handleLoginCloud() {
     const email = document.getElementById('emailInput').value.trim();
     const pass = document.getElementById('passwordInput').value.trim();
@@ -332,10 +331,25 @@ async function handleLoginCloud() {
     try {
         showToast('جاري تسجيل الدخول...', 'info');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        await auth.signInWithEmailAndPassword(email, pass);
+        const cred = await auth.signInWithEmailAndPassword(email, pass);
+        
+        // =========================================================
+        // حارس البوابة: التحقق مما إذا كان قد ضغط على رابط التفعيل في بريده
+        // =========================================================
+        if (!cred.user.emailVerified) {
+            // إذا لم يفعل، نطرده ونطلب منه التفعيل
+            await auth.signOut();
+            return showToast('⚠️ حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل أولاً.', 'error');
+        }
+
         showToast('تم تسجيل الدخول بنجاح!', 'success');
+        
+        // إغلاق نافذة تسجيل الدخول بعد النجاح
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('passwordInput').value = '';
+
     } catch (e) {
-        showToast('بيانات الدخول غير صحيحة', 'error');
+        showToast('بيانات الدخول غير صحيحة أو الحساب غير موجود', 'error');
     }
 }
 
@@ -345,38 +359,51 @@ async function handleSignupCloud() {
     if (!email || !pass) return showToast('يرجى ملء البيانات أولاً', 'error');
 
     try {
-        showToast('جاري التحقق من صلاحية الجهاز...', 'info');
+        showToast('جاري التحقق من الجهاز...', 'info');
 
+        // 1. الدرع الأول: فحص بصمة الجهاز لمنع تكرار التسجيل من نفس المتصفح
         const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
         const deviceDoc = await deviceRegRef.get();
+        
         if (deviceDoc.exists) {
             return showToast('عذراً، لقد قمت بإنشاء حساب من هذا الجهاز مسبقاً! كل جهاز مسموح له بحساب واحد فقط.', 'error');
         }
 
+        showToast('جاري إنشاء الحساب...', 'info');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
-       // جلب تاريخ بداية الفترة التجريبية من الجهاز إن وجد
-let existingTrial = localStorage.getItem('elalfey_trial_start');
+        // 2. الدرع الثاني: إرسال رابط التفعيل إجبارياً
+        await cred.user.sendEmailVerification();
 
-await db.collection('users').doc(cred.user.uid).set({
-    email: email,
-    devices: [localDeviceId],
-    history: [],
-    // إضافة هذا السطر لحفظ الفترة التجريبية المستهلكة
-    trialStart: existingTrial ? existingTrial : null, 
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-});
-
+        // 3. تسجيل بصمة الجهاز لمنع استخدامها مجدداً
         await deviceRegRef.set({
             email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        showToast('تم إنشاء الحساب بنجاح!', 'success');
+        // 4. حفظ بيانات المستخدم في السحابة
+        await db.collection('users').doc(cred.user.uid).set({
+            email: email,
+            devices: [localDeviceId],
+            history: [],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 5. تسجيل خروج المستخدم فوراً لنجبره على الذهاب للبريد وتفعيل الحساب
+        await auth.signOut();
+
+        showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
+        
         document.getElementById('passwordInput').value = '';
+        document.getElementById('authModal').style.display = 'none';
+
     } catch (e) {
-        showToast(e.message, 'error');
+        if (e.code === 'auth/email-already-in-use') {
+            showToast('هذا البريد الإلكتروني مسجل لدينا بالفعل!', 'error');
+        } else {
+            showToast('خطأ: ' + e.message, 'error');
+        }
     }
 }
 
