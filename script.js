@@ -42,8 +42,47 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let localDeviceId = localStorage.getItem('elalfey_device_id') || Math.random().toString(36).substring(2, 15);
+// =====================================================================
+// 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب)
+// =====================================================================
+import { Device } from '@capacitor/device'; // تأكد من وجود هذا السطر في أعلى الملف
+
+async function generateDeviceFingerprint() {
+    // 1. محاولة الحصول على المعرف الحقيقي من نظام الأندرويد (الحماية المطلقة)
+    try {
+        const info = await Device.getId();
+        return "HW_UUID_" + info.identifier;
+    } catch (e) {
+        // 2. إذا لم نكن داخل تطبيق أندرويد، نستخدم البصمة الذكية التي صممتها
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 200; canvas.height = 50;
+            ctx.textBaseline = "top"; ctx.font = "14px 'Arial'";
+            ctx.fillStyle = "#f60"; ctx.fillRect(125,1,62,20);
+            ctx.fillStyle = "#069"; ctx.fillText("M&H Editor Pro", 2, 15);
+            const canvasData = canvas.toDataURL();
+
+            const screenData = window.screen.width + "x" + window.screen.height;
+            const rawString = canvasData + screenData + navigator.userAgent;
+
+            let hash = 0;
+            for (let i = 0; i < rawString.length; i++) {
+                hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return "WEB_FP_" + Math.abs(hash).toString(16);
+        } catch (err) {
+            // 3. خط الدفاع الأخير (عشوائي)
+            return "DEV_RND_" + Math.random().toString(36).substring(2, 15);
+        }
+    }
+}
+
+// استدعاء نظام البصمة بدلاً من التوليد العشوائي القديم
+let localDeviceId = localStorage.getItem('elalfey_device_id') || generateDeviceFingerprint();
 localStorage.setItem('elalfey_device_id', localDeviceId);
+// =====================================================================
 
 let currentMode = 'questions';
 let currentQuestionSystem = 'arabic';
