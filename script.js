@@ -45,7 +45,7 @@ const db = firebase.firestore();
 // =====================================================================
 // 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب)
 // =====================================================================
-import { Device } from '@capacitor/device'; // تأكد من وجود هذا السطر في أعلى الملف
+//import { Device } from '@capacitor/device'; // تأكد من وجود هذا السطر في أعلى الملف
 
 async function generateDeviceFingerprint() {
     // 1. محاولة الحصول على المعرف الحقيقي من نظام الأندرويد (الحماية المطلقة)
@@ -1557,7 +1557,11 @@ function buildQAndA_HTML(dataArray, pColor) {
         let qNumStr = q.num;
         let qDir = getDirection(q.text);
 
-        hN += `<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both;"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${q.text.replace(/\n/g, '<br>')}</div>`;
+        // --- التعديل الأول: فصل النقاط عن السؤال في نسخة الطالب ---
+        let studentQText = q.text.replace(/\n/g, '<br>');
+        studentQText = studentQText.replace(/(?:<br\s*\/?>)?\s*([\.\-_]{4,})/g, '<div style="display: block; width: 100%; word-break: break-all; margin-top: 8px; line-height: 1.2;">$1</div>');
+
+        hN += `<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both;"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${studentQText}</div>`;
         if (q.type === 'mcq') {
             hN += `<ul class="${lC}" dir="${qDir}" style="direction: ${qDir};">`;
             q.options.forEach(o => hN += `<li class="option-item" dir="${qDir}" style="display: flex; gap: 6px; text-align: ${qDir === 'rtl' ? 'right' : 'left'};"><span style="flex-shrink: 0;">(${o.l})</span> <span>${o.t}</span></li>`);
@@ -1588,13 +1592,17 @@ function buildQAndA_HTML(dataArray, pColor) {
                 aT = aT.replace(/(?:<br\s*\/?>)?\s*[\.\-_]{4,}/g, (match) => {
                     if (!replaced) {
                         replaced = true;
-                        return '<br>' + ansHtml;
+                        // --- التعديل الثاني: فصل الإجابة النموذجية في نسخة المعلم ---
+                        return '<div style="display: block; width: 100%; margin-top: 8px;">' + ansHtml + '</div>';
                     }
                     return '';
                 });
             } else {
-                aT += `<br><br><strong>الإجابة:</strong> ${ansHtml}`;
+                aT += `<div style="display: block; width: 100%; margin-top: 8px;"><strong>الإجابة:</strong> ${ansHtml}</div>`;
             }
+        } else {
+            // --- التعديل الثالث: فصل النقاط في نسخة المعلم إذا لم يكتب إجابة بعد ---
+            aT = aT.replace(/(?:<br\s*\/?>)?\s*([\.\-_]{4,})/g, '<div style="display: block; width: 100%; word-break: break-all; margin-top: 8px; line-height: 1.2;">$1</div>');
         }
 
         hA += `<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both; ${qM !== 'text' ? `border-right-color:${pColor};` : ''}"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${aT}</div>`;
@@ -2515,19 +2523,40 @@ function runSmartOnboardingTour() {
 
     let currentStep = 0;
 
+    const clickBlocker = document.createElement('div');
+    clickBlocker.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999990; background:transparent; cursor:not-allowed;';
+
     const highlightBox = document.createElement('div');
     highlightBox.style.cssText = 'position:absolute; border:3px dashed #00f2fe; border-radius:12px; transition:all 0.4s ease; pointer-events:none; z-index:9999991; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.85);';
 
     const tooltip = document.createElement('div');
     tooltip.style.cssText = 'position:absolute; background:#ffffff; padding:20px; border-radius:15px; width:300px; box-shadow:0 15px 40px rgba(0,0,0,0.5); z-index:9999992; direction:rtl; transition:all 0.4s ease;';
 
+    document.body.appendChild(clickBlocker);
     document.body.appendChild(highlightBox);
     document.body.appendChild(tooltip);
+
+    function preventScroll(e) { e.preventDefault(); }
+    function preventKeyScroll(e) {
+        if(["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.code)) {
+            e.preventDefault();
+        }
+    }
+
+    window.addEventListener('wheel', preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    window.addEventListener('keydown', preventKeyScroll, { passive: false });
 
     function showStep(index) {
         if (index >= steps.length) {
             highlightBox.remove();
             tooltip.remove();
+            clickBlocker.remove();
+            
+            window.removeEventListener('wheel', preventScroll);
+            window.removeEventListener('touchmove', preventScroll);
+            window.removeEventListener('keydown', preventKeyScroll);
+            
             localStorage.setItem('elalfey_tour_completed', 'true');
             return;
         }
@@ -2554,12 +2583,29 @@ function runSmartOnboardingTour() {
             highlightBox.style.width = (rect.width + 20) + 'px';
             highlightBox.style.height = (rect.height + 20) + 'px';
 
-            let tooltipTop = rect.bottom + window.scrollY + 20;
             let tooltipLeft = rect.left + window.scrollX + (rect.width / 2) - 150;
+            let tooltipTop = rect.bottom + window.scrollY + 20;
 
+            // --- خوارزمية التموضع الذكي (Smart Positioning) ---
+            
+            // 1. الحفاظ على المربع ضمن عرض الشاشة
             if (tooltipLeft < 10) tooltipLeft = 10;
-            if (tooltipLeft + 300 > window.innerWidth) tooltipLeft = window.innerWidth - 310;
-            if (tooltipTop + 150 > document.body.scrollHeight) tooltipTop = rect.top + window.scrollY - 160;
+            if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 320;
+
+            // 2. الحفاظ على المربع ضمن طول الشاشة (حتى لو كان العنصر ضخماً)
+            let viewportBottom = window.scrollY + window.innerHeight;
+            let viewportTop = window.scrollY;
+
+            // إذا كان التولتيب سيختفي أسفل الشاشة
+            if (tooltipTop + 180 > viewportBottom) {
+                tooltipTop = rect.top + window.scrollY - 180; // ارفعه فوق العنصر
+                
+                // إذا كان رفعه فوق العنصر سيجعله يختفي أعلى الشاشة أيضاً
+                if (tooltipTop < viewportTop + 10) {
+                    // ضعه في منتصف الشاشة المرئية كحل نهائي ومضمون
+                    tooltipTop = window.scrollY + (window.innerHeight / 2) - 90;
+                }
+            }
 
             tooltip.style.top = tooltipTop + 'px';
             tooltip.style.left = tooltipLeft + 'px';
