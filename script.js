@@ -291,8 +291,14 @@ auth.onAuthStateChanged(async (user) => {
 
             // === 3. إظهار بيانات المستخدم في الواجهة ===
             document.getElementById('currentLoggedInUser').innerText = user.email;
-            document.getElementById('authSection').style.display = 'none';
             document.getElementById('userProfileSection').style.display = 'block';
+
+            // 🟢 التعديل الأول: إخفاء أزرار الضيوف وإظهار أيقونة "حسابي" بعد الدخول 🟢
+            const guestNav = document.getElementById('guestNavButtons');
+            const loggedInNav = document.getElementById('loggedInNav');
+            if (guestNav) guestNav.style.display = 'none';
+            if (loggedInNav) loggedInNav.style.display = 'block';
+            // ---------------------------------------------------------
 
             if (user.email === 'ayadmsd67@gmail.com') {
                 document.getElementById('adminPanelBtn').style.display = 'inline-block';
@@ -337,7 +343,7 @@ auth.onAuthStateChanged(async (user) => {
                         localStorage.removeItem('elalfey_vip_expiry');
                     }
 
-// الكود الجديد: طباعة تاريخ الانتهاء في الواجهة للطالب
+                    // الكود الخاص بطباعة تاريخ الانتهاء في الواجهة للطالب
                     const expireEl = document.getElementById('vipExpireDateText');
                     if (expireEl) {
                         if (liveData.vipExpiry === 'lifetime') {
@@ -371,10 +377,17 @@ auth.onAuthStateChanged(async (user) => {
             sessionListener();
             sessionListener = null;
         }
-        document.getElementById('authSection').style.display = 'block';
+        
         document.getElementById('userProfileSection').style.display = 'none';
         document.getElementById('adminPanelBtn').style.display = 'none';
         
+        // 🔴 التعديل الثاني: إظهار أزرار الضيوف وإخفاء أيقونة "حسابي" بعد الخروج 🔴
+        const guestNav = document.getElementById('guestNavButtons');
+        const loggedInNav = document.getElementById('loggedInNav');
+        if (guestNav) guestNav.style.display = 'flex';
+        if (loggedInNav) loggedInNav.style.display = 'none';
+        // ---------------------------------------------------------
+
         // مسح صلاحية الـ VIP من المتصفح عند الخروج
         localStorage.removeItem('elalfey_vip_expiry');
     }
