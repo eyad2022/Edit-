@@ -337,6 +337,23 @@ auth.onAuthStateChanged(async (user) => {
                         localStorage.removeItem('elalfey_vip_expiry');
                     }
 
+// الكود الجديد: طباعة تاريخ الانتهاء في الواجهة للطالب
+                    const expireEl = document.getElementById('vipExpireDateText');
+                    if (expireEl) {
+                        if (liveData.vipExpiry === 'lifetime') {
+                            expireEl.innerText = "⭐ اشتراكك: نسخة مدى الحياة (VIP)";
+                            expireEl.style.color = "#10b981";
+                        } else if (liveData.vipExpiry && liveData.vipExpiry !== 'expired') {
+                            let dateObj = new Date(liveData.vipExpiry);
+                            let readableDate = dateObj.toLocaleDateString('ar-EG') + ' الساعة ' + dateObj.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
+                            expireEl.innerText = "⏳ ينتهي اشتراكك في: " + readableDate;
+                            expireEl.style.color = "#10b981";
+                        } else {
+                            expireEl.innerText = "⚠️ انتهت فترة الاشتراك أو الـ 7 أيام المجانية";
+                            expireEl.style.color = "#ef4444"; 
+                        }
+                    }
+
                     let liveDevices = liveData.devices || [];
                     const countEl = document.getElementById('activeDevicesCount');
                     if (countEl) countEl.innerText = liveDevices.length;
@@ -363,9 +380,55 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
+// ==================================================
+// التحكم في نوافذ تسجيل الدخول وإنشاء الحساب
+// ==================================================
+function openLoginModal() {
+    document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('loginSection').style.display = 'block';
+    document.getElementById('signupSection').style.display = 'none';
+}
+
+function openSignupModal() {
+    document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('signupSection').style.display = 'block';
+}
+
+function togglePasswordVisibility(inputId, btnElement) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        btnElement.innerText = "🙈"; // تغيير الأيقونة عند الإظهار
+    } else {
+        input.type = "password";
+        btnElement.innerText = "👁️";
+    }
+}
+
+// دالة استعادة كلمة المرور
+async function handleResetPassword() {
+    const email = document.getElementById('loginEmailInput').value.trim();
+    if (!email) {
+        return showToast('يرجى كتابة بريدك الإلكتروني في خانة الإيميل أولاً، ثم اضغط على هل نسيت كلمة المرور', 'error');
+    }
+
+    try {
+        showToast('جاري إرسال رابط الاستعادة...', 'info');
+        await auth.sendPasswordResetEmail(email);
+        showToast('✅ تم إرسال رابط تغيير كلمة المرور إلى إيميلك بنجاح! راجع صندوق الوارد أو الـ Spam.', 'success');
+    } catch (e) {
+        showToast('❌ حدث خطأ، يرجى التأكد من أن البريد الإلكتروني مكتوب بشكل صحيح ومسجل لدينا.', 'error');
+    }
+}
+
+// ==================================================
+// دوال المصادقة السحابية المحدثة
+// ==================================================
 async function handleLoginCloud() {
-    const email = document.getElementById('emailInput').value.trim();
-    const pass = document.getElementById('passwordInput').value.trim();
+    const email = document.getElementById('loginEmailInput').value.trim();
+    const pass = document.getElementById('loginPasswordInput').value.trim();
+    
     if (!email || !pass) return showToast('يرجى ملء الحقول المطلوبة', 'error');
 
     try {
@@ -373,7 +436,6 @@ async function handleLoginCloud() {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.signInWithEmailAndPassword(email, pass);
         
-        // 🛡️ إعادة تفعيل حارس البوابة: التحقق من ضغط الطالب على الرابط
         if (!cred.user.emailVerified) {
             await auth.signOut();
             return showToast('⚠️ حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل أولاً.', 'error');
@@ -381,16 +443,20 @@ async function handleLoginCloud() {
 
         showToast('تم تسجيل الدخول بنجاح!', 'success');
         document.getElementById('authModal').style.display = 'none';
-        document.getElementById('passwordInput').value = '';
+        document.getElementById('loginPasswordInput').value = '';
     } catch (e) {
-        showToast('بيانات الدخول غير صحيحة', 'error');
+        showToast('بيانات الدخول غير صحيحة أو الحساب غير موجود', 'error');
     }
 }
 
 async function handleSignupCloud() {
-    const email = document.getElementById('emailInput').value.trim();
-    const pass = document.getElementById('passwordInput').value.trim();
-    if (!email || !pass) return showToast('يرجى ملء البيانات أولاً', 'error');
+    const name = document.getElementById('signupNameInput').value.trim();
+    const email = document.getElementById('signupEmailInput').value.trim();
+    const pass = document.getElementById('signupPasswordInput').value.trim();
+    const passConfirm = document.getElementById('signupConfirmPasswordInput').value.trim();
+
+    if (!name || !email || !pass || !passConfirm) return showToast('يرجى ملء جميع البيانات', 'error');
+    if (pass !== passConfirm) return showToast('❌ كلمتا المرور غير متطابقتين!', 'error');
 
     try {
         showToast('جاري التحقق من صلاحية الجهاز...', 'info');
@@ -404,7 +470,6 @@ async function handleSignupCloud() {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
-        // 🛡️ إعادة تفعيل الدرع: إرسال رابط التفعيل إجبارياً
         try {
             await cred.user.sendEmailVerification();
             showToast('📩 تم إصدار أمر إرسال رسالة التفعيل بنجاح!', 'success');
@@ -412,10 +477,10 @@ async function handleSignupCloud() {
             showToast('⚠️ خطأ في إرسال رسالة التفعيل: ' + emailError.message, 'error');
         }
 
-        // جلب تاريخ بداية الفترة التجريبية من الجهاز إن وجد
         let existingTrial = localStorage.getItem('elalfey_trial_start');
 
         await db.collection('users').doc(cred.user.uid).set({
+            name: name, // تم إضافة الاسم لقاعدة البيانات
             email: email,
             devices: [localDeviceId],
             history: [],
@@ -428,14 +493,15 @@ async function handleSignupCloud() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 🛡️ إعادة تفعيل نظام الطرد لحين التفعيل
         await auth.signOut();
         
         setTimeout(() => {
-            showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
+            showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
         }, 2000);
         
-        document.getElementById('passwordInput').value = '';
+        // تفريغ الحقول وإغلاق النافذة
+        document.getElementById('signupPasswordInput').value = '';
+        document.getElementById('signupConfirmPasswordInput').value = '';
         document.getElementById('authModal').style.display = 'none';
 
     } catch (e) {
@@ -446,6 +512,39 @@ async function handleSignupCloud() {
         }
     }
 }
+
+// ==================================================
+// تفعيل زر Enter لتسجيل الدخول وإنشاء الحساب
+// ==================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. تفعيل زر Enter في خانات تسجيل الدخول
+    const loginInputs = ['loginEmailInput', 'loginPasswordInput'];
+    loginInputs.forEach(id => {
+        const inputElement = document.getElementById(id);
+        if (inputElement) {
+            inputElement.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // منع السلوك الافتراضي للمتصفح
+                    handleLoginCloud(); // تشغيل دالة تسجيل الدخول
+                }
+            });
+        }
+    });
+
+    // 2. تفعيل زر Enter في خانات إنشاء الحساب
+    const signupInputs = ['signupNameInput', 'signupEmailInput', 'signupPasswordInput', 'signupConfirmPasswordInput'];
+    signupInputs.forEach(id => {
+        const inputElement = document.getElementById(id);
+        if (inputElement) {
+            inputElement.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleSignupCloud(); // تشغيل دالة إنشاء الحساب
+                }
+            });
+        }
+    });
+});
 // 🛑 دالة الخروج المدمرة (تمحو كل شيء)
 async function handleLogoutCloud() {
     try {
@@ -591,11 +690,22 @@ function restoreFromCloudHistory(idx) {
 }
 
 function requireVIP(actionType, param) {
-    // 1. التحقق من تسجيل الدخول أولاً (منع الزوار)
+    // 1. التحقق من تسجيل الدخول أولاً (منع الزوار غير المسجلين)
     if (!auth.currentUser) {
         showToast('⚠️ يرجى إنشاء حساب مجاني أو تسجيل الدخول أولاً!', 'error');
-        const authModal = document.getElementById('authModal');
-        if (authModal) authModal.style.display = 'flex';
+        
+        // --- التعديل هنا: استخدام دالة فتح نافذة تسجيل الدخول الجديدة ---
+        if (typeof openLoginModal === 'function') {
+            openLoginModal(); 
+        } else {
+            // كود احتياطي
+            const authModal = document.getElementById('authModal');
+            if (authModal) {
+                authModal.style.display = 'flex';
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('signupSection').style.display = 'none';
+            }
+        }
         return;
     }
 

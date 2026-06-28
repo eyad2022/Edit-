@@ -5,15 +5,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>المحرر الاحترافي الشامل - M&H</title>
-<meta name="description" content="منصة M&H Editor Pro الشاملة لتصميم وتنسيق الامتحانات والمستندات التعليمية. ابتكار أوراق البابل شيت (Bubble Sheet) الاحترافية، إنشاء بنوك الأسئلة، وتوليد اختبارات ذكية باستخدام مساعد الذكاء الاصطناعي مجاناً.">
-<meta name="keywords" content="M&H Editor Pro, بابل شيت, تصميم امتحانات, بنك الأسئلة, محرر اختبارات, MCQ, أسئلة مقالية, ذكاء اصطناعي تعليمي, تنسيق مستندات وورد, نماذج اختبارات جامعية, Bubble sheet maker" /> 
-<meta name="robots" content="index, follow" />
-<meta property="og:title" content="M&H Editor Pro | المحرر الاحترافي الشامل للامتحانات" />
-<meta property="og:description" content="قم بتصميم امتحاناتك، تنسيق أوراق البابل شيت، وتوليد الأسئلة الذكية في مكان واحد وبشكل احترافي متوافق مع معايير الجامعات." />
-<meta property="og:image" content="icon.png"> <meta property="og:url" content="https://editorpro-blush.vercel.app/" />
-<meta property="og:type" content="website" />
+  <meta name="description"
+    content="منصة M&H Editor Pro الشاملة لتصميم وتنسيق الامتحانات والمستندات التعليمية. ابتكار أوراق البابل شيت (Bubble Sheet) الاحترافية، إنشاء بنوك الأسئلة، وتوليد اختبارات ذكية باستخدام مساعد الذكاء الاصطناعي مجاناً.">
+  <meta name="keywords"
+    content="M&H Editor Pro, بابل شيت, تصميم امتحانات, بنك الأسئلة, محرر اختبارات, MCQ, أسئلة مقالية, ذكاء اصطناعي تعليمي, تنسيق مستندات وورد, نماذج اختبارات جامعية, Bubble sheet maker" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="M&H Editor Pro | المحرر الاحترافي الشامل للامتحانات" />
+  <meta property="og:description"
+    content="قم بتصميم امتحاناتك، تنسيق أوراق البابل شيت، وتوليد الأسئلة الذكية في مكان واحد وبشكل احترافي متوافق مع معايير الجامعات." />
+  <meta property="og:image" content="icon.png">
+  <meta property="og:url" content="https://editorpro-blush.vercel.app/" />
+  <meta property="og:type" content="website" />
 
-<meta name="google-site-verification" content="Vo4o3ZiK1YA8QamVVtArlJiCXuZ6oZsACXX55Oscwec" />
+  <meta name="google-site-verification" content="Vo4o3ZiK1YA8QamVVtArlJiCXuZ6oZsACXX55Oscwec" />
   <link
     href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Readex+Pro:wght@400;700&display=swap"
     rel="stylesheet" />
@@ -34,10 +38,8 @@
     <div class="nav-right" style="position: relative;">
       <!-- أزرار الضيوف (تختفي عند تسجيل الدخول) -->
       <div id="guestNavButtons" style="display: flex; gap: 12px;">
-        <button class="nav-btn btn-outline" onclick="document.getElementById('authModal').style.display='flex'">تسجيل
-          الدخول</button>
-        <button class="nav-btn btn-primary" onclick="document.getElementById('authModal').style.display='flex'">إنشاء
-          حساب</button>
+        <button class="nav-btn btn-outline" onclick="openLoginModal()">تسجيل الدخول</button>
+        <button class="nav-btn btn-primary" onclick="openSignupModal()">إنشاء حساب</button>
       </div>
 
       <!-- زر القائمة المنسدلة للحساب (يظهر تلقائياً بعد تسجيل الدخول) -->
@@ -60,6 +62,8 @@
               <span
                 style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">(الأجهزة
                 النشطة: <span id="activeDevicesCount">0</span> / 3)</span>
+              <div id="vipExpireDateText" style="color: #10b981; font-size: 13px; font-weight: bold; margin-top: 8px;">
+              </div>
             </div>
 
             <div
@@ -1061,40 +1065,87 @@
     </div>
   </div>
   <!-- نافذة تسجيل الدخول وإنشاء الحساب فقط -->
-  <div id="authModal" class="custom-modal">
-    <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
-      <div id="accountHistoryPanel">
-        <h3 style="color: var(--primary-color); margin-top: 0;">🔐 نظام الحسابات السحابي</h3>
-        <div id="authSection">
-          <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">قم بتسجيل الدخول لحفظ بياناتك في السحابة
-            ومزامنة تراخيص الـ VIP.</p>
-          <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px; text-align: right;">
-            <div style="background-color: #eef2ff; color: #4338ca; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 15px; border: 1px solid #c7d2fe; text-align: center; line-height: 1.5;">
-    💡 يرجى إدخال حساب بريد إلكتروني حقيقي وفعال، حيث ستصلك رسالة عليه لتأكيد وتفعيل الحساب.
-</div>
-            <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="emailInput"
-                placeholder="أدخل البريد الإلكتروني"></div>
-            <div class="form-group"><label>كلمة المرور</label><input type="password" id="passwordInput"
-                placeholder="******"></div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-              <button class="btn-tool" onclick="handleLoginCloud()"
-                style="flex: 1; justify-content: center; border-color: var(--primary-color); color: var(--primary-color);">تسجيل
-                الدخول</button>
-              <button class="btn-tool" onclick="handleSignupCloud()"
-                style="flex: 1; justify-content: center; background: var(--primary-color); color: white;">إنشاء
-                حساب</button>
-            </div>
+ <div id="authModal" class="custom-modal">
+  <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
+    
+    <div id="loginSection" style="display: none; text-align: right;">
+      <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">🔐 تسجيل الدخول</h3>
+      
+      <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="loginEmailInput" placeholder="أدخل البريد الإلكتروني">
+        </div>
+        
+        <div class="form-group">
+          <label>كلمة المرور</label>
+          <div class="password-wrapper">
+            <input type="password" id="loginPasswordInput" placeholder="******">
+            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPasswordInput', this)" title="إظهار/إخفاء الباسورد">👁️</button>
           </div>
         </div>
+        
+        <div style="text-align: left; margin-top: -10px;">
+          <a href="#" onclick="handleResetPassword()" style="color: var(--primary-color); font-size: 13px; text-decoration: underline; font-weight: bold;">هل نسيت كلمة المرور؟</a>
+        </div>
+
+        <button class="btn-tool" onclick="handleLoginCloud()" style="justify-content: center; background: var(--primary-color); color: white; padding: 12px; font-size: 16px;">تسجيل الدخول</button>
       </div>
-      <button onclick="document.getElementById('authModal').style.display='none'"
-      style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق</button>
-    <div style="background-color: #fef2f2; color: #b91c1c; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-top: 15px; border: 1px solid #fecaca; text-align: center;">
-    ⚠️ ملاحظة أمنية: يُسمح لكل جهاز بإنشاء حساب واحد فقط.
-</div>
+
+      <div style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: bold;">
+        ليس لديك حساب؟ <a href="#" onclick="openSignupModal()" style="color: var(--primary-color);">إنشاء حساب جديد</a>
+      </div>
     </div>
-    
+
+    <div id="signupSection" style="display: none; text-align: right;">
+      <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">✨ إنشاء حساب جديد</h3>
+      
+      <div style="background-color: #eef2ff; color: #4338ca; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 15px; border: 1px solid #c7d2fe; text-align: center;">
+        💡 يرجى إدخال حساب بريد إلكتروني حقيقي لتأكيد وتفعيل الحساب.
+      </div>
+
+      <div class="settings-grid" style="grid-template-columns: 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>الاسم الكامل</label>
+          <input type="text" id="signupNameInput" placeholder="أدخل اسمك أو اسم المستخدم">
+        </div>
+
+        <div class="form-group">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="signupEmailInput" placeholder="أدخل البريد الإلكتروني">
+        </div>
+        
+        <div class="form-group">
+          <label>كلمة المرور</label>
+          <div class="password-wrapper">
+            <input type="password" id="signupPasswordInput" placeholder="******">
+            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('signupPasswordInput', this)">👁️</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>تأكيد كلمة المرور</label>
+          <div class="password-wrapper">
+            <input type="password" id="signupConfirmPasswordInput" placeholder="أعد كتابة كلمة المرور">
+            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('signupConfirmPasswordInput', this)">👁️</button>
+          </div>
+        </div>
+
+        <button class="btn-tool" onclick="handleSignupCloud()" style="justify-content: center; border-color: var(--primary-color); color: var(--primary-color); padding: 12px; font-size: 16px;">إنشاء الحساب</button>
+      </div>
+
+      <div style="background-color: #fef2f2; color: #b91c1c; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-top: 15px; border: 1px solid #fecaca; text-align: center;">
+        ⚠️ ملاحظة أمنية: يُسمح لكل جهاز بإنشاء حساب واحد فقط.
+      </div>
+
+      <div style="text-align: center; margin-top: 15px; font-size: 14px; font-weight: bold;">
+        لديك حساب بالفعل؟ <a href="#" onclick="openLoginModal()" style="color: var(--primary-color);">تسجيل الدخول</a>
+      </div>
+    </div>
+
+    <button onclick="document.getElementById('authModal').style.display='none'" style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق النافذة</button>
   </div>
+</div>
 
   <div id="userProfileSection" style="display: none; text-align: right">
     <div style="
@@ -1228,7 +1279,8 @@
               font-size: 18px;
               display: block;
               margin-top: 5px;
-            "><a href="https://wa.me/+201155324374" target="_blank"><img style ="width: 80px;"   src="images.jpeg"  alt="" ></a></strong>
+            "><a href="https://wa.me/+201155324374" target="_blank"><img style="width: 80px;" src="images.jpeg"
+              alt=""></a></strong>
       </div>
     </div>
   </div>

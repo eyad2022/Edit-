@@ -107,7 +107,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0 30px;
-    z-index: 1050;
+    z-index: 99999;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
@@ -413,7 +413,7 @@ body.dark-mode .floating-panel .panel-header {
     flex-direction: column;
     gap: 5px;
     min-width: 200px;
-    z-index: 100;
+    z-index: 99999;
     animation: fadeInDown 0.2s ease-out;
 }
 
@@ -2005,3 +2005,37 @@ button.action-btn:hover {
          print-color-adjust: exact !important;
      }
  }
+
+ /* ========================================================
+   تنسيقات إظهار الباسورد (العين) في نافذة الدخول
+   ======================================================== */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-left: 45px; /* ترك مساحة للعين على اليسار في الواجهة العربية */
+}
+
+.toggle-password-btn {
+    position: absolute;
+    left: 10px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.toggle-password-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
