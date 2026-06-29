@@ -1065,87 +1065,101 @@
     </div>
   </div>
   <!-- نافذة تسجيل الدخول وإنشاء الحساب فقط -->
- <div id="authModal" class="custom-modal">
-  <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
-    
-    <div id="loginSection" style="display: none; text-align: right;">
-      <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">🔐 تسجيل الدخول</h3>
-      
-      <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px;">
-        <div class="form-group">
-          <label>البريد الإلكتروني</label>
-          <input type="email" id="loginEmailInput" placeholder="أدخل البريد الإلكتروني">
-        </div>
-        
-        <div class="form-group">
-          <label>كلمة المرور</label>
-          <div class="password-wrapper">
-            <input type="password" id="loginPasswordInput" placeholder="******">
-            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPasswordInput', this)" title="إظهار/إخفاء الباسورد">👁️</button>
+  <div id="authModal" class="custom-modal">
+    <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
+
+      <div id="loginSection" style="display: none; text-align: right;">
+        <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">🔐 تسجيل الدخول</h3>
+
+        <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px;">
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="loginEmailInput" placeholder="أدخل البريد الإلكتروني">
           </div>
-        </div>
-        
-        <div style="text-align: left; margin-top: -10px;">
-          <a href="#" onclick="handleResetPassword()" style="color: var(--primary-color); font-size: 13px; text-decoration: underline; font-weight: bold;">هل نسيت كلمة المرور؟</a>
+
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <div class="password-wrapper">
+              <input type="password" id="loginPasswordInput" placeholder="******">
+              <button type="button" class="toggle-password-btn"
+                onclick="togglePasswordVisibility('loginPasswordInput', this)" title="إظهار/إخفاء الباسورد">👁️</button>
+            </div>
+          </div>
+
+          <div style="text-align: left; margin-top: -10px;">
+            <a href="#" onclick="handleResetPassword()"
+              style="color: var(--primary-color); font-size: 13px; text-decoration: underline; font-weight: bold;">هل
+              نسيت كلمة المرور؟</a>
+          </div>
+
+          <button class="btn-tool" onclick="handleLoginCloud()"
+            style="justify-content: center; background: var(--primary-color); color: white; padding: 12px; font-size: 16px;">تسجيل
+            الدخول</button>
         </div>
 
-        <button class="btn-tool" onclick="handleLoginCloud()" style="justify-content: center; background: var(--primary-color); color: white; padding: 12px; font-size: 16px;">تسجيل الدخول</button>
+        <div style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: bold;">
+          ليس لديك حساب؟ <a href="#" onclick="openSignupModal()" style="color: var(--primary-color);">إنشاء حساب
+            جديد</a>
+        </div>
       </div>
 
-      <div style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: bold;">
-        ليس لديك حساب؟ <a href="#" onclick="openSignupModal()" style="color: var(--primary-color);">إنشاء حساب جديد</a>
+      <div id="signupSection" style="display: none; text-align: right;">
+        <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">✨ إنشاء حساب جديد</h3>
+
+        <div
+          style="background-color: #eef2ff; color: #4338ca; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 15px; border: 1px solid #c7d2fe; text-align: center;">
+          💡 يرجى إدخال حساب بريد إلكتروني حقيقي لتأكيد وتفعيل الحساب.
+        </div>
+
+        <div class="settings-grid" style="grid-template-columns: 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>الاسم الكامل</label>
+            <input type="text" id="signupNameInput" placeholder="أدخل اسمك أو اسم المستخدم">
+          </div>
+
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="signupEmailInput" placeholder="أدخل البريد الإلكتروني">
+          </div>
+
+          <div class="form-group">
+            <label>كلمة المرور</label>
+            <div class="password-wrapper">
+              <input type="password" id="signupPasswordInput" placeholder="******">
+              <button type="button" class="toggle-password-btn"
+                onclick="togglePasswordVisibility('signupPasswordInput', this)">👁️</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>تأكيد كلمة المرور</label>
+            <div class="password-wrapper">
+              <input type="password" id="signupConfirmPasswordInput" placeholder="أعد كتابة كلمة المرور">
+              <button type="button" class="toggle-password-btn"
+                onclick="togglePasswordVisibility('signupConfirmPasswordInput', this)">👁️</button>
+            </div>
+          </div>
+
+          <button class="btn-tool" onclick="handleSignupCloud()"
+            style="justify-content: center; border-color: var(--primary-color); color: var(--primary-color); padding: 12px; font-size: 16px;">إنشاء
+            الحساب</button>
+        </div>
+
+        <div
+          style="background-color: #fef2f2; color: #b91c1c; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-top: 15px; border: 1px solid #fecaca; text-align: center;">
+          ⚠️ ملاحظة أمنية: يُسمح لكل جهاز بإنشاء حساب واحد فقط.
+        </div>
+
+        <div style="text-align: center; margin-top: 15px; font-size: 14px; font-weight: bold;">
+          لديك حساب بالفعل؟ <a href="#" onclick="openLoginModal()" style="color: var(--primary-color);">تسجيل الدخول</a>
+        </div>
       </div>
+
+      <button onclick="document.getElementById('authModal').style.display='none'"
+        style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق
+        النافذة</button>
     </div>
-
-    <div id="signupSection" style="display: none; text-align: right;">
-      <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">✨ إنشاء حساب جديد</h3>
-      
-      <div style="background-color: #eef2ff; color: #4338ca; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 15px; border: 1px solid #c7d2fe; text-align: center;">
-        💡 يرجى إدخال حساب بريد إلكتروني حقيقي لتأكيد وتفعيل الحساب.
-      </div>
-
-      <div class="settings-grid" style="grid-template-columns: 1fr; gap: 12px;">
-        <div class="form-group">
-          <label>الاسم الكامل</label>
-          <input type="text" id="signupNameInput" placeholder="أدخل اسمك أو اسم المستخدم">
-        </div>
-
-        <div class="form-group">
-          <label>البريد الإلكتروني</label>
-          <input type="email" id="signupEmailInput" placeholder="أدخل البريد الإلكتروني">
-        </div>
-        
-        <div class="form-group">
-          <label>كلمة المرور</label>
-          <div class="password-wrapper">
-            <input type="password" id="signupPasswordInput" placeholder="******">
-            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('signupPasswordInput', this)">👁️</button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>تأكيد كلمة المرور</label>
-          <div class="password-wrapper">
-            <input type="password" id="signupConfirmPasswordInput" placeholder="أعد كتابة كلمة المرور">
-            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('signupConfirmPasswordInput', this)">👁️</button>
-          </div>
-        </div>
-
-        <button class="btn-tool" onclick="handleSignupCloud()" style="justify-content: center; border-color: var(--primary-color); color: var(--primary-color); padding: 12px; font-size: 16px;">إنشاء الحساب</button>
-      </div>
-
-      <div style="background-color: #fef2f2; color: #b91c1c; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-top: 15px; border: 1px solid #fecaca; text-align: center;">
-        ⚠️ ملاحظة أمنية: يُسمح لكل جهاز بإنشاء حساب واحد فقط.
-      </div>
-
-      <div style="text-align: center; margin-top: 15px; font-size: 14px; font-weight: bold;">
-        لديك حساب بالفعل؟ <a href="#" onclick="openLoginModal()" style="color: var(--primary-color);">تسجيل الدخول</a>
-      </div>
-    </div>
-
-    <button onclick="document.getElementById('authModal').style.display='none'" style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق النافذة</button>
   </div>
-</div>
 
   <div id="userProfileSection" style="display: none; text-align: right">
     <div style="
@@ -1274,13 +1288,29 @@
             font-size: 14px;
             color: #64748b;
           ">
-        للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر واتساب:<br /><strong style="
-              color: #10b981;
-              font-size: 18px;
-              display: block;
-              margin-top: 5px;
-            "><a href="https://wa.me/+201155324374" target="_blank"><img style="width: 80px;" src="images.jpeg"
-              alt=""></a></strong>
+       للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر:<br />
+        <div style="
+    display: flex;
+    justify-content: center; /* هذه الخاصية مسؤولة عن التوسيط الأفقي */
+    align-items: center;     /* هذه الخاصية لتوسيط العناصر عمودياً */
+    gap: 40px;               /* المسافة بين الأيقونات */
+    margin-top: 15px;
+">
+          <!-- أيقونة واتساب -->
+          <a href="https://wa.me/+201155324374" target="_blank">
+            <img style="width: 80px;" src="images.jpeg" alt="واتساب">
+          </a>
+
+          <!-- أيقونة تيليجرام -->
+          <a href="https://t.me/+201155324374" target="_blank">
+            <img style="width: 50px;" src="Telegram_logo.svg.png" alt="تيليجرام">
+          </a>
+
+          <!-- أيقونة ماسنجر -->
+          <a href="https://m.me/+201155324374" target="_blank">
+            <img style="width: 50px;" src="images.png" alt="ماسنجر">
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -1626,6 +1656,7 @@
       }
     });
   </script>
+
 </body>
 
 </html>
