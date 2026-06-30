@@ -1549,61 +1549,75 @@ button.action-btn:hover {
         font-size: 13px;
     }
 
-/* 1. تحديث حاوية الأزرار */
+/* 1. الحاوية: ترتيب الأزرار كشبكة من الأيقونات بجوار بعضها */
 .action-buttons {
-    display: flex; /* تأكد من وجود هذه الخاصية إذا لم تكن موجودة في مكان آخر */
-    flex-direction: column;
-    /* قمت بزيادة المسافة قليلاً من 12px إلى 20px لترك مساحة لظل الأزرار وحركتها */
-    gap: 20px; 
+    display: flex;
+    flex-wrap: wrap; /* يسمح بنزول الأزرار لسطر جديد إذا ضاقت الشاشة */
+    justify-content: center; /* توسيط شبكة الأزرار */
+    gap: 20px;
 }
 
-/* 2. تحديث كلاس الزر */
+/* 2. تحويل الزر إلى شكل "أيقونة / بطاقة" مربعة */
 button.action-btn {
-    /* --- أكوادك القديمة (الاحتفاظ بها مهم للحجم) --- */
-    width: 100% !important;
-    flex: 1 1 100% !important;
-    padding: 15px;
+    /* --- التحكم في الحجم لإلغاء المستطيل القديم --- */
+    width: 160px !important;    /* عرض البطاقة */
+    min-height: 150px !important; /* طول البطاقة (استخدمنا min-height تحسباً للنصوص الطويلة) */
+    flex: none !important;
     
-    /* --- التعديلات الجديدة (للشكل وتوسيط النص والأيقونة) --- */
+    /* --- الترتيب الداخلي (الإيموجي فوق والنص تحته) --- */
     display: flex;
+    flex-direction: column; 
     justify-content: center;
     align-items: center;
-    gap: 15px;
+    gap: 12px; /* المسافة بين الإيموجي والنص */
+    
+    /* --- الشكل والتنسيق --- */
+    padding: 15px !important;
     border: none;
-    border-radius: 15px; /* حواف دائرية */
+    border-radius: 25px !important; /* حواف دائرية واضحة تشبه أيقونات التطبيقات */
     color: white;
     font-weight: bold;
-    font-size: 16px; /* يمكنك تعديل الحجم حسب رغبتك */
+    font-size: 14px !important; 
+    text-align: center; /* توسيط النص الداخلي */
+    line-height: 1.4;
     cursor: pointer;
     
-    /* --- السحر هنا: تأثير الطفو (الظل والحركة) --- */
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.15);
+    /* --- السحر: الظل وحركة الطفو --- */
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
     animation: floating 3s ease-in-out infinite;
     transition: all 0.3s ease;
 }
 
-/* 3. إضافة تأثير عند تمرير الماوس (Hover) */
+/* 3. تكبير حجم الإيموجي ليصبح هو العنصر البارز في الأيقونة */
+button.action-btn .icon,
+button.action-btn i {
+    font-size: 40px !important; /* تكبير الرمز */
+    margin-bottom: 5px;
+}
+
+/* 4. التأثير عند تمرير الماوس */
 button.action-btn:hover {
-    animation-play-state: paused; /* إيقاف الحركة مؤقتاً */
-    transform: translateY(-10px) scale(1.02); /* رفع الزر للأعلى وتكبيره قليلاً */
-    box-shadow: 0px 15px 25px rgba(0, 0, 0, 0.25); /* زيادة الظل */
+    animation-play-state: paused;
+    transform: translateY(-10px) scale(1.05); /* يرتفع ويكبر قليلاً */
+    box-shadow: 0px 15px 25px rgba(0, 0, 0, 0.25);
     filter: brightness(1.1);
 }
 
-/* 4. تعريف حركة الطفو الأساسية (يمكنك وضعها أسفل الكود السابق) */
+/* 5. حركة الطفو الأساسية */
 @keyframes floating {
     0% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
     100% { transform: translateY(0); }
 }
 
-/* 5. تأخير الحركة لكل زر ليبدو الطفو متدرجاً بشكل جميل (اختياري) */
+/* 6. تأخير الحركة لكل زر (اختياري لجمالية أكثر) */
 button.action-btn:nth-child(1) { animation-delay: 0.0s; }
 button.action-btn:nth-child(2) { animation-delay: 0.2s; }
 button.action-btn:nth-child(3) { animation-delay: 0.4s; }
 button.action-btn:nth-child(4) { animation-delay: 0.6s; }
 button.action-btn:nth-child(5) { animation-delay: 0.8s; }
 button.action-btn:nth-child(6) { animation-delay: 1.0s; }
+
 
 
     .editor-area-wrapper {
