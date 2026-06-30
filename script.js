@@ -224,9 +224,20 @@ function getEditorText(id) {
     let finalStr = '';
 
     function traverse(node) {
-        if (node.nodeType === 3) finalStr += node.nodeValue;
-        else if (node.nodeName === 'IMG') finalStr += '\n' + node.outerHTML + '\n';
-        else node.childNodes.forEach(traverse);
+        if (node.nodeType === 3) {
+            finalStr += node.nodeValue;
+        } 
+        else if (node.nodeName === 'IMG') {
+            finalStr += '\n' + node.outerHTML + '\n';
+        }
+        // 👇 هذا هو التعديل الجديد: إجبار النظام على الاحتفاظ بالجداول وعدم تدميرها
+        else if (node.nodeName === 'TABLE') {
+            // نقوم بإزالة الأسطر الجديدة من كود الجدول لكي يقرأه النظام ككتلة واحدة ضمن السؤال
+            finalStr += '\n' + node.outerHTML.replace(/\n/g, '').replace(/\r/g, '') + '\n';
+        } 
+        else {
+            node.childNodes.forEach(traverse);
+        }
     }
     traverse(temp);
     return finalStr.replace(/\n\n+/g, '\n').trim();
