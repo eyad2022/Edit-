@@ -1312,10 +1312,12 @@ function insertQuestionTemplate(t) {
     document.execCommand('insertHTML', false, html);
 }
 
-function smartFormatAndClean() {
-    syncTextToDatabase();
-    let qP = getRawPreamble('questionsInput');
+function smartFormatAndClean(skipSync = false) {
+    if (!skipSync) {
+        syncTextToDatabase();
+    }
 
+    let qP = getRawPreamble('questionsInput');
     let qT = qP;
     let aT = "<div class='ans-key-heading' style='font-size: 16px; font-weight: bold; color: var(--primary-color);'>مفتاح الإجابات:</div>";
     let cType = '';
@@ -1365,9 +1367,11 @@ function smartFormatAndClean() {
 
     document.getElementById('questionsInput').innerHTML = qT;
     document.getElementById('answersInput').innerHTML = aT;
-    showToast('تم التنسيق الذكي وتوقع الإجابات بنجاح');
+    
+    if (!skipSync) {
+        showToast('تم التنسيق الذكي وتوقع الإجابات بنجاح');
+    }
 }
-
 function shuffleQuestions() {
     if (!confirm('سيتم خلط ترتيب مفردات الأسئلة، هل تود المتابعة؟')) return;
     syncTextToDatabase();
@@ -1558,6 +1562,11 @@ function insertImageToQuestion(e) {
                 const imgHTML = `<br><img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`;
                 document.getElementById('questionsInput').focus();
                 document.execCommand('insertHTML', false, imgHTML);
+                
+                // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
+                syncTextToDatabase();
+                autoSaveData();
+                // -------------------------------------------------------------
             };
             i.src = ev.target.result;
         };
@@ -1579,6 +1588,11 @@ function insertImage(e) {
                 c.height = i.height * scale;
                 c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
                 document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`);
+                
+                // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
+                syncTextToDatabase();
+                autoSaveData();
+                // -------------------------------------------------------------
             };
             i.src = ev.target.result;
         };
@@ -2882,4 +2896,51 @@ function getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement)
     let tfHtml = renderSection(tfTitle, 1, 50, 4, tfLetters);
 
     return topSection + mcqHtml + tfHtml;
+}
+function exportQuestionsToJSON() {
+    if (questionsDatabase.length === 0) {
+        showToast('لا توجد أسئلة للتصدير', 'error');
+        return;
+    }
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(questionsDatabase, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "MH_Bank_" + Date.now() + ".json");
+    
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    showToast('تم تصدير بنك الأسئلة بنجاح', 'success');
+}
+function importQuestionsFromJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            if (Array.isArray(importedData)) {
+                // 1. وضع البيانات المستوردة في الذاكرة
+                questionsDatabase = importedData;
+                
+                // 2. استدعاء التنسيق الذكي مع تمرير (true) لمنعه من مسح البيانات
+                smartFormatAndClean(true);
+                
+                // 3. حفظ البيانات في المتصفح حتى لا تختفي إذا قام المستخدم بعمل تحديث للصفحة
+                autoSaveData();
+                
+                showToast('تم استيراد وعرض بنك الأسئلة بنجاح', 'success');
+            } else {
+                showToast('تنسيق الملف غير صحيح', 'error');
+            }
+        } catch (error) {
+            showToast('خطأ في قراءة الملف', 'error');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; 
 }

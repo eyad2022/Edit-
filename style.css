@@ -801,34 +801,33 @@ input[type="color"] {
 }
 
 .action-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 15px;
-    flex-wrap: wrap;
     width: 100%;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
 button.action-btn {
-    flex: 1 1 calc(25% - 15px);
+    width: 100%;
     color: white;
     border: none;
-    padding: 20px;
+    padding: 15px;
     font-size: 16px;
     font-weight: 900;
     font-family: inherit;
-    border-radius: 16px;
+    border-radius: 12px;
     cursor: pointer;
     transition: 0.3s;
-    text-align: center;
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn i {
-    font-size: 26px;
+    font-size: 24px;
     font-style: normal;
 }
 
@@ -846,13 +845,19 @@ button.action-btn {
 
 .btn-pdf-multi {
     background: linear-gradient(135deg, #10b981, #059669);
-    flex: 1 1 100% !important;
 }
 
 .btn-pdf-general {
     background: linear-gradient(135deg, #10b981, #059669);
-    flex: 1 1 100% !important;
     font-size: 20px !important;
+}
+
+.btn-json-export {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.btn-json-import {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
 }
 
 button.action-btn:hover {

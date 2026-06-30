@@ -665,6 +665,15 @@
       <button class="action-btn btn-pdf-multi" onclick="requireVIP('multi', null)">
         <i>🔀</i> توليد نماذج متعددة
       </button>
+           <button class="action-btn btn-pdf-multi" style="background: linear-gradient(135deg, #f59e0b, #d97706); flex: 1 1 100% !important;" onclick="exportQuestionsToJSON()">
+  <i>💾</i> تصدير بنك الأسئلة (JSON)
+</button>
+<input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importQuestionsFromJSON(event)">
+
+<button class="action-btn btn-pdf-multi" style="background: linear-gradient(135deg, #10b981, #059669); flex: 1 1 100% !important;" onclick="document.getElementById('importJsonInput').click()">
+  <i>📥</i> استيراد بنك الأسئلة (JSON)
+</button>
+
     </div>
 
     <div class="action-buttons" id="textActionButtons" style="display: none">
