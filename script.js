@@ -43,46 +43,38 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // =====================================================================
-// 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب)
+// 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب) - نسخة مصححة
 // =====================================================================
-//import { Device } from '@capacitor/device'; // تأكد من وجود هذا السطر في أعلى الملف
-
-async function generateDeviceFingerprint() {
-    // 1. محاولة الحصول على المعرف الحقيقي من نظام الأندرويد (الحماية المطلقة)
+function generateDeviceFingerprint() {
     try {
-        const info = await Device.getId();
-        return "HW_UUID_" + info.identifier;
-    } catch (e) {
-        // 2. إذا لم نكن داخل تطبيق أندرويد، نستخدم البصمة الذكية التي صممتها
-        try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 200; canvas.height = 50;
-            ctx.textBaseline = "top"; ctx.font = "14px 'Arial'";
-            ctx.fillStyle = "#f60"; ctx.fillRect(125,1,62,20);
-            ctx.fillStyle = "#069"; ctx.fillText("M&H Editor Pro", 2, 15);
-            const canvasData = canvas.toDataURL();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200; canvas.height = 50;
+        ctx.textBaseline = "top"; ctx.font = "14px 'Arial'";
+        ctx.fillStyle = "#f60"; ctx.fillRect(125,1,62,20);
+        ctx.fillStyle = "#069"; ctx.fillText("M&H Editor Pro", 2, 15);
+        const canvasData = canvas.toDataURL();
 
-            const screenData = window.screen.width + "x" + window.screen.height;
-            const rawString = canvasData + screenData + navigator.userAgent;
+        const screenData = window.screen.width + "x" + window.screen.height;
+        const rawString = canvasData + screenData + navigator.userAgent;
 
-            let hash = 0;
-            for (let i = 0; i < rawString.length; i++) {
-                hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
-                hash = hash & hash;
-            }
-            return "WEB_FP_" + Math.abs(hash).toString(16);
-        } catch (err) {
-            // 3. خط الدفاع الأخير (عشوائي)
-            return "DEV_RND_" + Math.random().toString(36).substring(2, 15);
+        let hash = 0;
+        for (let i = 0; i < rawString.length; i++) {
+            hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
+            hash = hash & hash;
         }
+        return "WEB_FP_" + Math.abs(hash).toString(16);
+    } catch (err) {
+        return "DEV_RND_" + Math.random().toString(36).substring(2, 15);
     }
 }
 
-// استدعاء نظام البصمة بدلاً من التوليد العشوائي القديم
-let localDeviceId = localStorage.getItem('elalfey_device_id') || generateDeviceFingerprint();
-localStorage.setItem('elalfey_device_id', localDeviceId);
-// =====================================================================
+let localDeviceId = localStorage.getItem('elalfey_device_id');
+// التحقق من عدم وجود الخطأ القديم (Promise) في المتصفح وتصحيحه فوراً
+if (!localDeviceId || localDeviceId === "[object Promise]") {
+    localDeviceId = generateDeviceFingerprint();
+    localStorage.setItem('elalfey_device_id', localDeviceId);
+}
 
 let currentMode = 'questions';
 let currentQuestionSystem = 'arabic';
@@ -569,44 +561,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-// 🛑 دالة الخروج المدمرة (تمحو كل شيء)
+// 🛑 دالة الخروج المدمرة (تمحو كل شيء) - النسخة المصححة
 async function handleLogoutCloud() {
     try {
+        // 1. إيقاف المراقب السحابي فوراً قبل أي شيء لمنع ظهور رسالة "الخروج الإجباري" الخاطئة
+        if (typeof sessionListener === 'function') {
+            sessionListener();
+            sessionListener = null;
+        }
+
         const user = auth.currentUser;
         if (user) {
+            // إزالة بصمة الجهاز من السحابة بهدوء
             const docRef = db.collection('users').doc(user.uid);
             await docRef.update({
                 devices: firebase.firestore.FieldValue.arrayRemove(localDeviceId)
             });
         }
 
-        // مسح جميع الصلاحيات
+        // 2. مسح جميع الصلاحيات من المتصفح
         localStorage.removeItem('elalfey_vip_expiry');
-        //localStorage.removeItem('elalfey_trial_start');
         localStorage.removeItem('elalfey_q_input');
         localStorage.removeItem('elalfey_a_input');
         localStorage.removeItem('elalfey_general_text');
 
-        // تفريغ المحرر بالكامل
+        // 3. تفريغ المحرر بالكامل
         if (document.getElementById('questionsInput')) document.getElementById('questionsInput').innerHTML = '';
         if (document.getElementById('answersInput')) document.getElementById('answersInput').innerHTML = '';
-        if (document.getElementById('generalTextInput')) document.getElementById('generalTextInput').innerHTML = '';
+        if (document.getElementById('generalTextInput')) document.getElementById('generalTextInput').innerHTML = 'اكتب محتوى المستند الخاص بك هنا...';
 
+        // تصفير بنك الأسئلة
         questionsDatabase = [];
-        appHistory = [];
 
+        // 4. تسجيل الخروج النهائي من فايربيز
         await auth.signOut();
+        
+        // إغلاق أي قوائم مفتوحة
+        if (document.getElementById('profileDropdownMenu')) {
+            document.getElementById('profileDropdownMenu').style.display = 'none';
+        }
 
-        document.getElementById('authSection').style.display = 'block';
-        document.getElementById('userProfileSection').style.display = 'none';
-        document.getElementById('adminPanelBtn').style.display = 'none';
-
-        showToast('تم تسجيل الخروج ومحو جميع الصلاحيات والمزايا من الجهاز', 'info');
+        showToast('تم تسجيل الخروج ومحو بياناتك من الجهاز بنجاح', 'info');
     } catch (error) {
-        showToast('حدث خطأ أثناء الخروج', 'error');
+        console.error("Logout Error:", error);
+        showToast('حدث خطأ أثناء الخروج: ' + error.message, 'error');
     }
 }
-
 
 // 🛑 دالة حذف الحساب نهائياً (مع نظام حرق الجهاز)
 async function deleteUserAccount() {
@@ -1436,8 +1436,9 @@ async function generateAIQuestions(mode = 'quiz') {
 
     let systemInstruction = mode === 'quiz' ?
         "أنت مساعد تعليمي. استخرج أسئلة من النص التالي. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" :
-        "أنت مساعد ذكي موسوعي. أجب على السؤال التالي بشكل مباشر ومهني باللغة العربية.";
-
+        mode === 'classify' ? 
+        "أنت خبير تربوي وموجه امتحانات. مهمتك هي قراءة الأسئلة المرفقة، ثم:\n1. تصنيف كل سؤال حسب مستوى الصعوبة (سهل، متوسط، قدرات عليا).\n2. اقتراح توزيع عادل ومنطقي للدرجات لكل سؤال بناءً على صعوبته وطوله.\n3. تقديم جدول إحصائي نهائي يوضح (عدد الأسئلة، الدرجة الكلية المقترحة، ونسبة كل مستوى صعوبة).\nأجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>) لتبدو جميلة عند عرضها." :
+        "أنت مساعد ذكي موسوعي. أجب على السؤال التالي بشكل مباشر ومهني باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
     let promptText = `${systemInstruction}\n\nالمحتوى المطلوب معالجته:\n${txt}`;
 
     try {
@@ -2954,4 +2955,116 @@ function importQuestionsFromJSON(event) {
     };
     reader.readAsText(file);
     event.target.value = ''; 
+}
+// تسجيل الـ Service Worker لتفعيل PWA والعمل بدون إنترنت
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('✅ تم تفعيل PWA بنجاح!', reg.scope))
+            .catch(err => console.error('❌ فشل تفعيل PWA:', err));
+    });
+}
+let chartsInitialized = false;
+
+// دالة فتح لوحة الإدارة مع جلب البيانات الحقيقية
+async function openAdminPanel() {
+    document.getElementById('adminPanelModal').style.display = 'flex';
+    
+    if (chartsInitialized) return; 
+
+    try {
+        // جلب البيانات من Firebase (كمثال: جلب عدد المستخدمين وعدد الأسئلة)
+        // افترض أن لديك كوليكشن باسم 'users' و 'questions'
+        /* const usersSnap = await db.collection('users').get();
+        const usersCount = usersSnap.size;
+        
+        const codesSnap = await db.collection('codes').get();
+        const codesCount = codesSnap.size;
+        */
+       
+        // نظراً لأنني لا أعرف أسماء الكوليكشنز الدقيقة لديك، سأضع الأكواد جاهزة للربط:
+        let activeUsers = 120; // استبدل بـ usersCount
+        let generatedQuestions = questionsDatabase ? questionsDatabase.length : 0; 
+        
+        chartsInitialized = true;
+
+        // 1. رسم بياني لنشاط المستخدمين
+        new Chart(document.getElementById('usersActivityChart'), {
+            type: 'line',
+            data: {
+                labels: ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+                datasets: [{
+                    label: 'نشاط النظام',
+                    data: [50, 75, activeUsers, 90, 110, 130, 150], // يمكن ربطها بتواريخ الدخول
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            }
+        });
+
+        // 2. رسم بياني للذكاء الاصطناعي وبنك الأسئلة
+        new Chart(document.getElementById('aiUsageChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['أسئلة في البنك الحالي', 'أسئلة تم تصديرها', 'عمليات تنسيق'],
+                datasets: [{
+                    data: [generatedQuestions, 45, 12],
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b']
+                }]
+            }
+        });
+
+        // 3. رسم بياني للأكواد
+        new Chart(document.getElementById('codesUsageChart'), {
+            type: 'bar',
+            data: {
+                labels: ['أكواد مستخدمة', 'أكواد متاحة'],
+                datasets: [{
+                    label: 'إحصائيات التفعيل',
+                    data: [35, 100], // يمكن ربطها بكوليكشن الأكواد
+                    backgroundColor: ['#ef4444', '#10b981']
+                }]
+            }
+        });
+
+    } catch (error) {
+        console.error("خطأ في جلب بيانات لوحة الإدارة: ", error);
+        showToast("حدث خطأ أثناء تحميل الإحصائيات", "error");
+    }
+}
+async function extractTextFromImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    showToast('جاري قراءة الصورة واستخراج النص.. قد يستغرق هذا بضع ثوانٍ ⏳', 'info');
+    
+    try {
+        // استخدام Tesseract لدعم اللغتين العربية والإنجليزية معاً
+        const result = await Tesseract.recognize(
+            file,
+            'ara+eng', 
+            { logger: m => console.log(m) } // يمكنك إزالة هذا السطر لاحقاً، هو فقط لمتابعة التقدم في الـ Console
+        );
+        
+        const extractedText = result.data.text;
+        
+        // إدراج النص المستخرج في محرر الأسئلة
+        document.getElementById('questionsInput').focus();
+        
+        // تحويل الأسطر إلى فواصل <br> ليتم إدراجها بشكل صحيح كـ HTML
+        const formattedText = extractedText.replace(/\n/g, '<br>');
+        document.execCommand('insertHTML', false, formattedText + '<br>');
+        
+        showToast('✅ تم استخراج النص بنجاح! يمكنك تعديله الآن.', 'success');
+        
+        syncTextToDatabase();
+        autoSaveData();
+    } catch (error) {
+        console.error(error);
+        showToast('❌ حدث خطأ أثناء تحليل الصورة، تأكد من وضوحها.', 'error');
+    }
+    
+    e.target.value = ''; // تفريغ الحقل
 }

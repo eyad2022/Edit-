@@ -1,10 +1,12 @@
 {
-  "name": "المحرر الاحترافي - EL-ALFEY",
+  "name": "M&H Editor Pro - المحرر الاحترافي",
   "short_name": "M&H Editor",
+  "description": "منصة شاملة لتصميم وتنسيق الامتحانات وأوراق البابل شيت",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4A00E0",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon.png",

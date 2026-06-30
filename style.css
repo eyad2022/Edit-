@@ -2119,3 +2119,46 @@ button.action-btn:hover {
     padding: 0 !important;
     background: transparent !important;
 }
+/* ========================================================
+   تحسينات الأجهزة اللوحية (التابلت والآيباد) 768px - 1024px
+   ======================================================== */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    /* تصغير الفراغات في الأزرار العائمة */
+    .action-buttons {
+        gap: 15px !important;
+    }
+    
+    /* تصغير الأزرار/البطاقات لتستوعب الشاشة عدداً أكبر بجوار بعض */
+    button.action-btn {
+        width: 130px !important;
+        min-height: 120px !important;
+        font-size: 13px !important;
+        padding: 10px !important;
+    }
+    
+    button.action-btn .icon, 
+    button.action-btn i {
+        font-size: 30px !important;
+    }
+
+    /* توسيع المحرر ليأخذ مساحة مريحة على التابلت */
+    .editor-container, 
+    .rich-textarea {
+        width: 100% !important;
+        padding: 15px !important;
+        font-size: 16px !important;
+    }
+
+    /* ضبط النوافذ المنبثقة (Modals) */
+    .modal-content, 
+    .auth-box {
+        width: 85% !important;
+        max-width: none !important;
+        padding: 20px !important;
+    }
+    
+    /* ضبط القوائم الجانبية (إن وجدت) */
+    .sidebar-menu {
+        width: 250px !important;
+    }
+}

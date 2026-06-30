@@ -23,13 +23,15 @@
     rel="stylesheet" />
   <link rel="icon" type="image/png" href="icon.png" />
   <link rel="stylesheet" href="style.css" />
-
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#6366f1">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/polyfill/3.104.0/polyfill.min.js"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 
 <body>
@@ -68,15 +70,18 @@
 
             <div
               style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--ui-border);">
-              <button id="adminPanelBtn" class="btn-tool btn-danger"
-                onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu')"
-                style="display: none; padding: 6px 12px; font-size: 12px;">⚙️ الإدارة</button>
+             <span id="adminPanelBtn" style="display: none;">
+    <button class="btn-tool btn-danger" onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu')" style="display: inline-flex; margin-left: 8px; padding: 6px 12px; font-size: 12px;">⚙️ الإدارة</button>
+    <button class="btn-tool" onclick="openAdminPanel(); closeCustomDropdown('profileDropdownMenu')" style="display: inline-flex; background: #6366f1; color: white; border-color: #4f46e5; padding: 6px 12px; font-size: 12px;">📊 الإحصائيات</button>
+</span>
+                
               <button class="btn-tool btn-danger"
                 onclick="handleLogoutCloud(); closeCustomDropdown('profileDropdownMenu')"
                 style="padding: 6px 12px; font-size: 12px;">🚪 خروج</button>
               <button class="btn-tool" onclick="deleteUserAccount(); closeCustomDropdown('profileDropdownMenu')"
                 style="background: #fee2e2; color: #b91c1c; border-color: #f87171; padding: 6px 12px; font-size: 12px;">🗑️
                 حذف الحساب</button>
+                
             </div>
 
             <h4 style="margin: 0 0 10px 0; font-weight: 900; color: var(--ui-text); font-size: 13px;">🗂️ سجل المستندات
@@ -114,6 +119,7 @@
     <button class="dock-item" onclick="toggleFloatingPanel('questionSettingsPanel')" title="التحكم في بنيوية الأسئلة">
       📝
     </button>
+    
     <div class="dock-divider"></div>
     <button class="dock-item" onclick="toggleFloatingPanel('compactBubblePanel')" title="نظام البابل شيت المضغوط">
       📄
@@ -351,6 +357,15 @@
                 ">
               📝 سؤال مقالي
             </button>
+            <button onclick="
+                  document.getElementById('ocrImageUpload').click();
+                  closeCustomDropdown('insertMenu');
+                ">
+              📄 استخراج نص من صورة (OCR)
+            </button>
+            <input type="file" id="ocrImageUpload" accept="image/*" style="display: none" onchange="extractTextFromImage(event)" />
+            
+            <div style="height: 1px; background: var(--ui-border); margin: 5px 0"></div>
             <div style="height: 1px; background: var(--ui-border); margin: 5px 0"></div>
             <button onclick="
                   document.getElementById('qImageUpload').click();
@@ -1551,6 +1566,18 @@
             ">
           ✨ توليد أسئلة
         </button>
+        <button onclick="generateAIQuestions('classify')" style="
+              background: linear-gradient(135deg, #f59e0b, #d97706);
+              color: white;
+              border: none;
+              padding: 12px 20px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: bold;
+              font-family: inherit;
+            ">
+          📊 تحليل وتوزيع الدرجات
+        </button>
         <button onclick="document.getElementById('aiModal').style.display = 'none'" style="
               background: #e2e8f0;
               color: #1e293b;
@@ -1665,7 +1692,28 @@
       }
     });
   </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<div id="adminPanelModal" class="modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center;">
+    <div class="modal-content admin-dashboard" style="background: white; width: 90%; max-width: 1000px; padding: 25px; border-radius: 20px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: var(--primary-color);">📊 لوحة تحكم الإدارة (Admin Panel)</h2>
+            <button onclick="document.getElementById('adminPanelModal').style.display='none'" style="background: red; color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer;">إغلاق ✖</button>
+        </div>
+        
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div class="stat-card" style="background: #f8fafc; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <canvas id="usersActivityChart"></canvas>
+            </div>
+            <div class="stat-card" style="background: #f8fafc; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <canvas id="aiUsageChart"></canvas>
+            </div>
+            <div class="stat-card" style="background: #f8fafc; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <canvas id="codesUsageChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>
