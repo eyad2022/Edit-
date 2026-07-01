@@ -800,35 +800,120 @@ input[type="color"] {
     border-color: var(--primary-color);
 }
 
+/* ========================================================
+   تنسيقات الأزرار (نظام البطاقات الطافية العصرية)
+   ======================================================== */
 .action-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
     width: 100%;
-    margin-top: 25px;
 }
 
 button.action-btn {
-    width: 100%;
-    color: white;
-    border: none;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 900;
-    font-family: inherit;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
+    width: 160px !important;
+    min-height: 150px !important;
+    flex: none !important;
+
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    gap: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    align-items: center;
+    gap: 12px;
+
+    padding: 15px !important;
+    border: none;
+    border-radius: 25px !important;
+    color: white;
+    font-weight: bold;
+    font-size: 14px !important;
+    text-align: center;
+    line-height: 1.4;
+    cursor: pointer;
+
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+    animation: floating 3s ease-in-out infinite;
+    transition: all 0.3s ease;
 }
 
-.action-btn i {
-    font-size: 24px;
-    font-style: normal;
+button.action-btn .icon,
+button.action-btn i {
+    font-size: 40px !important;
+    margin-bottom: 5px;
+    /* إضافة ظل خفيف للإيموجي لجعله بارزاً */
+    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+button.action-btn:hover {
+    animation-play-state: paused;
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0px 15px 25px rgba(0, 0, 0, 0.25);
+    filter: brightness(1.1);
+}
+
+@keyframes floating {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+button.action-btn:nth-child(1) {
+    animation-delay: 0.0s;
+}
+
+button.action-btn:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+button.action-btn:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+button.action-btn:nth-child(4) {
+    animation-delay: 0.6s;
+}
+
+button.action-btn:nth-child(5) {
+    animation-delay: 0.8s;
+}
+
+button.action-btn:nth-child(6) {
+    animation-delay: 1.0s;
+}
+
+/* ألوان الأزرار */
+.btn-pdf-student {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.btn-pdf-teacher {
+    background: linear-gradient(135deg, #ef4444, #e11d48);
+}
+
+.btn-pdf-both {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+}
+
+.btn-pdf-multi {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.btn-json-export {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.btn-json-import {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
 }
 
 .btn-pdf-student {
@@ -1549,16 +1634,25 @@ button.action-btn:hover {
         font-size: 13px;
     }
 
+
     .action-buttons {
-        flex-direction: column;
         gap: 12px;
+        /* تقليل المسافة بين البطاقات */
     }
 
     button.action-btn {
-        width: 100% !important;
-        flex: 1 1 100% !important;
-        padding: 15px;
+        width: calc(50% - 12px) !important;
+        /* جعل كل بطاقة تأخذ نصف الشاشة بالضبط */
+        min-height: 130px !important;
+        padding: 10px !important;
+        border-radius: 20px !important;
+        font-size: 13px !important;
     }
+
+    button.action-btn i {
+        font-size: 32px !important;
+    }
+
 
     .editor-area-wrapper {
         padding: 15px;
@@ -1654,200 +1748,200 @@ button.action-btn:hover {
 
 
 @media print {
-     @page {
-         margin: 0;
-         size: A4 portrait;
-     }
+    @page {
+        margin: 0;
+        size: A4 portrait;
+    }
 
-     body {
-         background-color: white !important;
-         color: black !important;
-         margin: 0;
-         padding: 0;
-     }
+    body {
+        background-color: white !important;
+        color: black !important;
+        margin: 0;
+        padding: 0;
+    }
 
-     .setup-container,
-     #toastContainer,
-     .custom-modal,
-     .word-sidebar,
-     #imageToolbar,
-     .print-warning-note {
-         display: none !important;
-     }
+    .setup-container,
+    #toastContainer,
+    .custom-modal,
+    .word-sidebar,
+    #imageToolbar,
+    .print-warning-note {
+        display: none !important;
+    }
 
-     #wordPrintModal {
-         display: block !important;
-         position: static !important;
-         background: transparent !important;
-         width: 100% !important;
-         height: auto !important;
-         overflow: visible !important;
-     }
+    #wordPrintModal {
+        display: block !important;
+        position: static !important;
+        background: transparent !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
 
-     .word-preview-area {
-         padding: 0 !important;
-         background: transparent !important;
-         display: block !important;
-         overflow: visible !important;
-     }
+    .word-preview-area {
+        padding: 0 !important;
+        background: transparent !important;
+        display: block !important;
+        overflow: visible !important;
+    }
 
-     .print-border-overlay {
-         display: var(--print-border-display, none) !important;
-         position: fixed;
-         top: 8mm;
-         left: 8mm;
-         right: 8mm;
-         bottom: 8mm;
-         border: var(--border-width) var(--border-style) var(--border-color) !important;
-         border-radius: var(--hdr-radius, 0) !important;
-         z-index: 9999;
-         pointer-events: none;
-     }
+    .print-border-overlay {
+        display: var(--print-border-display, none) !important;
+        position: fixed;
+        top: 8mm;
+        left: 8mm;
+        right: 8mm;
+        bottom: 8mm;
+        border: var(--border-width) var(--border-style) var(--border-color) !important;
+        border-radius: var(--hdr-radius, 0) !important;
+        z-index: 9999;
+        pointer-events: none;
+    }
 
-     .pdf-page {
-         min-height: 100vh !important;
-         height: auto !important;
-         padding: 0 15mm !important;
-         box-sizing: border-box;
-         margin: 0;
-         width: 100% !important;
-         border: none !important;
-         background-color: transparent !important;
-         transform: none !important;
-         box-shadow: none !important;
-         page-break-after: always;
-     }
+    .pdf-page {
+        min-height: 100vh !important;
+        height: auto !important;
+        padding: 0 15mm !important;
+        box-sizing: border-box;
+        margin: 0;
+        width: 100% !important;
+        border: none !important;
+        background-color: transparent !important;
+        transform: none !important;
+        box-shadow: none !important;
+        page-break-after: always;
+    }
 
-     .exam-header-print {
-         margin-bottom: 15px !important;
-         font-size: 14pt !important;
-         padding-bottom: 8px !important;
-     }
+    .exam-header-print {
+        margin-bottom: 15px !important;
+        font-size: 14pt !important;
+        padding-bottom: 8px !important;
+    }
 
-     .student-info-print {
-         padding: 10px 15px !important;
-         margin-bottom: 20px !important;
-         font-size: 13pt !important;
-         border-width: 1px !important;
-     }
+    .student-info-print {
+        padding: 10px 15px !important;
+        margin-bottom: 20px !important;
+        font-size: 13pt !important;
+        border-width: 1px !important;
+    }
 
-     .content-card {
-         page-break-inside: avoid !important;
-         break-inside: avoid !important;
-         display: block !important;
-         width: 100% !important;
-         padding: 12px 15px !important;
-         margin-bottom: 25px !important;
-         clear: both !important;
-         border-width: 1px !important;
-         border-right-width: 4px !important;
-     }
+    .content-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        display: block !important;
+        width: 100% !important;
+        padding: 12px 15px !important;
+        margin-bottom: 25px !important;
+        clear: both !important;
+        border-width: 1px !important;
+        border-right-width: 4px !important;
+    }
 
-     .content-card.mode-text {
-         padding: 0 !important;
-         margin-bottom: 8px !important;
-         border: none !important;
-         box-shadow: none !important;
-     }
+    .content-card.mode-text {
+        padding: 0 !important;
+        margin-bottom: 8px !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
 
-     .q-text {
-         font-size: 14pt !important;
-         margin-bottom: 10px !important;
-         line-height: 1.4 !important;
-     }
+    .q-text {
+        font-size: 14pt !important;
+        margin-bottom: 10px !important;
+        line-height: 1.4 !important;
+    }
 
-     .options-list.layout-row {
-         display: flex !important;
-         flex-direction: row !important;
-         flex-wrap: wrap !important;
-         justify-content: flex-start !important;
-         gap: 15px !important;
-         width: 100% !important;
-     }
+    .options-list.layout-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 15px !important;
+        width: 100% !important;
+    }
 
-     .options-list.layout-row .option-item {
-         flex: 1 1 auto !important;
-         width: auto !important;
-         max-width: 100% !important;
-         font-size: 12pt !important;
-         border: none !important;
-         background: transparent !important;
-         padding: 4px 6px !important;
-         margin: 0 !important;
-         white-space: normal !important;
-         text-align: start !important;
-     }
+    .options-list.layout-row .option-item {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        max-width: 100% !important;
+        font-size: 12pt !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 4px 6px !important;
+        margin: 0 !important;
+        white-space: normal !important;
+        text-align: start !important;
+    }
 
-     .options-list.layout-grid {
-         display: grid !important;
-         grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)) !important;
-         gap: 10px !important;
-     }
+    .options-list.layout-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)) !important;
+        gap: 10px !important;
+    }
 
-     .options-list.layout-grid .option-item {
-         width: 100% !important;
-         margin: 0 !important;
-         font-size: 12pt !important;
-         border: none !important;
-         background: transparent !important;
-         padding: 4px 6px !important;
-         text-align: start !important;
-     }
+    .options-list.layout-grid .option-item {
+        width: 100% !important;
+        margin: 0 !important;
+        font-size: 12pt !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 4px 6px !important;
+        text-align: start !important;
+    }
 
-     .options-list.layout-col {
-         display: flex !important;
-         flex-direction: column !important;
-         gap: 6px !important;
-     }
+    .options-list.layout-col {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
 
-     .options-list.layout-col .option-item {
-         width: 100% !important;
-         margin: 0 !important;
-         font-size: 12pt !important;
-         border: none !important;
-         background: transparent !important;
-         padding: 4px 6px !important;
-         text-align: start !important;
-     }
+    .options-list.layout-col .option-item {
+        width: 100% !important;
+        margin: 0 !important;
+        font-size: 12pt !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 4px 6px !important;
+        text-align: start !important;
+    }
 
-     .print-mode-text .general-text-display {
-         line-height: 1.6;
-     }
+    .print-mode-text .general-text-display {
+        line-height: 1.6;
+    }
 
-     .bubble-advanced-header {
-         margin-bottom: 25px !important;
-         padding: 15px !important;
-         border-width: 2px !important;
-     }
+    .bubble-advanced-header {
+        margin-bottom: 25px !important;
+        padding: 15px !important;
+        border-width: 2px !important;
+    }
 
-     .bubble-student-id-grid {
-         padding: 5px !important;
-         border-width: 1px !important;
-     }
+    .bubble-student-id-grid {
+        padding: 5px !important;
+        border-width: 1px !important;
+    }
 
-     body * {
-         visibility: hidden !important;
-     }
+    body * {
+        visibility: hidden !important;
+    }
 
-     #wordPrintModal,
-     #wordPrintModal * {
-         visibility: visible !important;
-     }
+    #wordPrintModal,
+    #wordPrintModal * {
+        visibility: visible !important;
+    }
 
-     #wordPrintModal {
-         position: absolute;
-         left: 0;
-         top: 0;
-         width: 100vw;
-         background: white !important;
-     }
+    #wordPrintModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        background: white !important;
+    }
 
-     .word-sidebar,
-     .btn-print,
-     .btn-close {
-         display: none !important;
-     }
- }
+    .word-sidebar,
+    .btn-print,
+    .btn-close {
+        display: none !important;
+    }
+}
 
 /* ========================================================
    الإصلاح الجذري الإجباري للقائمة الجانبية (لا يُحذف)
@@ -1951,12 +2045,13 @@ button.action-btn:hover {
 #autosaveIndicator {
     position: fixed;
     bottom: 25px;
-    left: 25px; /* تظهر على اليسار لكي لا تغطي على أزرار الدعم */
+    left: 25px;
+    /* تظهر على اليسار لكي لا تغطي على أزرار الدعم */
     background: #ffffff;
     border: 2px solid var(--primary-color);
     padding: 12px 20px;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1977,41 +2072,42 @@ button.action-btn:hover {
 /* ========================================================
    إصلاح تمدد الصندوق والكلمات الطويلة في المحرر والطباعة
    ======================================================== */
-.rich-textarea, 
-.editor-area, 
-.content-card, 
-.q-text, 
-.option-item, 
+.rich-textarea,
+.editor-area,
+.content-card,
+.q-text,
+.option-item,
 .print-heading-block {
     word-wrap: break-word !important;
-    overflow-wrap: anywhere !important; /* يجبر الحروف المتصلة بدون مسافات على النزول لسطر جديد */
+    overflow-wrap: anywhere !important;
+    /* يجبر الحروف المتصلة بدون مسافات على النزول لسطر جديد */
     white-space: pre-wrap !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
 }
 
 @media print {
-     table.editor-table {
-         page-break-inside: avoid !important;
-     }
+    table.editor-table {
+        page-break-inside: avoid !important;
+    }
 
-     table.editor-table tr,
-     table.editor-table th,
-     table.editor-table td {
-         height: 55px !important;
-         min-height: 55px !important;
-         padding: 15px !important;
-         border: 2px solid #000 !important;
-     }
+    table.editor-table tr,
+    table.editor-table th,
+    table.editor-table td {
+        height: 55px !important;
+        min-height: 55px !important;
+        padding: 15px !important;
+        border: 2px solid #000 !important;
+    }
 
-     table.editor-table th {
-         background-color: #e2e8f0 !important;
-         -webkit-print-color-adjust: exact !important;
-         print-color-adjust: exact !important;
-     }
- }
+    table.editor-table th {
+        background-color: #e2e8f0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
 
- /* ========================================================
+/* ========================================================
    تنسيقات إظهار الباسورد (العين) في نافذة الدخول
    ======================================================== */
 .password-wrapper {
@@ -2022,7 +2118,8 @@ button.action-btn:hover {
 
 .password-wrapper input {
     width: 100%;
-    padding-left: 45px; /* ترك مساحة للعين على اليسار في الواجهة العربية */
+    padding-left: 45px;
+    /* ترك مساحة للعين على اليسار في الواجهة العربية */
 }
 
 .toggle-password-btn {
@@ -2044,26 +2141,27 @@ button.action-btn:hover {
     opacity: 1;
     transform: scale(1.1);
 }
+
 /* ========================================================
    تنسيقات الجداول داخل المحرر (للمستخدم فقط)
    ======================================================== */
-.rich-textarea table, 
-.editor-area table, 
+.rich-textarea table,
+.editor-area table,
 .editor-table {
     width: 100% !important;
     max-width: 100% !important;
-    table-layout: fixed !important; 
+    table-layout: fixed !important;
     border-collapse: collapse !important;
     margin: 15px 0 !important;
     box-sizing: border-box !important;
     word-wrap: break-word !important;
 }
 
-.rich-textarea th, 
-.rich-textarea td, 
-.editor-area th, 
-.editor-area td, 
-.editor-table th, 
+.rich-textarea th,
+.rich-textarea td,
+.editor-area th,
+.editor-area td,
+.editor-table th,
 .editor-table td {
     border: 2px solid var(--ui-border) !important;
     padding: 8px 10px !important;
@@ -2071,8 +2169,8 @@ button.action-btn:hover {
     vertical-align: middle !important;
 }
 
-.rich-textarea th, 
-.editor-area th, 
+.rich-textarea th,
+.editor-area th,
 .editor-table th {
     background-color: var(--ui-input-bg) !important;
     font-weight: 900 !important;
@@ -2090,7 +2188,7 @@ button.action-btn:hover {
     margin: 15px 0 !important;
 }
 
-#wordPrintPreviewArea .pdf-page th, 
+#wordPrintPreviewArea .pdf-page th,
 #wordPrintPreviewArea .pdf-page td {
     border: 2px solid var(--text-color) !important;
     padding: 8px 10px !important;
@@ -2108,26 +2206,28 @@ button.action-btn:hover {
 /* ========================================================
    السر هنا: حماية الهيكل الخفي للصفحة من أخذ حدود الجداول
    ======================================================== */
-#wordPrintPreviewArea .pdf-page > table {
+#wordPrintPreviewArea .pdf-page>table {
     margin: 0 !important;
 }
 
-#wordPrintPreviewArea .pdf-page > table > thead > tr > td,
-#wordPrintPreviewArea .pdf-page > table > tbody > tr > td,
-#wordPrintPreviewArea .pdf-page > table > tfoot > tr > td {
+#wordPrintPreviewArea .pdf-page>table>thead>tr>td,
+#wordPrintPreviewArea .pdf-page>table>tbody>tr>td,
+#wordPrintPreviewArea .pdf-page>table>tfoot>tr>td {
     border: none !important;
     padding: 0 !important;
     background: transparent !important;
 }
+
 /* ========================================================
    تحسينات الأجهزة اللوحية (التابلت والآيباد) 768px - 1024px
    ======================================================== */
 @media screen and (min-width: 768px) and (max-width: 1024px) {
+
     /* تصغير الفراغات في الأزرار العائمة */
     .action-buttons {
         gap: 15px !important;
     }
-    
+
     /* تصغير الأزرار/البطاقات لتستوعب الشاشة عدداً أكبر بجوار بعض */
     button.action-btn {
         width: 130px !important;
@@ -2135,14 +2235,14 @@ button.action-btn:hover {
         font-size: 13px !important;
         padding: 10px !important;
     }
-    
-    button.action-btn .icon, 
+
+    button.action-btn .icon,
     button.action-btn i {
         font-size: 30px !important;
     }
 
     /* توسيع المحرر ليأخذ مساحة مريحة على التابلت */
-    .editor-container, 
+    .editor-container,
     .rich-textarea {
         width: 100% !important;
         padding: 15px !important;
@@ -2150,13 +2250,13 @@ button.action-btn:hover {
     }
 
     /* ضبط النوافذ المنبثقة (Modals) */
-    .modal-content, 
+    .modal-content,
     .auth-box {
         width: 85% !important;
         max-width: none !important;
         padding: 20px !important;
     }
-    
+
     /* ضبط القوائم الجانبية (إن وجدت) */
     .sidebar-menu {
         width: 250px !important;
