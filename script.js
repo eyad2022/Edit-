@@ -292,8 +292,13 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
 
-            // === 3. إظهار بيانات المستخدم في الواجهة ===
-            document.getElementById('currentLoggedInUser').innerText = user.email;
+       // === 3. إظهار بيانات المستخدم في الواجهة ===
+            if (document.getElementById('currentUserName')) {
+                document.getElementById('currentUserName').innerText = data.name || "مستخدم";
+            }
+            if (document.getElementById('currentLoggedInUser')) {
+                document.getElementById('currentLoggedInUser').innerText = user.email;
+            }
             document.getElementById('userProfileSection').style.display = 'block';
 
             // 🟢 التعديل الأول: إخفاء أزرار الضيوف وإظهار أيقونة "حسابي" بعد الدخول 🟢
@@ -3067,4 +3072,57 @@ async function extractTextFromImage(e) {
     }
     
     e.target.value = ''; // تفريغ الحقل
+}
+// ==================================================
+// نظام تغيير كلمة المرور من داخل المنصة
+// ==================================================
+function openChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'flex';
+    document.getElementById('oldPasswordInput').value = '';
+    document.getElementById('newPasswordInput').value = '';
+    document.getElementById('confirmNewPasswordInput').value = '';
+}
+
+async function handleChangePassword() {
+    const oldPass = document.getElementById('oldPasswordInput').value.trim();
+    const newPass = document.getElementById('newPasswordInput').value.trim();
+    const confirmPass = document.getElementById('confirmNewPasswordInput').value.trim();
+
+    if (!oldPass || !newPass || !confirmPass) {
+        return showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+    }
+
+    if (newPass !== confirmPass) {
+        return showToast('❌ كلمتا المرور الجديدتان غير متطابقتين', 'error');
+    }
+
+    if (newPass.length < 6) {
+        return showToast('⚠️ يجب أن يتكون الباسورد من 6 أحرف أو أرقام على الأقل', 'error');
+    }
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        showToast('جاري التحقق من الباسورد القديم وتغييره...', 'info');
+        
+        // 1. إعادة المصادقة باستخدام الباسورد القديم (للتأكد من هوية صاحب الحساب)
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPass);
+        await user.reauthenticateWithCredential(credential);
+
+        // 2. تحديث الباسورد بالجديد
+        await user.updatePassword(newPass);
+
+        showToast('✅ تم تغيير كلمة المرور بنجاح!', 'success');
+        document.getElementById('changePasswordModal').style.display = 'none';
+        
+    } catch (error) {
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            showToast('❌ الباسورد القديم الذي أدخلته غير صحيح!', 'error');
+        } else if (error.code === 'auth/requires-recent-login') {
+            showToast('⚠️ يرجى تسجيل الخروج والدخول مجدداً أولاً لتغيير الباسورد', 'error');
+        } else {
+            showToast('❌ حدث خطأ: ' + error.message, 'error');
+        }
+    }
 }

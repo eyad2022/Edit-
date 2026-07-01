@@ -59,8 +59,11 @@
           <div id="userProfileSection" style="display: none; text-align: right;">
             <div
               style="margin-bottom: 15px; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border);">
-              <span style="font-weight: 900; color: var(--primary-color); font-size: 13px;">مرحباً بك: <br> <span
-                  id="currentLoggedInUser" style="color:var(--text-color);"></span> 🟢</span><br>
+              <span style="font-weight: 900; color: var(--primary-color); font-size: 13px;">مرحباً بك: <span
+                  id="currentUserName" style="color:var(--text-color);"></span> 🟢</span><br>
+              <span
+                style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">📧
+                الإيميل: <span id="currentLoggedInUser"></span></span><br>
               <span
                 style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">(الأجهزة
                 النشطة: <span id="activeDevicesCount">0</span> / 3)</span>
@@ -70,6 +73,11 @@
 
             <div
               style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--ui-border);">
+
+              <button class="btn-tool" onclick="openChangePasswordModal(); closeCustomDropdown('profileDropdownMenu')"
+                style="background: #e0f2fe; color: #0284c7; border-color: #7dd3fc; padding: 6px 12px; font-size: 12px;">🔑
+                تغيير الباسورد</button>
+
               <span id="adminPanelBtn" style="display: none;">
                 <button class="btn-tool btn-danger"
                   onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu')"
@@ -86,7 +94,6 @@
               <button class="btn-tool" onclick="deleteUserAccount(); closeCustomDropdown('profileDropdownMenu')"
                 style="background: #fee2e2; color: #b91c1c; border-color: #f87171; padding: 6px 12px; font-size: 12px;">🗑️
                 حذف الحساب</button>
-
             </div>
 
             <h4 style="margin: 0 0 10px 0; font-weight: 900; color: var(--ui-text); font-size: 13px;">🗂️ سجل المستندات
@@ -674,28 +681,29 @@
     </div>
 
     <div class="action-buttons" id="questionActionButtons">
-  <button class="action-btn btn-pdf-student" onclick="requireVIP('export', 'student')">
-    <i class="icon">🧑‍🎓</i> طباعة نسخة الطالب
-  </button>
-  <button class="action-btn btn-pdf-teacher" onclick="requireVIP('export', 'teacher')">
-    <i class="icon">👨‍🏫</i> طباعة نموذج الإجابة
-  </button>
-  <button class="action-btn btn-pdf-both" onclick="requireVIP('export', 'both')">
-    <i class="icon">📑</i> تصدير المستند كاملاً
-  </button>
-  <button class="action-btn btn-pdf-multi" onclick="requireVIP('multi', null)">
-    <i class="icon">🔀</i> توليد نماذج متعددة
-  </button>
-  
-  <button class="action-btn btn-json-export" onclick="exportQuestionsToJSON()">
-    <i class="icon">💾</i> تصدير بنك الأسئلة
-  </button>
-  
-  <input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importQuestionsFromJSON(event)">
-  <button class="action-btn btn-json-import" onclick="document.getElementById('importJsonInput').click()">
-    <i class="icon">📥</i> استيراد بنك الأسئلة
-  </button>
-</div>
+      <button class="action-btn btn-pdf-student" onclick="requireVIP('export', 'student')">
+        <i class="icon">🧑‍🎓</i> طباعة نسخة الطالب
+      </button>
+      <button class="action-btn btn-pdf-teacher" onclick="requireVIP('export', 'teacher')">
+        <i class="icon">👨‍🏫</i> طباعة نموذج الإجابة
+      </button>
+      <button class="action-btn btn-pdf-both" onclick="requireVIP('export', 'both')">
+        <i class="icon">📑</i> تصدير المستند كاملاً
+      </button>
+      <button class="action-btn btn-pdf-multi" onclick="requireVIP('multi', null)">
+        <i class="icon">🔀</i> توليد نماذج متعددة
+      </button>
+
+      <button class="action-btn btn-json-export" onclick="exportQuestionsToJSON()">
+        <i class="icon">💾</i> تصدير بنك الأسئلة
+      </button>
+
+      <input type="file" id="importJsonInput" accept=".json" style="display: none;"
+        onchange="importQuestionsFromJSON(event)">
+      <button class="action-btn btn-json-import" onclick="document.getElementById('importJsonInput').click()">
+        <i class="icon">📥</i> استيراد بنك الأسئلة
+      </button>
+    </div>
 
     <div class="action-buttons" id="textActionButtons" style="display: none">
       <button class="action-btn btn-pdf-general" onclick="executeExport('text')">
@@ -1190,7 +1198,7 @@
         النافذة</button>
     </div>
   </div>
-
+<!-- 
   <div id="userProfileSection" style="display: none; text-align: right">
     <div style="
                 margin-bottom: 15px;
@@ -1251,9 +1259,9 @@
                 border-radius: 8px;
                 border: 1px solid var(--ui-border);
               "></div>
+  </div> -->
   </div>
-  </div>
-  <button onclick="document.getElementById('authModal').style.display = 'none'" style="
+  <!-- <button onclick="document.getElementById('authModal').style.display = 'none'" style="
             margin-top: 20px;
             background: #e2e8f0;
             color: #1e293b;
@@ -1265,7 +1273,7 @@
             width: 100%;
           ">
     إغلاق
-  </button>
+  </button> -->
   </div>
   </div>
 
@@ -1725,6 +1733,42 @@
           style="background: #f8fafc; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
           <canvas id="codesUsageChart"></canvas>
         </div>
+      </div>
+    </div>
+  </div>
+  <div id="changePasswordModal" class="custom-modal">
+    <div class="modal-content" style="border-top: 5px solid #0284c7; text-align: right; max-width: 400px;">
+      <h3 style="color: #0284c7; margin-top: 0; text-align: center;">🔑 تغيير كلمة المرور</h3>
+      <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>كلمة المرور القديمة</label>
+          <div class="password-wrapper">
+            <input type="password" id="oldPasswordInput" placeholder="أدخل الباسورد القديم">
+            <button type="button" class="toggle-password-btn"
+              onclick="togglePasswordVisibility('oldPasswordInput', this)">👁️</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>كلمة المرور الجديدة</label>
+          <div class="password-wrapper">
+            <input type="password" id="newPasswordInput" placeholder="أدخل الباسورد الجديد">
+            <button type="button" class="toggle-password-btn"
+              onclick="togglePasswordVisibility('newPasswordInput', this)">👁️</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>تأكيد كلمة المرور الجديدة</label>
+          <div class="password-wrapper">
+            <input type="password" id="confirmNewPasswordInput" placeholder="تأكيد الباسورد الجديد">
+            <button type="button" class="toggle-password-btn"
+              onclick="togglePasswordVisibility('confirmNewPasswordInput', this)">👁️</button>
+          </div>
+        </div>
+        <button class="btn-tool" onclick="handleChangePassword()"
+          style="justify-content: center; background: #0284c7; color: white; padding: 12px; font-size: 16px; border:none;">حفظ
+          وتغيير الباسورد</button>
+        <button class="btn-tool" onclick="document.getElementById('changePasswordModal').style.display='none'"
+          style="justify-content: center; background: #e2e8f0; color: #1e293b; padding: 12px; font-size: 16px; border:none;">إلغاء</button>
       </div>
     </div>
   </div>
