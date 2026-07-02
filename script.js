@@ -210,7 +210,18 @@ function getEditorText(id) {
     if (!el) return '';
     const clone = el.cloneNode(true);
     clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
-    clone.querySelectorAll('div, p').forEach(div => div.replaceWith('\n' + div.innerHTML + '\n'));
+    
+    // إزالة الـ div و p بأمان دون تدمير الـ HTML الداخلي كالجداول
+    Array.from(clone.querySelectorAll('div, p')).forEach(block => {
+        const frag = document.createDocumentFragment();
+        frag.appendChild(document.createTextNode('\n'));
+        while (block.firstChild) {
+            frag.appendChild(block.firstChild);
+        }
+        frag.appendChild(document.createTextNode('\n'));
+        block.replaceWith(frag);
+    });
+    
     let temp = document.createElement('div');
     temp.innerHTML = clone.innerHTML;
     let finalStr = '';
@@ -222,9 +233,8 @@ function getEditorText(id) {
         else if (node.nodeName === 'IMG') {
             finalStr += '\n' + node.outerHTML + '\n';
         }
-        // 👇 هذا هو التعديل الجديد: إجبار النظام على الاحتفاظ بالجداول وعدم تدميرها
         else if (node.nodeName === 'TABLE') {
-            // نقوم بإزالة الأسطر الجديدة من كود الجدول لكي يقرأه النظام ككتلة واحدة ضمن السؤال
+            // المحافظة على الجدول ككتلة واحدة مترابطة
             finalStr += '\n' + node.outerHTML.replace(/\n/g, '').replace(/\r/g, '') + '\n';
         } 
         else {
@@ -1618,6 +1628,32 @@ function insertImage(e) {
     e.target.value = '';
 }
 
+function insertImage(e) {
+    if (e.target.files[0]) {
+        const rd = new FileReader();
+        rd.onload = ev => {
+            const i = new Image();
+            i.onload = () => {
+                const c = document.createElement('canvas');
+                let scale = 1;
+                if (i.width > 800) scale = 800 / i.width;
+                c.width = i.width * scale;
+                c.height = i.height * scale;
+                c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
+                document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`);
+                
+                // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
+                syncTextToDatabase();
+                autoSaveData();
+                // -------------------------------------------------------------
+            };
+            i.src = ev.target.result;
+        };
+        rd.readAsDataURL(e.target.files[0]);
+    }
+    e.target.value = '';
+}
+
 function insertTable() {
     const r = prompt("صفوف:", "3"); const c = prompt("أعمدة:", "3"); if (r && c) {
         let h = `<table border="1" style="width:100%; border-collapse:collapse; text-align:center;"><tbody>`; for (let i = 0; i < r; i++) {
@@ -2646,139 +2682,220 @@ function insertCustomTable() {
 }
 
 /* ========================================================
-   الجولة التعريفية التفاعلية المفصلة (Detailed Spotlight Tour)
+   نظام الجولة التعريفية التفاعلية الشاملة (The Ultimate Tour) 🚀
    ======================================================== */
-function runSmartOnboardingTour() {
-    if (localStorage.getItem('elalfey_tour_completed')) return;
+function runSmartOnboardingTour(forceStart = false) {
+    // إذا كان قد أكمل الجولة سابقاً ولم يطلب تشغيلها إجبارياً، لا تعمل
+    if (!forceStart && localStorage.getItem('elalfey_tour_completed')) return;
 
+    // قائمة بكل عنصر في الموقع مع الشرح التفصيلي
     const steps = [
-        { selector: '.top-navbar', title: 'شريط التنقل العلوي', text: 'يحتوي على أزرار الدخول، حسابك السحابي، وأدوات الذكاء الاصطناعي (AI) وتفعيل الـ VIP.' },
-        { selector: '#btnTabQuestions', title: 'محرر بنك الأسئلة', text: 'هذا التبويب مخصص لبناء الامتحانات وتنسيقها بشكل ذكي واستخراج مفتاح الإجابة تلقائياً.' },
-        { selector: '#btnTabText', title: 'محرر النصوص والمستندات', text: 'هذا التبويب مخصص لكتابة الملازم والمستندات الحرة بتنسيقات تشبه برنامج Word.' },
-        { selector: '.system-switcher-container', title: 'أنظمة الإدخال', text: 'اختر النظام المناسب لمادتك: النظام العربي لليمين، اللغات لليسار، والعلمي لدعم المعادلات الرياضية.' },
-        { selector: '.btn-icon-insert', title: 'إدراج سؤال جديد', text: 'اضغط هنا لإدراج قوالب جاهزة لأسئلة (الاختياري، الصح والخطأ، المقالي) أو إدراج صورة.' },
-        { selector: 'button[onclick="showAnalytics()"]', title: 'التحليل الإحصائي', text: 'يعرض لك إحصائيات دقيقة عن عدد الأسئلة وأنواعها في امتحانك الحالي.' },
-        { selector: 'button[onclick="shuffleQuestions()"]', title: 'الخلط الشامل', text: 'يقوم بخلط ترتيب الأسئلة وترتيب الخيارات (أ، ب، ج، د) لعمل نماذج مختلفة.' },
-        { selector: 'button[onclick="smartFormatAndClean()"]', title: 'إعادة التنسيق الذكي', text: 'يقوم بترتيب وتنسيق المستند بالكامل وفصل الأسئلة عن الإجابات بضغطة واحدة.' },
-        { selector: '#questionsInput', title: 'مساحة كتابة الأسئلة', text: 'هنا تكتب أسئلتك. تأكد من اتباع التنسيق الصحيح المكتوب في النص الإرشادي.' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'generalSettingsPanel\\\')"]', title: 'التنسيق العام (🎨)', text: 'يتحكم في إطار الورقة، الألوان، الخطوط، والعلامة المائية.' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'examSettingsPanel\\\')"]', title: 'هندسة الترويسة (🏛️)', text: 'لإضافة وتعديل بيانات رأس الامتحان (اسم المدرسة، المادة، الزمن).' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'questionSettingsPanel\\\')"]', title: 'بنيوية الأسئلة (📝)', text: 'للتحكم في حجم ولون الخطوط للأسئلة والخيارات، وترتيبها في أعمدة.' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'compactBubblePanel\\\')"]', title: 'البابل شيت المضغوط (📄)', text: 'لإنشاء ورقة بابل شيت متكاملة وموفرة للورق.' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'multiModelSettingsPanel\\\')"]', title: 'إعدادات النماذج المتعددة (🔀)', text: 'لضبط شكل ومكان ظهور رمز النموذج (A, B, C).' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'bubbleSettingsPanel\\\')"]', title: 'تنسيق البابل شيت (⭕)', text: 'للتحكم في شكل الدوائر، حجمها، وموضع الحروف (داخل/خارج).' },
-        { selector: '.settings-dock button[onclick="toggleFloatingPanel(\\\'bubbleHeaderSettingsPanel\\\')"]', title: 'ترويسة البابل شيت (📋)', text: 'لتصميم الجزء العلوي الخاص ببيانات الطالب في ورقة البابل شيت.' },
-        { selector: '.settings-dock button[onclick*="confirmModal"]', title: 'تفريغ المحرر (🗑️)', text: 'اضغط هنا لمسح جميع البيانات والبدء بمسودة جديدة.' },
-        { selector: '.btn-pdf-student', title: 'نسخة الطالب', text: 'طباعة أو تصدير الامتحان بدون إجابات.' },
-        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة', text: 'طباعة مفتاح الإجابات والامتحان مجاباً عليه.' },
-        { selector: '.btn-pdf-both', title: 'تصدير كامل', text: 'طباعة نسخة الطالب ونسخة المعلم معاً في ملف واحد.' },
-        { selector: '.btn-pdf-multi', title: 'توليد النماذج المتعددة', text: 'توليد 4 نماذج مختلفة بأسئلة وخيارات عشوائية الترتيب مع البابل شيت الخاص بها!' }
+        // --- 1. الناف بار العلوي ---
+        { selector: '.top-navbar', title: 'مرحباً بك في M&H Editor Pro 🚀', text: 'هذه الجولة ستشرح لك كل جزء في المنصة بالتفصيل لتصبح محترفاً في استخدامها. لنبدأ بالشريط العلوي!' },
+        { selector: 'button[onclick="openLoginModal()"]', title: 'تسجيل الدخول 🔐', text: 'من هنا يمكنك تسجيل الدخول لحسابك السحابي لحفظ أعمالك، مزامنتها عبر أجهزتك، واستعادة الأرشيف.' },
+        { selector: 'button[onclick="openSignupModal()"]', title: 'إنشاء حساب جديد ✨', text: 'إذا لم يكن لديك حساب، أنشئ حساباً مجانياً الآن لحماية بياناتك والوصول إلى الميزات السحابية.' },
+        { selector: '#loggedInNav', title: 'قائمة حسابك الشخصي 👤', text: 'تظهر بعد الدخول.. تحتوي على بياناتك، إيميلك، الأجهزة النشطة، زر تغيير الباسورد، وسجل مستنداتك السحابي.' },
+        { selector: '.theme-toggle', title: 'الوضع الليلي / الفاتح 🌙', text: 'زر لتبديل مظهر الموقع بالكامل لراحة عينيك أثناء العمل لفترات طويلة.' },
+        { selector: '.btn-ai', title: 'المساعد الذكي (AI) 🤖', text: 'مساعدك الشخصي! اضغط هنا ليقوم بقراءة ملفاتك، توليد الأسئلة، تقييم الامتحانات، وتوزيع الدرجات تلقائياً.' },
+        { selector: '.btn-vip', title: 'عضوية VIP 👑', text: 'من هنا يمكنك إدخال كود التفعيل للترقية للنسخة الاحترافية الشاملة مدى الحياة أو لفترة محددة.' },
+
+        // --- 2. تبويبات العمل الأساسية ---
+        { selector: '#btnTabQuestions', title: 'قسم بنك الأسئلة 📝', text: 'بيئة العمل الأساسية. هنا تقوم بإنشاء الامتحانات، تنسيق البابل شيت، وتوليد النماذج المتعددة (A, B, C).' },
+        { selector: '#btnTabText', title: 'محرر النصوص والمستندات 📄', text: 'محرر وورد (Word) متكامل ومجاني لكتابة الملازم والمذكرات الحرة وتنسيقها براحتك مع دعم الجداول.' },
+
+        // --- 3. أنظمة الإدخال والأدوات (قسم بنك الأسئلة) ---
+        { selector: '.system-switcher-container', title: 'أنظمة الكتابة الذكية ⚙️', text: 'هذا الشريط يضبط اتجاه الكتابة وتنسيق الحروف في محرر الأسئلة ليتناسب مع مادتك.' },
+        { selector: '#sysBtnArabic', title: 'النظام العربي المطور 🇸🇦', text: 'يضبط الاتجاه من اليمين لليسار، ويستخدم ترقيم الخيارات العربي (أ، ب، ج، د).' },
+        { selector: '#sysBtnForeign', title: 'نظام اللغات الأجنبية 🇬🇧', text: 'يضبط الاتجاه من اليسار لليمين للمواد كالإنجليزية والفرنسية، وترقيم (A, B, C, D).' },
+        { selector: '#sysBtnScience', title: 'النظام العلمي ⚛️', text: 'مخصص للرياضيات والعلوم، يفتح شريط أدوات إضافي لإدراج الرموز والمعادلات المعقدة (LaTeX).' },
+        
+        { selector: 'button[onclick="execUndo()"]', title: 'زر التراجع ↩️', text: 'أخطأت في شيء؟ لا تقلق، اضغط هنا للتراجع عن آخر تعديل قمت به.' },
+        
+        // --- 4. أدوات التحكم بالبنك ---
+        { selector: '.btn-icon-insert', title: 'قائمة الإدراج السريع ➕', text: 'قائمة تتيح لك إدراج قالب جاهز لـ (سؤال اختياري، صح/خطأ، مقالي)، إدراج صورة، أو استخراج النص من صورة (OCR).' },
+        { selector: '#archiveBtnTrigger', title: 'الأرشيف السحابي ☁️', text: 'يحفظ محتوى المحرر بالكامل في حسابك لتسترجعه من أي جهاز متصل بالإنترنت في أي وقت.' },
+        { selector: 'button[onclick="showAnalytics()"]', title: 'تحليل البنك 📊', text: 'يعرض لك إحصائية دقيقة (عدد أسئلة الاختياري، المقالي، إلخ) لامتحانك الحالي ورسم بياني لها.' },
+        { selector: 'button[onclick="shuffleQuestions()"]', title: 'الخلط الشامل 🔀', text: 'يخلط ترتيب الأسئلة، ويخلط الخيارات داخل السؤال نفسه بضغطة زر لمنع الغش.' },
+        { selector: 'button[onclick="smartFormatAndClean()"]', title: 'التنسيق الذكي ✨', text: 'زر سحري! يقوم بتنظيف الأسئلة، ترقيمها، وفصل الإجابات النموذجية وإرسالها لمحرر الإجابات بالأسفل.' },
+
+        // --- 5. المحررات ---
+        { selector: '.grid-layout .form-group:nth-child(1) .editor-toolbar', title: 'شريط التنسيق العلوي 🛠️', text: 'أدوات التحكم بالنص (B, I, U)، المحاذاة، تغيير اللون، وحجم الخط لكل سؤال.' },
+        { selector: '#questionsInput', title: 'محرر الأسئلة 📝', text: 'اكتب الترويسة، اضغط إنتر، ثم اكتب سؤالك. ضع الخيارات تحته وضع علامة [✓] بجوار الخيار الصحيح.' },
+        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتم توليد الإجابات هنا آلياً بعد ضغط (التنسيق الذكي)، أو يمكنك كتابة/لصق إجاباتك الجاهزة فيه.' },
+
+        // --- 6. القائمة الجانبية العائمة (اللوحات) ---
+        { selector: '.settings-dock', title: 'شريط الإعدادات الجانبي 🎛️', text: 'هنا توجد كافة اللوحات الهندسية للتحكم بتصميم وطباعة وشكل الورقة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'generalSettingsPanel\\\')"]', title: 'التنسيق العام (🎨)', text: 'لضبط البرواز، ألوان الورقة، حجم الخطوط العام، وإضافة العلامة المائية.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'examSettingsPanel\\\')"]', title: 'هندسة الترويسة (🏛️)', text: 'لوضع ديباجة الامتحان العلوية (الوزارة، المدرسة، المادة، الزمن) ومربع بيانات الطالب.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'questionSettingsPanel\\\')"]', title: 'بنيوية الأسئلة (📝)', text: 'للتحكم في عرض الأسئلة (نص حر أو كروت) وترتيب الخيارات (أفقياً، عمودياً، أو شبكة).' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'compactBubblePanel\\\')"]', title: 'البابل شيت المضغوط (📄)', text: 'لتوليد نماذج امتحانات يكون فيها البابل شيت مدمجاً في نفس ورقة الأسئلة لتوفير الطباعة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'multiModelSettingsPanel\\\')"]', title: 'النماذج المتعددة (🔀)', text: 'لتحديد نوع ترقيم النماذج (A,B,C) وأين يظهر اسم النموذج في الورقة المطبوعة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'bubbleSettingsPanel\\\')"]', title: 'تنسيق دوائر البابل شيت (⭕)', text: 'لاختيار شكل الدوائر، حجمها، مكان الحروف، وعدد الأعمدة في ورقة البابل شيت المنفصلة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\\\'bubbleHeaderSettingsPanel\\\')"]', title: 'ترويسة البابل شيت (📋)', text: 'لتخصيص الخانات العلوية لورقة البابل شيت (اسم، رقم جلوس، إلخ).' },
+        { selector: '.settings-dock .btn-dock-danger', title: 'تفريغ ومسح الكل (🗑️)', text: 'يمسح المحرر تماماً لتبدأ مشروعاً جديداً بصفحة بيضاء.' },
+
+        // --- 7. أزرار التصدير والطباعة السفلية ---
+        { selector: '.action-buttons', title: 'منصة الطباعة والتصدير 🖨️', text: 'أهم جزء! بعد إنهاء إعداداتك، من هنا تقوم باستخراج الملفات.' },
+        { selector: '.btn-pdf-student', title: 'طباعة نسخة الطالب 🧑‍🎓', text: 'تُصدر ورقة الامتحان نظيفة تماماً بدون الإجابات النموذجية.' },
+        { selector: '.btn-pdf-teacher', title: 'طباعة نموذج الإجابة 👨‍🏫', text: 'تُصدر الامتحان وبداخله الإجابات مظللة ومفتاح الإجابات كاملاً للمعلم.' },
+        { selector: '.btn-pdf-both', title: 'تصدير المستند كاملاً 📑', text: 'تجمع (نسخة الطالب + نسخة المعلم + البابل شيت المنفصل) في ملف واحد للطباعة.' },
+        { selector: '.btn-pdf-multi', title: 'توليد النماذج المتعددة 🔀', text: 'يصنع لك 4 نماذج مختلفة الترتيب (A,B,C,D) للأسئلة والخيارات، مع بابل شيت لكل نموذج!' },
+        { selector: '.btn-json-export', title: 'تصدير (JSON) 💾', text: 'يحفظ الامتحان على جهازك كملف داتا، لتستكمل العمل عليه متى شئت لاحقاً.' },
+        { selector: '.btn-json-import', title: 'استيراد (JSON) 📥', text: 'لاستعادة ملف الامتحان الذي صدرته مسبقاً لاستكمال التعديل عليه.' }
     ];
 
     let currentStep = 0;
 
+    // تنظيف أي جولة شغالة مسبقاً
+    if (document.getElementById('tourClickBlocker')) {
+        document.getElementById('tourClickBlocker').remove();
+        document.getElementById('tourHighlightBox').remove();
+        document.getElementById('tourTooltip').remove();
+    }
+
+    // بناء عناصر الجولة (الظل، المربع המضئ، نافذة الشرح)
     const clickBlocker = document.createElement('div');
-    clickBlocker.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999990; background:transparent; cursor:not-allowed;';
+    clickBlocker.id = 'tourClickBlocker';
+    clickBlocker.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999990; background:rgba(15, 23, 42, 0.5); cursor:not-allowed; transition: all 0.3s;';
 
     const highlightBox = document.createElement('div');
-    highlightBox.style.cssText = 'position:absolute; border:3px dashed #00f2fe; border-radius:12px; transition:all 0.4s ease; pointer-events:none; z-index:9999991; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.85);';
+    highlightBox.id = 'tourHighlightBox';
+    highlightBox.style.cssText = 'position:absolute; border:4px dashed #10b981; border-radius:12px; transition:all 0.4s ease; pointer-events:none; z-index:9999991; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.7); background: transparent;';
 
     const tooltip = document.createElement('div');
-    tooltip.style.cssText = 'position:absolute; background:#ffffff; padding:20px; border-radius:15px; width:300px; box-shadow:0 15px 40px rgba(0,0,0,0.5); z-index:9999992; direction:rtl; transition:all 0.4s ease;';
+    tooltip.id = 'tourTooltip';
+    tooltip.style.cssText = 'position:absolute; background:#ffffff; padding:20px; border-radius:16px; width:340px; box-shadow:0 15px 40px rgba(0,0,0,0.4); z-index:9999992; direction:rtl; transition:all 0.4s ease; border-top: 6px solid #10b981;';
 
     document.body.appendChild(clickBlocker);
     document.body.appendChild(highlightBox);
     document.body.appendChild(tooltip);
 
+    // منع التمرير اليدوي أثناء الجولة
     function preventScroll(e) { e.preventDefault(); }
     function preventKeyScroll(e) {
-        if(["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.code)) {
+        if (["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.code)) {
             e.preventDefault();
         }
     }
-
     window.addEventListener('wheel', preventScroll, { passive: false });
     window.addEventListener('touchmove', preventScroll, { passive: false });
     window.addEventListener('keydown', preventKeyScroll, { passive: false });
 
-    function showStep(index) {
-        if (index >= steps.length) {
-            highlightBox.remove();
-            tooltip.remove();
-            clickBlocker.remove();
-            
-            window.removeEventListener('wheel', preventScroll);
-            window.removeEventListener('touchmove', preventScroll);
-            window.removeEventListener('keydown', preventKeyScroll);
-            
-            localStorage.setItem('elalfey_tour_completed', 'true');
-            return;
-        }
+    // إنهاء الجولة
+    function endTour() {
+        if (clickBlocker) clickBlocker.remove();
+        if (highlightBox) highlightBox.remove();
+        if (tooltip) tooltip.remove();
+        window.removeEventListener('wheel', preventScroll);
+        window.removeEventListener('touchmove', preventScroll);
+        window.removeEventListener('keydown', preventKeyScroll);
+        localStorage.setItem('elalfey_tour_completed', 'true');
+        showToast('انتهت الجولة التعريفية! نتمنى لك تجربة ممتعة 🚀', 'success');
+    }
 
-        let target = null;
-        try {
-            target = document.querySelector(steps[index].selector);
-        } catch (e) {
-            target = null;
+    // دالة ذكية لتخطي العناصر المخفية (مثل تخطي زر الدخول إذا كان مسجلاً للدخول بالفعل)
+    function getNextVisibleStep(startIndex, direction = 1) {
+        let i = startIndex;
+        while (i >= 0 && i < steps.length) {
+            let target = null;
+            try { target = document.querySelector(steps[i].selector); } catch (e) { }
+            // إذا كان العنصر موجوداً ومرئياً، نعتمده
+            if (target && target.offsetParent !== null && window.getComputedStyle(target).display !== 'none') {
+                return i;
+            }
+            i += direction;
         }
+        return direction > 0 ? steps.length : -1;
+    }
 
-        if (!target || target.offsetParent === null) {
-            showStep(index + 1);
-            return;
-        }
+    // دالة عرض الخطوة
+    function showStep(index, direction = 1) {
+        let targetIndex = getNextVisibleStep(index, direction);
 
+        // إذا وصلنا للنهاية
+        if (targetIndex >= steps.length) { endTour(); return; }
+        // إذا ضغط السابق في أول خطوة ولم يجد، يبقى في الصفر
+        if (targetIndex < 0) targetIndex = getNextVisibleStep(0, 1);
+
+        currentStep = targetIndex;
+        let target = document.querySelector(steps[currentStep].selector);
+
+        // التمرير الناعم للعنصر
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+        // تأخير بسيط ليتم التمرير قبل رسم المربع حول العنصر
         setTimeout(() => {
             const rect = target.getBoundingClientRect();
 
-            highlightBox.style.top = (rect.top + window.scrollY - 10) + 'px';
-            highlightBox.style.left = (rect.left + window.scrollX - 10) + 'px';
-            highlightBox.style.width = (rect.width + 20) + 'px';
-            highlightBox.style.height = (rect.height + 20) + 'px';
+            // ضبط المربع المضيء حول العنصر
+            highlightBox.style.top = (rect.top + window.scrollY - 8) + 'px';
+            highlightBox.style.left = (rect.left + window.scrollX - 8) + 'px';
+            highlightBox.style.width = (rect.width + 16) + 'px';
+            highlightBox.style.height = (rect.height + 16) + 'px';
 
-            let tooltipLeft = rect.left + window.scrollX + (rect.width / 2) - 150;
+            // حساب تموضع صندوق الشرح (التولتيب)
+            let tooltipLeft = rect.left + window.scrollX + (rect.width / 2) - 170;
             let tooltipTop = rect.bottom + window.scrollY + 20;
 
-            // --- خوارزمية التموضع الذكي (Smart Positioning) ---
-            
-            // 1. الحفاظ على المربع ضمن عرض الشاشة
+            // خوارزمية عدم خروج الصندوق عن الشاشة أفقياً
             if (tooltipLeft < 10) tooltipLeft = 10;
-            if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 320;
+            if (tooltipLeft + 360 > window.innerWidth) tooltipLeft = window.innerWidth - 360;
 
-            // 2. الحفاظ على المربع ضمن طول الشاشة (حتى لو كان العنصر ضخماً)
+            // خوارزمية عدم خروج الصندوق عن الشاشة عمودياً
             let viewportBottom = window.scrollY + window.innerHeight;
             let viewportTop = window.scrollY;
 
-            // إذا كان التولتيب سيختفي أسفل الشاشة
-            if (tooltipTop + 180 > viewportBottom) {
-                tooltipTop = rect.top + window.scrollY - 180; // ارفعه فوق العنصر
-                
-                // إذا كان رفعه فوق العنصر سيجعله يختفي أعلى الشاشة أيضاً
+            // إذا نزل تحت الشاشة، نرفعه فوق العنصر
+            if (tooltipTop + 220 > viewportBottom) {
+                tooltipTop = rect.top + window.scrollY - 200;
+                // إذا كان رفعه فوق العنصر يجعله يختفي من الأعلى، نضعه في وسط الشاشة
                 if (tooltipTop < viewportTop + 10) {
-                    // ضعه في منتصف الشاشة المرئية كحل نهائي ومضمون
-                    tooltipTop = window.scrollY + (window.innerHeight / 2) - 90;
+                    tooltipTop = window.scrollY + (window.innerHeight / 2) - 100;
                 }
             }
 
             tooltip.style.top = tooltipTop + 'px';
             tooltip.style.left = tooltipLeft + 'px';
 
+            // بناء المحتوى
             tooltip.innerHTML = `
-                <h3 style="margin:0 0 10px 0; color:#6366f1; font-size:18px;">${steps[index].title}</h3>
-                <p style="margin:0 0 20px 0; color:#333; font-size:14px; line-height:1.6;">${steps[index].text}</p>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:12px; color:#888;">الخطوة ${index + 1} من ${steps.length}</span>
-                    <button id="tourNextBtn" style="background:linear-gradient(135deg, #6366f1, #00f2fe); color:#fff; border:none; padding:8px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">${index === steps.length - 1 ? 'إنهاء الجولة 🚀' : 'التالي ⬅️'}</button>
+                <button id="tourSkipBtn" style="position:absolute; top: 10px; left: 10px; background:transparent; border:none; color:#94a3b8; font-size: 18px; cursor:pointer;" title="إنهاء وتخطي الجولة">✖</button>
+                <h3 style="margin:0 0 12px 0; color:#10b981; font-size:18px; font-weight: 900;">${steps[currentStep].title}</h3>
+                <p style="margin:0 0 20px 0; color:#334155; font-size:14px; line-height:1.7; font-weight:bold;">${steps[currentStep].text}</p>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                    <span style="font-size:13px; color:#64748b; font-weight:900;">${currentStep + 1} / ${steps.length}</span>
+                    <div style="display: flex; gap: 8px;">
+                        ${currentStep > 0 ? `<button id="tourPrevBtn" style="background:#e2e8f0; color:#1e293b; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:bold; font-family:inherit;">السابق</button>` : ''}
+                        <button id="tourNextBtn" style="background:#10b981; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:900; font-family:inherit;">${currentStep === steps.length - 1 ? 'إنهاء الجولة 🚀' : 'التالي ⬅️'}</button>
+                    </div>
                 </div>
             `;
 
-            document.getElementById('tourNextBtn').onclick = () => showStep(index + 1);
-        }, 400);
+            // أزرار التحكم في الشرح
+            const nextBtn = document.getElementById('tourNextBtn');
+            if (nextBtn) nextBtn.onclick = () => showStep(currentStep + 1, 1);
+
+            const prevBtn = document.getElementById('tourPrevBtn');
+            if (prevBtn) prevBtn.onclick = () => showStep(currentStep - 1, -1);
+
+            const skipBtn = document.getElementById('tourSkipBtn');
+            if (skipBtn) skipBtn.onclick = endTour;
+
+        }, 400); // مهلة بسيطة لانتظار التمرير (Scroll)
     }
 
-    setTimeout(() => showStep(0), 1000);
+    // تشغيل الجولة بعد تأخير بسيط ليتم تحميل الصفحة بالكامل
+    setTimeout(() => showStep(0, 1), 1000);
 }
+
+// جعل الدالة متاحة عالمياً إذا أردت استدعاءها من زر في واجهة المستخدم مستقبلاً
+window.runSmartOnboardingTour = runSmartOnboardingTour;
+
+// مراقب التحميل لتشغيل الجولة للمستخدمين الجدد
+window.addEventListener('load', () => {
+    runSmartOnboardingTour(false);
+});
 
 window.addEventListener('load', runSmartOnboardingTour);
 
@@ -2920,7 +3037,16 @@ function exportQuestionsToJSON() {
         return;
     }
     
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(questionsDatabase, null, 2));
+    // إحضار الجداول والترويسات الموجودة أعلى الامتحان
+    const currentPreamble = getRawPreamble('questionsInput');
+    
+    // تجهيز الكائن الشامل الذي يضم الأسئلة والجداول العلوية
+    const exportData = {
+        preamble: currentPreamble,
+        questions: questionsDatabase
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchorNode = document.createElement('a');
     
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -2930,7 +3056,7 @@ function exportQuestionsToJSON() {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
     
-    showToast('تم تصدير بنك الأسئلة بنجاح', 'success');
+    showToast('تم تصدير بنك الأسئلة (مع الترويسة والجداول) بنجاح', 'success');
 }
 function importQuestionsFromJSON(event) {
     const file = event.target.files[0];
@@ -2940,17 +3066,28 @@ function importQuestionsFromJSON(event) {
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
+            
+            // التوافق مع الملفات القديمة (التي تحتوي أسئلة فقط)
             if (Array.isArray(importedData)) {
-                // 1. وضع البيانات المستوردة في الذاكرة
                 questionsDatabase = importedData;
-                
-                // 2. استدعاء التنسيق الذكي مع تمرير (true) لمنعه من مسح البيانات
                 smartFormatAndClean(true);
-                
-                // 3. حفظ البيانات في المتصفح حتى لا تختفي إذا قام المستخدم بعمل تحديث للصفحة
                 autoSaveData();
-                
                 showToast('تم استيراد وعرض بنك الأسئلة بنجاح', 'success');
+            } 
+            // التوافق مع الملفات الجديدة (التي تحتوي على أسئلة + جداول وترويسة)
+            else if (importedData && importedData.questions) {
+                questionsDatabase = importedData.questions;
+                
+                // استعادة الجداول والترويسات ووضعها في بداية المحرر
+                if (importedData.preamble) {
+                    document.getElementById('questionsInput').innerHTML = importedData.preamble;
+                } else {
+                    document.getElementById('questionsInput').innerHTML = '';
+                }
+                
+                smartFormatAndClean(true);
+                autoSaveData();
+                showToast('تم استيراد بنك الأسئلة (مع الجداول) بنجاح', 'success');
             } else {
                 showToast('تنسيق الملف غير صحيح', 'error');
             }
