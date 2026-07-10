@@ -2685,75 +2685,84 @@ function insertCustomTable() {
    نظام الجولة التعريفية التفاعلية الشاملة (The Ultimate Tour) 🚀
    ======================================================== */
 function runSmartOnboardingTour(forceStart = false) {
-    // إذا كان قد أكمل الجولة سابقاً ولم يطلب تشغيلها إجبارياً، لا تعمل
-    if (!forceStart && localStorage.getItem('elalfey_tour_completed')) return;
+    if (typeof forceStart !== 'boolean') {
+        forceStart = false;
+    }
 
-    // قائمة بكل عنصر في الموقع مع الشرح التفصيلي
+    if (!forceStart && localStorage.getItem('elalfey_tour_completed') === 'true') {
+        return; 
+    }
+
+    localStorage.setItem('elalfey_tour_completed', 'true');
+
+    // مصفوفة الخطوات الشاملة (تشرح كل عنصر في الموقع)
     const steps = [
-        // --- 1. الناف بار العلوي ---
-        { selector: '.top-navbar', title: 'مرحباً بك في M&H Editor Pro 🚀', text: 'هذه الجولة ستشرح لك كل جزء في المنصة بالتفصيل لتصبح محترفاً في استخدامها. لنبدأ بالشريط العلوي!' },
-        { selector: 'button[onclick="openLoginModal()"]', title: 'تسجيل الدخول 🔐', text: 'من هنا يمكنك تسجيل الدخول لحسابك السحابي لحفظ أعمالك، مزامنتها عبر أجهزتك، واستعادة الأرشيف.' },
-        { selector: 'button[onclick="openSignupModal()"]', title: 'إنشاء حساب جديد ✨', text: 'إذا لم يكن لديك حساب، أنشئ حساباً مجانياً الآن لحماية بياناتك والوصول إلى الميزات السحابية.' },
-        { selector: '#loggedInNav', title: 'قائمة حسابك الشخصي 👤', text: 'تظهر بعد الدخول.. تحتوي على بياناتك، إيميلك، الأجهزة النشطة، زر تغيير الباسورد، وسجل مستنداتك السحابي.' },
-        { selector: '.theme-toggle', title: 'الوضع الليلي / الفاتح 🌙', text: 'زر لتبديل مظهر الموقع بالكامل لراحة عينيك أثناء العمل لفترات طويلة.' },
-        { selector: '.btn-ai', title: 'المساعد الذكي (AI) 🤖', text: 'مساعدك الشخصي! اضغط هنا ليقوم بقراءة ملفاتك، توليد الأسئلة، تقييم الامتحانات، وتوزيع الدرجات تلقائياً.' },
-        { selector: '.btn-vip', title: 'عضوية VIP 👑', text: 'من هنا يمكنك إدخال كود التفعيل للترقية للنسخة الاحترافية الشاملة مدى الحياة أو لفترة محددة.' },
+        // --- 1. الشريط العلوي (الناف بار) ---
+        { selector: '.top-navbar', title: 'مرحباً بك في M&H Editor Pro 🚀', text: 'أهلاً بك في بيئة العمل المتكاملة الأقوى لإنشاء الامتحانات. هذه الجولة ستشرح لك كل زر وأداة في المنصة لتصبح محترفاً. لنبدأ بالشريط العلوي!' },
+        { selector: '#guestNavButtons', title: 'التسجيل والدخول 🔐', text: 'من هنا يمكنك تسجيل الدخول لحسابك أو إنشاء حساب مجاني. الحساب يتيح لك حفظ مسوداتك في السحابة واستعادة أعمالك من أي جهاز.' },
+        { selector: '#loggedInNav', title: 'قائمة حسابك الشخصي 👤', text: 'تظهر هنا بعد تسجيل الدخول. تحتوي على بياناتك، عدد الأجهزة النشطة (حد أقصى 3)، زر تغيير الباسورد، وسجل مستنداتك السحابي السريع.' },
+        { selector: '.theme-toggle', title: 'الوضع الليلي / الفاتح 🌙', text: 'زر تبديل مظهر الموقع ليتناسب مع إضاءة غرفتك ولإراحة عينيك أثناء فترات العمل الطويلة.' },
+        { selector: '.btn-ai', title: 'المساعد الذكي (AI) 🤖', text: 'اضغط هنا لفتح مساعد الذكاء الاصطناعي! يمكنه قراءة ملفات PDF والصور، توليد أسئلة منها، وتصنيف صعوبة امتحانك وتوزيع الدرجات.' },
+        { selector: '.btn-vip', title: 'عضوية VIP 👑', text: 'لإدخال كود التفعيل والترقية للنسخة الاحترافية لفتح كافة الخصائص المتقدمة كالتصدير اللامحدود والذكاء الاصطناعي.' },
 
-        // --- 2. تبويبات العمل الأساسية ---
-        { selector: '#btnTabQuestions', title: 'قسم بنك الأسئلة 📝', text: 'بيئة العمل الأساسية. هنا تقوم بإنشاء الامتحانات، تنسيق البابل شيت، وتوليد النماذج المتعددة (A, B, C).' },
-        { selector: '#btnTabText', title: 'محرر النصوص والمستندات 📄', text: 'محرر وورد (Word) متكامل ومجاني لكتابة الملازم والمذكرات الحرة وتنسيقها براحتك مع دعم الجداول.' },
+        // --- 2. أقسام العمل الرئيسية ---
+        { selector: '.tabs', title: 'أقسام العمل الرئيسية 📁', text: 'المنصة مقسمة إلى قسمين رئيسيين، يمكنك التنقل بينهما من هنا.' },
+        { selector: '#btnTabQuestions', title: 'بنك الأسئلة المتقدم 📝', text: 'هنا يتم بناء الامتحانات الاحترافية وتنسيق أوراق البابل شيت وتوليد النماذج المتعددة.' },
+        { selector: '#btnTabText', title: 'محرر المستندات 📄', text: 'محرر وورد متكامل (مجاني بالكامل) لكتابة المذكرات والملازم الحرة مع دعم الجداول والصور.' },
 
-        // --- 3. أنظمة الإدخال والأدوات (قسم بنك الأسئلة) ---
-        { selector: '.system-switcher-container', title: 'أنظمة الكتابة الذكية ⚙️', text: 'هذا الشريط يضبط اتجاه الكتابة وتنسيق الحروف في محرر الأسئلة ليتناسب مع مادتك.' },
-        { selector: '#sysBtnArabic', title: 'النظام العربي المطور 🇸🇦', text: 'يضبط الاتجاه من اليمين لليسار، ويستخدم ترقيم الخيارات العربي (أ، ب، ج، د).' },
-        { selector: '#sysBtnForeign', title: 'نظام اللغات الأجنبية 🇬🇧', text: 'يضبط الاتجاه من اليسار لليمين للمواد كالإنجليزية والفرنسية، وترقيم (A, B, C, D).' },
-        { selector: '#sysBtnScience', title: 'النظام العلمي ⚛️', text: 'مخصص للرياضيات والعلوم، يفتح شريط أدوات إضافي لإدراج الرموز والمعادلات المعقدة (LaTeX).' },
+        // --- 3. أدوات بنك الأسئلة العلوية ---
+        { selector: 'button[onclick="execUndo()"]', title: 'تراجع (Undo) ↩️', text: 'هل مسحت شيئاً بالخطأ؟ استخدم هذا الزر للتراجع عن آخر خطوة قمت بها.' },
+        { selector: 'button[onclick="execRedo()"]', title: 'إعادة (Redo) ↪️', text: 'للتقدم خطوة للأمام إذا تراجعت عن أمر وتريد إعادته.' },
         
-        { selector: 'button[onclick="execUndo()"]', title: 'زر التراجع ↩️', text: 'أخطأت في شيء؟ لا تقلق، اضغط هنا للتراجع عن آخر تعديل قمت به.' },
+        { selector: '.system-switcher-container', title: 'أنظمة الكتابة الذكية ⚙️', text: 'تضبط هذه الأزرار اتجاه المحرر وترقيم الخيارات حسب لغة ونوع المادة التي تدرسها.' },
+        { selector: '#sysBtnArabic', title: 'النظام العربي 🇸🇦', text: 'للمواد العربية. يجعل الكتابة من اليمين لليسار ويرقم الخيارات بـ (أ، ب، ج، د).' },
+        { selector: '#sysBtnForeign', title: 'نظام اللغات 🇬🇧', text: 'لمواد اللغات. يقلب المحرر من اليسار لليمين (LTR) ويرقم الخيارات بـ (A, B, C, D).' },
+        { selector: '#sysBtnScience', title: 'النظام العلمي ⚛️', text: 'لرياضيات والعلوم. يفتح شريطاً إضافياً لإدراج الجذور والكسور والمعادلات المعقدة.' },
+
+        // --- 4. أدوات الإدراج والتحكم ---
+        { selector: '.btn-icon-insert', title: 'قائمة الإدراج السريع ➕', text: 'أهم قائمة! تتيح لك إدراج قوالب أسئلة جاهزة، إدراج صور، أو استخدام (OCR) لاستخراج النص من أي صورة ووضعه بالمحرر فوراً.' },
+        { selector: '#archiveBtnTrigger', title: 'الأرشيف السحابي ☁️', text: 'احفظ مسودة كاملة من عملك الحالي في السحابة لتتمكن من استرجاعها واستكمالها لاحقاً.' },
+        { selector: 'button[onclick="showAnalytics()"]', title: 'التحليل الإحصائي 📊', text: 'يقرأ أسئلتك ويعرض لك رسماً بيانياً يوضح عدد أسئلة (الاختياري، المقالي، صح/خطأ).' },
+        { selector: 'button[onclick="shuffleQuestions()"]', title: 'الخلط الشامل 🔀', text: 'بضغطة واحدة، يقوم بخلط ترتيب الأسئلة، وخلط الخيارات (أ، ب، ج، د) داخل كل سؤال لمنع الغش.' },
+        { selector: 'button[onclick="smartFormatAndClean()"]', title: 'التنسيق الذكي ✨', text: 'الزر السحري! يقوم بتنظيف الأسئلة، ترتيبها، واصطياد الإجابات الصحيحة ونقلها تلقائياً لمربع مفتاح الإجابات.' },
+
+        // --- 5. مساحات العمل والمحررات ---
+        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط تنسيق الأسئلة 🛠️', text: 'أدوات التحكم بالنص: جعله عريضاً (B)، مائلاً، محاذاته، وتغيير لونه وحجمه.' },
+        { selector: '.btn-voice', title: 'الإملاء الصوتي 🎙️', text: 'هل تعبت من الكتابة؟ اضغط هنا، وتحدث ليقوم النظام بتحويل كلامك إلى نص مكتوب داخل المحرر فوراً.' },
+        { selector: '#questionsInput', title: 'مساحة بناء الأسئلة 📝', text: 'هنا تكتب أسئلتك. ضع الخيارات تحت بعضها، ولا تنسَ وضع علامة [✓] بجوار الخيار الصحيح ليتعرف عليه النظام.' },
         
-        // --- 4. أدوات التحكم بالبنك ---
-        { selector: '.btn-icon-insert', title: 'قائمة الإدراج السريع ➕', text: 'قائمة تتيح لك إدراج قالب جاهز لـ (سؤال اختياري، صح/خطأ، مقالي)، إدراج صورة، أو استخراج النص من صورة (OCR).' },
-        { selector: '#archiveBtnTrigger', title: 'الأرشيف السحابي ☁️', text: 'يحفظ محتوى المحرر بالكامل في حسابك لتسترجعه من أي جهاز متصل بالإنترنت في أي وقت.' },
-        { selector: 'button[onclick="showAnalytics()"]', title: 'تحليل البنك 📊', text: 'يعرض لك إحصائية دقيقة (عدد أسئلة الاختياري، المقالي، إلخ) لامتحانك الحالي ورسم بياني لها.' },
-        { selector: 'button[onclick="shuffleQuestions()"]', title: 'الخلط الشامل 🔀', text: 'يخلط ترتيب الأسئلة، ويخلط الخيارات داخل السؤال نفسه بضغطة زر لمنع الغش.' },
-        { selector: 'button[onclick="smartFormatAndClean()"]', title: 'التنسيق الذكي ✨', text: 'زر سحري! يقوم بتنظيف الأسئلة، ترقيمها، وفصل الإجابات النموذجية وإرسالها لمحرر الإجابات بالأسفل.' },
+        { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط تنسيق الإجابات 🛠️', text: 'شريط أدوات منفصل للتحكم في شكل ولون وحجم خطوط مفتاح الإجابات.' },
+        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتم توليد الإجابات هنا آلياً عند الضغط على (التنسيق الذكي)، أو يمكنك كتابتها يدوياً إذا رغبت في ذلك.' },
 
-        // --- 5. المحررات ---
-        { selector: '.grid-layout .form-group:nth-child(1) .editor-toolbar', title: 'شريط التنسيق العلوي 🛠️', text: 'أدوات التحكم بالنص (B, I, U)، المحاذاة، تغيير اللون، وحجم الخط لكل سؤال.' },
-        { selector: '#questionsInput', title: 'محرر الأسئلة 📝', text: 'اكتب الترويسة، اضغط إنتر، ثم اكتب سؤالك. ضع الخيارات تحته وضع علامة [✓] بجوار الخيار الصحيح.' },
-        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتم توليد الإجابات هنا آلياً بعد ضغط (التنسيق الذكي)، أو يمكنك كتابة/لصق إجاباتك الجاهزة فيه.' },
+        // --- 6. اللوحات الجانبية (هندسة الورقة) ---
+        { selector: '.settings-dock', title: 'اللوحات الهندسية للورقة 🎛️', text: 'من هنا تتحكم في كل تفصيلة صغيرة في تصميم وشكل ورقة الامتحان المطبوعة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'generalSettingsPanel\')"]', title: 'التنسيق العام 🎨', text: 'لضبط البرواز الخارجي، لون الورقة، نوع الخط (Font)، وإضافة علامة مائية شفافة باسمك.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'examSettingsPanel\')"]', title: 'الترويسة العلوية 🏛️', text: 'لتصميم ديباجة الامتحان (الوزارة، المدرسة، المادة، الزمن) ومربع اسم الطالب ورقم الجلوس.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'questionSettingsPanel\')"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في عرض السؤال (كروت أو نص حر)، ولون الخيارات، وتوزيعها (أفقياً، عمودياً، شبكة).' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'compactBubblePanel\')"]', title: 'البابل شيت المضغوط 📄', text: 'لتوليد نماذج امتحانات تدمج ورقة البابل شيت في أعلى ورقة الأسئلة مباشرة لتوفير الطباعة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'multiModelSettingsPanel\')"]', title: 'النماذج المتعددة 🔀', text: 'لضبط إعدادات النماذج المتعددة، مثل اختيار ترقيم النماذج (A,B,C) وأماكن ظهورها في الورقة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'bubbleSettingsPanel\')"]', title: 'تنسيق دوائر البابل شيت ⭕', text: 'لاختيار شكل الفقاعات (دائرة، مربع)، حجمها، نوع الحروف داخلها، وعدد الأعمدة.' },
+        { selector: 'button[onclick="toggleFloatingPanel(\'bubbleHeaderSettingsPanel\')"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص الخانات العلوية وشبكة تظليل رقم الجلوس لورقة البابل شيت المنفصلة.' },
+        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: 'يمسح محتوى المحرر بالكامل لتنظيف الشاشة والبدء في مشروع جديد بصفحة بيضاء.' },
 
-        // --- 6. القائمة الجانبية العائمة (اللوحات) ---
-        { selector: '.settings-dock', title: 'شريط الإعدادات الجانبي 🎛️', text: 'هنا توجد كافة اللوحات الهندسية للتحكم بتصميم وطباعة وشكل الورقة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'generalSettingsPanel\\\')"]', title: 'التنسيق العام (🎨)', text: 'لضبط البرواز، ألوان الورقة، حجم الخطوط العام، وإضافة العلامة المائية.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'examSettingsPanel\\\')"]', title: 'هندسة الترويسة (🏛️)', text: 'لوضع ديباجة الامتحان العلوية (الوزارة، المدرسة، المادة، الزمن) ومربع بيانات الطالب.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'questionSettingsPanel\\\')"]', title: 'بنيوية الأسئلة (📝)', text: 'للتحكم في عرض الأسئلة (نص حر أو كروت) وترتيب الخيارات (أفقياً، عمودياً، أو شبكة).' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'compactBubblePanel\\\')"]', title: 'البابل شيت المضغوط (📄)', text: 'لتوليد نماذج امتحانات يكون فيها البابل شيت مدمجاً في نفس ورقة الأسئلة لتوفير الطباعة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'multiModelSettingsPanel\\\')"]', title: 'النماذج المتعددة (🔀)', text: 'لتحديد نوع ترقيم النماذج (A,B,C) وأين يظهر اسم النموذج في الورقة المطبوعة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'bubbleSettingsPanel\\\')"]', title: 'تنسيق دوائر البابل شيت (⭕)', text: 'لاختيار شكل الدوائر، حجمها، مكان الحروف، وعدد الأعمدة في ورقة البابل شيت المنفصلة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\\\'bubbleHeaderSettingsPanel\\\')"]', title: 'ترويسة البابل شيت (📋)', text: 'لتخصيص الخانات العلوية لورقة البابل شيت (اسم، رقم جلوس، إلخ).' },
-        { selector: '.settings-dock .btn-dock-danger', title: 'تفريغ ومسح الكل (🗑️)', text: 'يمسح المحرر تماماً لتبدأ مشروعاً جديداً بصفحة بيضاء.' },
-
-        // --- 7. أزرار التصدير والطباعة السفلية ---
-        { selector: '.action-buttons', title: 'منصة الطباعة والتصدير 🖨️', text: 'أهم جزء! بعد إنهاء إعداداتك، من هنا تقوم باستخراج الملفات.' },
-        { selector: '.btn-pdf-student', title: 'طباعة نسخة الطالب 🧑‍🎓', text: 'تُصدر ورقة الامتحان نظيفة تماماً بدون الإجابات النموذجية.' },
-        { selector: '.btn-pdf-teacher', title: 'طباعة نموذج الإجابة 👨‍🏫', text: 'تُصدر الامتحان وبداخله الإجابات مظللة ومفتاح الإجابات كاملاً للمعلم.' },
-        { selector: '.btn-pdf-both', title: 'تصدير المستند كاملاً 📑', text: 'تجمع (نسخة الطالب + نسخة المعلم + البابل شيت المنفصل) في ملف واحد للطباعة.' },
-        { selector: '.btn-pdf-multi', title: 'توليد النماذج المتعددة 🔀', text: 'يصنع لك 4 نماذج مختلفة الترتيب (A,B,C,D) للأسئلة والخيارات، مع بابل شيت لكل نموذج!' },
-        { selector: '.btn-json-export', title: 'تصدير (JSON) 💾', text: 'يحفظ الامتحان على جهازك كملف داتا، لتستكمل العمل عليه متى شئت لاحقاً.' },
-        { selector: '.btn-json-import', title: 'استيراد (JSON) 📥', text: 'لاستعادة ملف الامتحان الذي صدرته مسبقاً لاستكمال التعديل عليه.' }
+        // --- 7. منصة الطباعة والتصدير ---
+        { selector: '#questionActionButtons', title: 'منصة التصدير والطباعة 🖨️', text: 'بعد الانتهاء من كتابة وتنسيق أسئلتك، من هنا تقوم باستخراج عملك بالصيغة التي تريدها.' },
+        { selector: '.btn-pdf-student', title: 'نسخة الطالب 🧑‍🎓', text: 'تُصدر ورقة الامتحان نظيفة تماماً للطلاب بدون أي إجابات أو تظليل.' },
+        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة 👨‍🏫', text: 'تُصدر الامتحان وبداخله الإجابات الصحيحة مظللة بشكل جميل ليستخدمها المعلم في التصحيح.' },
+        { selector: '.btn-pdf-both', title: 'تصدير شامل 📑', text: 'يجمع لك (نسخة الطالب + نسخة المعلم + ورقة البابل شيت) في ملف واحد جاهز للطباعة المتتالية.' },
+        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'يولد 4 نماذج مختلفة (A,B,C,D) للأسئلة مع خلطها، ويولد بابل شيت مخصص لكل نموذج.' },
+        { selector: '.btn-json-export', title: 'تصدير كملف (JSON) 💾', text: 'يحفظ الامتحان على جهازك كملف بيانات (Data)، لتستطيع استكماله في أي وقت.' },
+        { selector: '.btn-json-import', title: 'استيراد (JSON) 📥', text: 'لاستعادة ملف الامتحان الذي قمت بتصديره مسبقاً ورفعه للمحرر لاستكمال التعديل عليه.' }
     ];
 
     let currentStep = 0;
 
-    // تنظيف أي جولة شغالة مسبقاً
     if (document.getElementById('tourClickBlocker')) {
         document.getElementById('tourClickBlocker').remove();
         document.getElementById('tourHighlightBox').remove();
         document.getElementById('tourTooltip').remove();
     }
 
-    // بناء عناصر الجولة (الظل، المربع המضئ، نافذة الشرح)
     const clickBlocker = document.createElement('div');
     clickBlocker.id = 'tourClickBlocker';
     clickBlocker.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999990; background:rgba(15, 23, 42, 0.5); cursor:not-allowed; transition: all 0.3s;';
@@ -2770,7 +2779,6 @@ function runSmartOnboardingTour(forceStart = false) {
     document.body.appendChild(highlightBox);
     document.body.appendChild(tooltip);
 
-    // منع التمرير اليدوي أثناء الجولة
     function preventScroll(e) { e.preventDefault(); }
     function preventKeyScroll(e) {
         if (["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.code)) {
@@ -2781,7 +2789,6 @@ function runSmartOnboardingTour(forceStart = false) {
     window.addEventListener('touchmove', preventScroll, { passive: false });
     window.addEventListener('keydown', preventKeyScroll, { passive: false });
 
-    // إنهاء الجولة
     function endTour() {
         if (clickBlocker) clickBlocker.remove();
         if (highlightBox) highlightBox.remove();
@@ -2793,13 +2800,11 @@ function runSmartOnboardingTour(forceStart = false) {
         showToast('انتهت الجولة التعريفية! نتمنى لك تجربة ممتعة 🚀', 'success');
     }
 
-    // دالة ذكية لتخطي العناصر المخفية (مثل تخطي زر الدخول إذا كان مسجلاً للدخول بالفعل)
     function getNextVisibleStep(startIndex, direction = 1) {
         let i = startIndex;
         while (i >= 0 && i < steps.length) {
             let target = null;
             try { target = document.querySelector(steps[i].selector); } catch (e) { }
-            // إذا كان العنصر موجوداً ومرئياً، نعتمده
             if (target && target.offsetParent !== null && window.getComputedStyle(target).display !== 'none') {
                 return i;
             }
@@ -2808,47 +2813,36 @@ function runSmartOnboardingTour(forceStart = false) {
         return direction > 0 ? steps.length : -1;
     }
 
-    // دالة عرض الخطوة
     function showStep(index, direction = 1) {
         let targetIndex = getNextVisibleStep(index, direction);
 
-        // إذا وصلنا للنهاية
         if (targetIndex >= steps.length) { endTour(); return; }
-        // إذا ضغط السابق في أول خطوة ولم يجد، يبقى في الصفر
         if (targetIndex < 0) targetIndex = getNextVisibleStep(0, 1);
 
         currentStep = targetIndex;
         let target = document.querySelector(steps[currentStep].selector);
 
-        // التمرير الناعم للعنصر
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // تأخير بسيط ليتم التمرير قبل رسم المربع حول العنصر
         setTimeout(() => {
             const rect = target.getBoundingClientRect();
 
-            // ضبط المربع المضيء حول العنصر
             highlightBox.style.top = (rect.top + window.scrollY - 8) + 'px';
             highlightBox.style.left = (rect.left + window.scrollX - 8) + 'px';
             highlightBox.style.width = (rect.width + 16) + 'px';
             highlightBox.style.height = (rect.height + 16) + 'px';
 
-            // حساب تموضع صندوق الشرح (التولتيب)
             let tooltipLeft = rect.left + window.scrollX + (rect.width / 2) - 170;
             let tooltipTop = rect.bottom + window.scrollY + 20;
 
-            // خوارزمية عدم خروج الصندوق عن الشاشة أفقياً
             if (tooltipLeft < 10) tooltipLeft = 10;
             if (tooltipLeft + 360 > window.innerWidth) tooltipLeft = window.innerWidth - 360;
 
-            // خوارزمية عدم خروج الصندوق عن الشاشة عمودياً
             let viewportBottom = window.scrollY + window.innerHeight;
             let viewportTop = window.scrollY;
 
-            // إذا نزل تحت الشاشة، نرفعه فوق العنصر
             if (tooltipTop + 220 > viewportBottom) {
                 tooltipTop = rect.top + window.scrollY - 200;
-                // إذا كان رفعه فوق العنصر يجعله يختفي من الأعلى، نضعه في وسط الشاشة
                 if (tooltipTop < viewportTop + 10) {
                     tooltipTop = window.scrollY + (window.innerHeight / 2) - 100;
                 }
@@ -2857,7 +2851,6 @@ function runSmartOnboardingTour(forceStart = false) {
             tooltip.style.top = tooltipTop + 'px';
             tooltip.style.left = tooltipLeft + 'px';
 
-            // بناء المحتوى
             tooltip.innerHTML = `
                 <button id="tourSkipBtn" style="position:absolute; top: 10px; left: 10px; background:transparent; border:none; color:#94a3b8; font-size: 18px; cursor:pointer;" title="إنهاء وتخطي الجولة">✖</button>
                 <h3 style="margin:0 0 12px 0; color:#10b981; font-size:18px; font-weight: 900;">${steps[currentStep].title}</h3>
@@ -2872,7 +2865,6 @@ function runSmartOnboardingTour(forceStart = false) {
                 </div>
             `;
 
-            // أزرار التحكم في الشرح
             const nextBtn = document.getElementById('tourNextBtn');
             if (nextBtn) nextBtn.onclick = () => showStep(currentStep + 1, 1);
 
@@ -2882,13 +2874,11 @@ function runSmartOnboardingTour(forceStart = false) {
             const skipBtn = document.getElementById('tourSkipBtn');
             if (skipBtn) skipBtn.onclick = endTour;
 
-        }, 400); // مهلة بسيطة لانتظار التمرير (Scroll)
+        }, 400); 
     }
 
-    // تشغيل الجولة بعد تأخير بسيط ليتم تحميل الصفحة بالكامل
     setTimeout(() => showStep(0, 1), 1000);
 }
-
 // جعل الدالة متاحة عالمياً إذا أردت استدعاءها من زر في واجهة المستخدم مستقبلاً
 window.runSmartOnboardingTour = runSmartOnboardingTour;
 
