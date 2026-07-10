@@ -3253,3 +3253,90 @@ async function handleChangePassword() {
         }
     }
 }
+let speechRecog = null;
+
+function toggleSpeechRecognition(targetId, btnEl) {
+    // 1. التحقق من دعم المتصفح
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showToast('متصفحك لا يدعم الإملاء الصوتي. يرجى استخدام Google Chrome.', 'error');
+        return;
+    }
+    
+    // 2. إيقاف التسجيل إذا كان الزر مضغوطاً مسبقاً (يعمل كزر تشغيل/إيقاف)
+    if (speechRecog && btnEl.classList.contains('listening')) {
+        speechRecog.stop();
+        btnEl.classList.remove('listening');
+        btnEl.innerHTML = '🎙️ إملاء';
+        btnEl.style.color = '#8b5cf6';
+        return;
+    }
+    
+    // 3. تهيئة الميكروفون
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    speechRecog = new SpeechRecognition();
+    
+    // تحديد اللغة بناءً على نظامك (عربي أو إنجليزي)
+    let isForeign = (typeof currentQuestionSystem !== 'undefined' && currentQuestionSystem === 'foreign');
+    speechRecog.lang = isForeign ? 'en-US' : 'ar-SA';
+    speechRecog.continuous = true;
+    speechRecog.interimResults = true;
+
+    // 4. عند بدء التحدث
+    speechRecog.onstart = function() {
+        btnEl.classList.add('listening');
+        btnEl.innerHTML = '🔴 تحدث...';
+        btnEl.style.color = '#ef4444';
+        showToast('جاري الاستماع... تحدث الآن.', 'info');
+    };
+
+    // 5. عند التقاط الكلمات
+    speechRecog.onresult = function(event) {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            }
+        }
+        
+        // إدراج النص المكتوب في المحرر مكان وقوف المؤشر
+        if (finalTranscript) {
+            const editor = document.getElementById(targetId);
+            if (editor) {
+                editor.focus();
+                document.execCommand('insertText', false, finalTranscript + ' ');
+                
+                // حفظ البيانات آلياً (استدعاء دوالك الأصلية)
+                if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
+                if (typeof autoSaveData === 'function') autoSaveData();
+            }
+        }
+    };
+
+    // 6. التعامل مع الأخطاء (هنا ستعرف سبب المشكلة بالضبط)
+    speechRecog.onerror = function(event) {
+        let errorMsg = 'حدث خطأ غير معروف في الميكروفون.';
+        
+        if (event.error === 'not-allowed') {
+            errorMsg = '❌ المتصفح يمنع الميكروفون! اضغط على (علامة القفل 🔒) أعلى المتصفح بجوار الرابط واسمح للميكروفون.';
+        } else if (event.error === 'no-speech') {
+            errorMsg = '⚠️ لم أسمع شيئاً! الرجاء التحدث بصوت أعلى.';
+        } else if (event.error === 'network') {
+            errorMsg = '❌ الإملاء الصوتي يحتاج إلى اتصال بالإنترنت.';
+        }
+        
+        showToast(errorMsg, 'error');
+        btnEl.classList.remove('listening');
+        btnEl.innerHTML = '🎙️ إملاء';
+        btnEl.style.color = '#8b5cf6';
+    };
+
+    // 7. عند الانتهاء أو التوقف
+    speechRecog.onend = function() {
+        btnEl.classList.remove('listening');
+        btnEl.innerHTML = '🎙️ إملاء';
+        btnEl.style.color = '#8b5cf6';
+    };
+
+    // تشغيل المايك
+    speechRecog.start();
+}
