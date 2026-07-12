@@ -546,7 +546,52 @@ async function handleSignupCloud() {
         }
     }
 }
-
+// ==================================================
+// دالة تسجيل الدخول / إنشاء الحساب باستخدام جوجل
+// ==================================================
+async function handleGoogleSignIn() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    try {
+        showToast('جاري الاتصال بحساب جوجل...', 'info');
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        // التحقق مما إذا كان المستخدم جديداً في قاعدة البيانات
+        const docRef = db.collection('users').doc(user.uid);
+        const docSnap = await docRef.get();
+        
+        if (!docSnap.exists) {
+            // إنشاء ملف للمستخدم الجديد
+            let existingTrial = localStorage.getItem('elalfey_trial_start');
+            await docRef.set({
+                name: user.displayName || "مستخدم جوجل",
+                email: user.email,
+                devices: [localDeviceId],
+                history: [],
+                trialStart: existingTrial ? existingTrial : null, 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // تسجيل الجهاز لمنع تعدد الحسابات العشوائي
+            const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
+            await deviceRegRef.set({
+                email: user.email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        showToast('تم تسجيل الدخول بنجاح!', 'success');
+        document.getElementById('authModal').style.display = 'none';
+        
+    } catch (error) {
+        if (error.code === 'auth/popup-closed-by-user') {
+            showToast('تم إلغاء تسجيل الدخول', 'info');
+        } else {
+            showToast('حدث خطأ أثناء الدخول بجوجل: ' + error.message, 'error');
+        }
+    }
+}
 // ==================================================
 // تفعيل زر Enter لتسجيل الدخول وإنشاء الحساب
 // ==================================================

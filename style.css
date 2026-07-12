@@ -2273,8 +2273,8 @@ button.action-btn:hover {
     position: relative;
     width: 800px; 
     max-width: 90vw;
-    height: 500px; 
-    max-height: 85vh;
+    height: 580px; 
+    max-height: 90vh;
     background: rgba(10, 10, 25, 0.85) !important;
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
@@ -2308,7 +2308,7 @@ button.action-btn:hover {
 }
 
 @media (max-width: 900px) {
-    .auth-container { width: 95%; height: 600px; border-radius: 35px; }
+    .auth-container { width: 95%; height: 650px; border-radius: 35px; }
     .auth-container .bg-panel { display: none !important; }
     .auth-container .info-text { display: none !important; }
     .auth-container .form-box { width: 100% !important; padding: 0 25px !important; }
@@ -2343,7 +2343,7 @@ button.action-btn:hover {
     position: relative;
     width: 100%;
     height: 46px; 
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 
 .auth-container .input-box input {
@@ -2440,7 +2440,36 @@ button.action-btn:hover {
     box-shadow: 0 12px 35px rgba(0, 229, 255, 0.6) !important;
     transform: translateY(-3px) scale(1.02);
 }
+/* تنسيقات زر جوجل الزجاجي */
+.auth-container .btn-google {
+    width: 100%;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 25px !important;
+    cursor: pointer;
+    font-size: 15px;
+    color: #fff !important;
+    font-weight: bold;
+    transition: 0.4s;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2) !important;
+}
 
+.auth-container .btn-google:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: #fff !important;
+    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-3px) scale(1.02);
+}
+
+.auth-container .btn-google img {
+    width: 22px;
+}
 .auth-container .logreg-link {
     font-size: 12.5px;
     color: #ccc;
