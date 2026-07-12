@@ -412,28 +412,31 @@ auth.onAuthStateChanged(async (user) => {
 });
 
 // ==================================================
-// التحكم في نوافذ تسجيل الدخول وإنشاء الحساب
+// التحكم في نوافذ تسجيل الدخول وإنشاء الحساب (للتصميم المبهر الجديد)
 // ==================================================
 function openLoginModal() {
     document.getElementById('authModal').style.display = 'flex';
-    document.getElementById('loginSection').style.display = 'block';
-    document.getElementById('signupSection').style.display = 'none';
+    const container = document.getElementById('authMainContainer');
+    if (container) container.classList.remove('active'); // إزالة الحركة للعودة لتسجيل الدخول
 }
 
 function openSignupModal() {
     document.getElementById('authModal').style.display = 'flex';
-    document.getElementById('loginSection').style.display = 'none';
-    document.getElementById('signupSection').style.display = 'block';
+    const container = document.getElementById('authMainContainer');
+    if (container) container.classList.add('active'); // تفعيل الحركة لإظهار إنشاء الحساب
 }
 
-function togglePasswordVisibility(inputId, btnElement) {
+// دالة إظهار وإخفاء الباسورد المخصصة لأيقونات التصميم الجديد
+function toggleAuthPassword(inputId, iconElement) {
     const input = document.getElementById(inputId);
-    if (input.type === "password") {
-        input.type = "text";
-        btnElement.innerText = "🙈"; // تغيير الأيقونة عند الإظهار
+    if (input.type === 'password') {
+        input.type = 'text';
+        iconElement.classList.replace('bxs-hide', 'bxs-show');
+        iconElement.style.color = '#ff007a';
     } else {
-        input.type = "password";
-        btnElement.innerText = "👁️";
+        input.type = 'password';
+        iconElement.classList.replace('bxs-show', 'bxs-hide');
+        iconElement.style.color = '#fff';
     }
 }
 

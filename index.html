@@ -21,6 +21,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Readex+Pro:wght@400;700&display=swap"
     rel="stylesheet" />
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="icon" type="image/png" href="icon.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="./manifest.json">
@@ -698,13 +699,13 @@
       </button>
 
       <button class="action-btn btn-json-export" onclick="exportQuestionsToJSON()">
-        <i class="icon">💾</i> تصدير بنك الأسئلة
+        <i class="icon">💾</i>حفظ بصيغة json
       </button>
 
       <input type="file" id="importJsonInput" accept=".json" style="display: none;"
         onchange="importQuestionsFromJSON(event)">
       <button class="action-btn btn-json-import" onclick="document.getElementById('importJsonInput').click()">
-        <i class="icon">📥</i> استيراد بنك الأسئلة
+        <i class="icon">📥</i> استيراد بنك أسئلة json
       </button>
     </div>
 
@@ -1105,180 +1106,90 @@
       </div>
     </div>
   </div>
-  <!-- نافذة تسجيل الدخول وإنشاء الحساب فقط -->
-  <div id="authModal" class="custom-modal">
-    <div class="modal-content auth-content" style="border-top: 5px solid var(--primary-color);">
+<!-- نافذة تسجيل الدخول وإنشاء الحساب المدمجة -->
+<div id="authModal" class="custom-modal">
+    <!-- حاوية التصميم المبهر -->
+    <div class="auth-container" id="authMainContainer" dir="ltr">
+        
+        <!-- زر الإغلاق -->
+        <button onclick="document.getElementById('authModal').style.display='none'" style="position: absolute; top: 15px; left: 15px; background: transparent; border: none; color: #fff; font-size: 26px; cursor: pointer; z-index: 100; transition: 0.3s;" onmouseover="this.style.color='#ff007a'" onmouseout="this.style.color='#fff'">✖</button>
 
-      <div id="loginSection" style="display: none; text-align: right;">
-        <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">🔐 تسجيل الدخول</h3>
-
-        <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px;">
-          <div class="form-group">
-            <label>البريد الإلكتروني</label>
-            <input type="email" id="loginEmailInput" placeholder="أدخل البريد الإلكتروني">
-          </div>
-
-          <div class="form-group">
-            <label>كلمة المرور</label>
-            <div class="password-wrapper">
-              <input type="password" id="loginPasswordInput" placeholder="******">
-              <button type="button" class="toggle-password-btn"
-                onclick="togglePasswordVisibility('loginPasswordInput', this)" title="إظهار/إخفاء الباسورد">👁️</button>
-            </div>
-          </div>
-
-          <div style="text-align: left; margin-top: -10px;">
-            <a href="#" onclick="handleResetPassword()"
-              style="color: var(--primary-color); font-size: 13px; text-decoration: underline; font-weight: bold;">هل
-              نسيت كلمة المرور؟</a>
-          </div>
-
-          <button class="btn-tool" onclick="handleLoginCloud()"
-            style="justify-content: center; background: var(--primary-color); color: white; padding: 12px; font-size: 16px;">تسجيل
-            الدخول</button>
+        <!-- قسم تسجيل الدخول (Login) -->
+        <div class="form-box login" dir="rtl">
+            <h2 class="animation" style="--i:0; --j:21;">تسجيل الدخول</h2>
+            <form>
+                <div class="input-box animation" style="--i:1; --j:22;">
+                    <input type="email" id="loginEmailInput" required>
+                    <label>البريد الإلكتروني</label>
+                    <i class='bx bxs-envelope'></i>
+                </div>
+                <div class="input-box animation" style="--i:2; --j:23;">
+                    <input type="password" id="loginPasswordInput" required>
+                    <label>كلمة المرور</label>
+                    <i class='bx bxs-hide eye-icon' onclick="toggleAuthPassword('loginPasswordInput', this)" style="cursor: pointer; pointer-events: auto;"></i>
+                </div>
+                <div class="animation" style="--i:3; --j:24;" style="text-align: right; margin-top: -15px; margin-bottom: 15px;">
+                    <a href="#" onclick="handleResetPassword()" style="color: #ff007a; font-size: 13px; text-decoration: none; font-weight: bold;">هل نسيت كلمة المرور؟</a>
+                </div>
+                <button type="button" onclick="handleLoginCloud()" class="btn animation" style="--i:4; --j:25;">دخول</button>
+                <div class="logreg-link animation" style="--i:5; --j:26;">
+                    <p>ليس لديك حساب؟ <a href="#" class="register-link" onclick="document.getElementById('authMainContainer').classList.add('active');">إنشاء حساب جديد</a></p>
+                </div>
+            </form>
         </div>
 
-        <div style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: bold;">
-          ليس لديك حساب؟ <a href="#" onclick="openSignupModal()" style="color: var(--primary-color);">إنشاء حساب
-            جديد</a>
-        </div>
-      </div>
-
-      <div id="signupSection" style="display: none; text-align: right;">
-        <h3 style="color: var(--primary-color); margin-top: 0; text-align: center;">✨ إنشاء حساب جديد</h3>
-
-        <div
-          style="background-color: #eef2ff; color: #4338ca; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 15px; border: 1px solid #c7d2fe; text-align: center;">
-          💡 يرجى إدخال حساب بريد إلكتروني حقيقي لتأكيد وتفعيل الحساب.
-        </div>
-
-        <div class="settings-grid" style="grid-template-columns: 1fr; gap: 12px;">
-          <div class="form-group">
-            <label>الاسم الكامل</label>
-            <input type="text" id="signupNameInput" placeholder="أدخل اسمك أو اسم المستخدم">
-          </div>
-
-          <div class="form-group">
-            <label>البريد الإلكتروني</label>
-            <input type="email" id="signupEmailInput" placeholder="أدخل البريد الإلكتروني">
-          </div>
-
-          <div class="form-group">
-            <label>كلمة المرور</label>
-            <div class="password-wrapper">
-              <input type="password" id="signupPasswordInput" placeholder="******">
-              <button type="button" class="toggle-password-btn"
-                onclick="togglePasswordVisibility('signupPasswordInput', this)">👁️</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>تأكيد كلمة المرور</label>
-            <div class="password-wrapper">
-              <input type="password" id="signupConfirmPasswordInput" placeholder="أعد كتابة كلمة المرور">
-              <button type="button" class="toggle-password-btn"
-                onclick="togglePasswordVisibility('signupConfirmPasswordInput', this)">👁️</button>
-            </div>
-          </div>
-
-          <button class="btn-tool" onclick="handleSignupCloud()"
-            style="justify-content: center; border-color: var(--primary-color); color: var(--primary-color); padding: 12px; font-size: 16px;">إنشاء
-            الحساب</button>
+        <!-- قسم إنشاء الحساب (Register) -->
+        <div class="form-box register" dir="rtl">
+            <h2 class="animation" style="--i:17; --j:0;">إنشاء حساب</h2>
+            <form>
+                <div class="input-box animation" style="--i:18; --j:1;">
+                    <input type="text" id="signupNameInput" required>
+                    <label>الاسم الكامل</label>
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-box animation" style="--i:19; --j:2;">
+                    <input type="email" id="signupEmailInput" required>
+                    <label>البريد الإلكتروني</label>
+                    <i class='bx bxs-envelope'></i>
+                </div>
+                <div class="input-box animation" style="--i:20; --j:3;">
+                    <input type="password" id="signupPasswordInput" required>
+                    <label>كلمة المرور</label>
+                    <i class='bx bxs-hide eye-icon' onclick="toggleAuthPassword('signupPasswordInput', this)" style="cursor: pointer; pointer-events: auto;"></i>
+                </div>
+                <div class="input-box animation" style="--i:21; --j:4;">
+                    <input type="password" id="signupConfirmPasswordInput" required>
+                    <label>تأكيد كلمة المرور</label>
+                    <i class='bx bxs-hide eye-icon' onclick="toggleAuthPassword('signupConfirmPasswordInput', this)" style="cursor: pointer; pointer-events: auto;"></i>
+                </div>
+                <button type="button" onclick="handleSignupCloud()" class="btn animation" style="--i:22; --j:5;">تأكيد وإنشاء</button>
+                <div class="logreg-link animation" style="--i:23; --j:6;">
+                    <p>لديك حساب بالفعل؟ <a href="#" class="login-link" onclick="document.getElementById('authMainContainer').classList.remove('active');">تسجيل الدخول</a></p>
+                </div>
+            </form>
         </div>
 
-        <div
-          style="background-color: #fef2f2; color: #b91c1c; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-top: 15px; border: 1px solid #fecaca; text-align: center;">
-          ⚠️ ملاحظة أمنية: يُسمح لكل جهاز بإنشاء حساب واحد فقط.
+        <!-- النصوص الترحيبية -->
+        <div class="info-text login" dir="rtl">
+            <h2 class="animation" style="--i:0; --j:20;">مرحباً بعودتك!</h2>
+            <p class="animation" style="--i:1; --j:21;">سعداء برؤيتك مجدداً. سجل دخولك للوصول إلى أرشيفك السحابي واستكمال أعمالك.</p>
+        </div>
+        
+        <div class="info-text register" dir="rtl">
+            <h2 class="animation" style="--i:17; --j:0;">أهلاً بك معنا!</h2>
+            <p class="animation" style="--i:18; --j:1;">انضم إلينا لإنشاء وتنسيق امتحاناتك باحترافية، وحفظ مسوداتك سحابياً ومزامنتها عبر أجهزتك.</p>
+            
+           <!-- الرسائل التحذيرية (تم تغيير لون الإطار الجانبي للسيان المضيء) -->
+<div class="animation" style="--i:19; --j:2; margin-top: 25px; padding: 15px; background: rgba(0, 0, 0, 0.25); border-radius: 15px; border-right: 4px solid #43CBFF; line-height: 1.6; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+    <span style="color: #fff; font-size: 12.5px; font-weight: bold; display: block;">💡 برجاء وضع حساب جيميل حقيقي للتأكد منه.</span>
+    <span style="color: #fff; font-size: 12px; font-weight: bold; display: block; margin-top: 4px;">⚠️ ملحوظة: يمكن إنشاء حساب واحد فقط لكل جهاز.</span>
+</div>
         </div>
 
-        <div style="text-align: center; margin-top: 15px; font-size: 14px; font-weight: bold;">
-          لديك حساب بالفعل؟ <a href="#" onclick="openLoginModal()" style="color: var(--primary-color);">تسجيل الدخول</a>
-        </div>
-      </div>
-
-      <button onclick="document.getElementById('authModal').style.display='none'"
-        style="margin-top: 20px; background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">إغلاق
-        النافذة</button>
+        <!-- اللوحة الخلفية ذات الزاوية المائلة -->
+        <div class="bg-panel"></div>
     </div>
-  </div>
-<!-- 
-  <div id="userProfileSection" style="display: none; text-align: right">
-    <div style="
-                margin-bottom: 15px;
-                background: var(--ui-input-bg);
-                padding: 15px;
-                border-radius: 8px;
-              ">
-      <span style="
-                  font-weight: 900;
-                  color: var(--primary-color);
-                  font-size: 16px;
-                ">مرحباً بك: <span id="currentLoggedInUser"></span> 🟢</span><br />
-      <span style="font-size: 13px; color: #64748b; font-weight: bold">(الأجهزة النشطة: <span
-          id="activeDevicesCount">0</span> /
-        3)</span>
-    </div>
-    <div style="
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-                justify-content: center;
-              ">
-      <button id="adminPanelBtn" class="btn-tool btn-danger" onclick="
-                  document.getElementById('adminModal').style.display = 'flex';
-                  document.getElementById('authModal').style.display = 'none';
-                " style="display: none">
-        ⚙️ الإدارة
-      </button>
-      <button class="btn-tool btn-danger" onclick="
-                  handleLogoutCloud();
-                  document.getElementById('authModal').style.display = 'none';
-                ">
-        🚪 خروج
-      </button>
-      <button class="btn-tool" onclick="
-                  deleteUserAccount();
-                  document.getElementById('authModal').style.display = 'none';
-                " style="
-                  background: #fee2e2;
-                  color: #b91c1c;
-                  border-color: #f87171;
-                ">
-        🗑️ حذف حسابي
-      </button>
-    </div>
-    <h4 style="
-                margin: 15px 0 10px;
-                font-weight: 900;
-                color: var(--ui-text);
-              ">
-      🗂️ سجل المستندات السحابي:
-    </h4>
-    <div id="historyListContainer" style="
-                max-height: 150px;
-                overflow-y: auto;
-                background: var(--ui-bg);
-                padding: 10px;
-                border-radius: 8px;
-                border: 1px solid var(--ui-border);
-              "></div>
-  </div> -->
-  </div>
-  <!-- <button onclick="document.getElementById('authModal').style.display = 'none'" style="
-            margin-top: 20px;
-            background: #e2e8f0;
-            color: #1e293b;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-          ">
-    إغلاق
-  </button> -->
-  </div>
-  </div>
+</div>
 
   <div id="toastContainer"></div>
 
