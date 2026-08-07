@@ -947,21 +947,31 @@ function proceedWithAction(actionType, param) {
 
 window.addEventListener('DOMContentLoaded', async () => {
 
-    const adminModalContent = document.querySelector('#adminModal .modal-content');
-    if (adminModalContent) {
-        const adminTools = document.createElement('div');
-        adminTools.innerHTML = `
-            <div style="margin-top: 25px; border-top: 2px dashed #cbd5e1; padding-top: 20px;">
-                <h4 style="color: #ef4444; margin-top: 0; font-weight: 900;">👥 إدارة المستخدمين وصلاحياتهم</h4>
-                <input type="email" id="adminTargetEmail" placeholder="أدخل إيميل المستخدم المستهدف هنا..." style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px;">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button onclick="executeAdminAction('cancel_vip')" style="flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">إلغاء الـ VIP</button>
-                    <button onclick="executeAdminAction('ban_user')" style="flex: 1; background: #64748b; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">حظر الحساب</button>
-                    <button onclick="executeAdminAction('delete_user')" style="flex: 1; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;">تفريغ وحذف</button>
+  // حقن أدوات الإدارة بالتصميم الاحترافي
+    const adminToolsContainer = document.getElementById('adminDynamicToolsContainer');
+    if (adminToolsContainer) {
+        adminToolsContainer.innerHTML = `
+            <div class="admin-section highlight-section">
+                <h4 class="section-title"><i data-lucide="users"></i> إدارة المستخدمين وصلاحياتهم</h4>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 13px; font-weight: bold; color: #64748b; margin-bottom: 8px; display: block;">البريد الإلكتروني للمستخدم المستهدف</label>
+                    <input type="email" id="adminTargetEmail" class="premium-input" placeholder="أدخل الإيميل هنا...">
+                </div>
+                <div class="admin-actions-grid">
+                    <button onclick="executeAdminAction('cancel_vip')" class="btn-admin-action btn-warning">
+                        <i data-lucide="user-minus"></i> <span>إلغاء الـ VIP</span>
+                    </button>
+                    <button onclick="executeAdminAction('ban_user')" class="btn-admin-action btn-dark">
+                        <i data-lucide="ban"></i> <span>حظر الحساب</span>
+                    </button>
+                    <button onclick="executeAdminAction('delete_user')" class="btn-admin-action btn-danger">
+                        <i data-lucide="trash-2"></i> <span>تفريغ وحذف</span>
+                    </button>
                 </div>
             </div>
         `;
-        adminModalContent.insertBefore(adminTools, adminModalContent.lastElementChild);
+        // تفعيل أيقونات Lucide
+        if (window.lucide) { lucide.createIcons(); }
     }
 
     await loadSavedData();
@@ -2186,9 +2196,10 @@ function applySystemLanguageSettings() {
     const userLang = navigator.language || navigator.userLanguage;
     const isArabic = userLang.toLowerCase().startsWith('ar');
 
-    document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
-    document.documentElement.lang = isArabic ? 'ar' : 'en';
-    document.documentElement.style.setProperty('--text-align', isArabic ? 'right' : 'left');
+   // إجبار الموقع على البقاء بالاتجاه العربي (RTL) دائماً لتجنب تدمير التصميم
+    document.documentElement.dir = 'rtl';
+    document.documentElement.lang = 'ar';
+    document.documentElement.style.setProperty('--text-align', 'right');
 
     if (!isArabic) return;
 

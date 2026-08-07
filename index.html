@@ -1278,64 +1278,53 @@
   </div>
 
   <div id="adminModal" class="custom-modal">
-    <div class="modal-content" style="border-top: 5px solid #ef4444; text-align: right">
-      <h3 style="color: #ef4444; margin-top: 0; font-weight: 900">
-        ⚙️ مصنع الأكواد السحابي
-      </h3>
-      <div style="display: flex; gap: 10px; margin-bottom: 15px">
-        <div class="form-group" style="flex: 1">
-          <label>نوع الباقة</label>
-          <select id="adminCodeType">
-            <option value="7">أسبوع (7 أيام)</option>
-            <option value="30">شهر (30 يوماً)</option>
-            <option value="365">سنة (365 يوماً)</option>
-            <option value="9999">مدى الحياة</option>
-          </select>
+    <div class="modal-content admin-premium-modal">
+      
+      <!-- الترويسة -->
+      <div class="admin-header">
+        <div class="admin-icon-wrapper">
+          <i data-lucide="shield-alert"></i>
         </div>
-        <div class="form-group" style="width: 100px">
-          <label>العدد</label>
-          <input type="number" id="adminCodeCount" value="5" min="1" max="100" />
+        <div>
+          <h3>لوحة التحكم الإدارية (Admin)</h3>
+          <p>توليد الأكواد وإدارة صلاحيات المستخدمين</p>
         </div>
       </div>
-      <button onclick="generateDynamicCodes()" style="
-            background: #ef4444;
-            color: white;
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-          ">
-        🔥 توليد الأكواد وحفظها
-      </button>
-      <textarea id="generatedCodesOutput" rows="6" style="
-            width: 100%;
-            margin-top: 15px;
-            padding: 10px;
-            direction: ltr;
-            text-align: left;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            font-family: monospace;
-            font-size: 14px;
-          " readonly></textarea>
-      <div style="text-align: center; margin-top: 15px">
-        <button onclick="
-              document.getElementById('adminModal').style.display = 'none'
-            " style="
-              background: #e2e8f0;
-              border: none;
-              padding: 10px 40px;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: bold;
-              color: #1e293b;
-            ">
-          إغلاق
+
+      <!-- مصنع الأكواد -->
+      <div class="admin-section">
+        <h4 class="section-title"><i data-lucide="key"></i> مصنع الأكواد السحابي</h4>
+        <div class="admin-grid-2">
+          <div class="form-group">
+            <label>نوع الباقة</label>
+            <select id="adminCodeType" class="premium-input">
+              <option value="7">أسبوع (7 أيام)</option>
+              <option value="30">شهر (30 يوماً)</option>
+              <option value="365">سنة (365 يوماً)</option>
+              <option value="9999">مدى الحياة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>العدد المطلوب</label>
+            <input type="number" id="adminCodeCount" value="5" min="1" max="100" class="premium-input" />
+          </div>
+        </div>
+        <button onclick="generateDynamicCodes()" class="btn-premium btn-generate">
+          <i data-lucide="zap"></i> توليد الأكواد وحفظها
+        </button>
+        <textarea id="generatedCodesOutput" rows="4" class="premium-textarea" placeholder="ستظهر الأكواد هنا بمجرد توليدها..." readonly></textarea>
+      </div>
+
+      <!-- حاوية إدارة المستخدمين (تُحقن من الـ JS) -->
+      <div id="adminDynamicToolsContainer"></div>
+
+      <!-- التذييل -->
+      <div class="admin-footer">
+        <button onclick="document.getElementById('adminModal').style.display = 'none'" class="btn-premium btn-close-admin">
+          إغلاق اللوحة
         </button>
       </div>
+
     </div>
   </div>
 
