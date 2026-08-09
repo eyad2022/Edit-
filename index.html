@@ -45,66 +45,71 @@
         <button class="nav-btn btn-primary" onclick="openSignupModal()">إنشاء حساب</button>
       </div>
 
-      <!-- زر القائمة المنسدلة للحساب (يظهر تلقائياً بعد تسجيل الدخول) -->
-      <div id="loggedInNav" style="display: none;">
-        <button class="nav-btn btn-outline"
-          style="border-color: var(--correct-color); color: var(--correct-color); gap: 8px;"
-          onclick="toggleCustomDropdown('profileDropdownMenu')">
-          👤 حسابي
-        </button>
+     <div class="f-profile-wrapper" style="display: none;">
+  <button class="f-profile-btn" onclick="toggleCustomDropdown('profileDropdownMenu')">
+    <div class="f-avatar">
+      <i class='bx bx-user'></i>
+      <span class="f-online-dot"></span>
+    </div>
+    <span>حسابي</span>
+    <i class='bx bx-chevron-down arrow'></i>
+  </button>
 
-        <!-- القائمة المنسدلة (Dropdown) الخاصة بالحساب وسجل المستندات -->
-        <div id="profileDropdownMenu" class="floating-dropdown-menu"
-          style="display: none; width: 330px; top: calc(100% + 15px); right: 0; padding: 15px; cursor: default;">
-          <!-- تم نقل قسم بيانات المستخدم هنا ليقرأه الجافاسكريبت بشكل طبيعي -->
-          <div id="userProfileSection" style="display: none; text-align: right;">
-            <div
-              style="margin-bottom: 15px; background: var(--ui-input-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--ui-border);">
-              <span style="font-weight: 900; color: var(--primary-color); font-size: 13px;">مرحباً بك: <span
-                  id="currentUserName" style="color:var(--text-color);"></span> 🟢</span><br>
-              <span
-                style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">📧
-                الإيميل: <span id="currentLoggedInUser"></span></span><br>
-              <span
-                style="font-size: 12px; color: #64748b; font-weight: bold; margin-top: 5px; display: inline-block;">(الأجهزة
-                النشطة: <span id="activeDevicesCount">0</span> / 3)</span>
-              <div id="vipExpireDateText" style="color: #10b981; font-size: 13px; font-weight: bold; margin-top: 8px;">
-              </div>
-            </div>
+  <div id="profileDropdownMenu" class="f-profile-glass-menu" style="display: none;">
+    
+    <div class="f-profile-header">
+      <div class="f-profile-avatar-large">
+        <i class='bx bx-user-circle'></i>
+      </div>
+      <div class="f-profile-info">
+        <h4 id="userNameDisplay">جاري التحميل...</h4>
+        <p id="userEmailDisplay">...</p>
+      </div>
+    </div>
 
-            <div
-              style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--ui-border);">
-
-              <button class="btn-tool" onclick="openChangePasswordModal(); closeCustomDropdown('profileDropdownMenu')"
-                style="background: #e0f2fe; color: #0284c7; border-color: #7dd3fc; padding: 6px 12px; font-size: 12px;">🔑
-                تغيير الباسورد</button>
-
-              <span id="adminPanelBtn" style="display: none;">
-                <button class="btn-tool btn-danger"
-                  onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu')"
-                  style="display: inline-flex; margin-left: 8px; padding: 6px 12px; font-size: 12px;">⚙️
-                  الإدارة</button>
-                <button class="btn-tool" onclick="openAdminPanel(); closeCustomDropdown('profileDropdownMenu')"
-                  style="display: inline-flex; background: #6366f1; color: white; border-color: #4f46e5; padding: 6px 12px; font-size: 12px;">📊
-                  الإحصائيات</button>
-              </span>
-
-              <button class="btn-tool btn-danger"
-                onclick="handleLogoutCloud(); closeCustomDropdown('profileDropdownMenu')"
-                style="padding: 6px 12px; font-size: 12px;">🚪 خروج</button>
-              <button class="btn-tool" onclick="deleteUserAccount(); closeCustomDropdown('profileDropdownMenu')"
-                style="background: #fee2e2; color: #b91c1c; border-color: #f87171; padding: 6px 12px; font-size: 12px;">🗑️
-                حذف الحساب</button>
-            </div>
-
-            <h4 style="margin: 0 0 10px 0; font-weight: 900; color: var(--ui-text); font-size: 13px;">🗂️ سجل المستندات
-              السحابي:</h4>
-            <div id="historyListContainer"
-              style="max-height: 200px; overflow-y: auto; background: var(--ui-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--ui-border);">
-            </div>
-          </div>
+    <div class="f-profile-stats-grid">
+      <div class="f-stat-box">
+        <i class='bx bx-devices'></i>
+        <div>
+          <span>الأجهزة النشطة</span>
+          <strong id="activeDevicesDisplay">...</strong>
         </div>
       </div>
+      <div class="f-stat-box highlight-vip">
+        <i class='bx bx-crown'></i>
+        <div>
+          <span>نهاية الاشتراك</span>
+          <strong id="vipEndDateDisplay">...</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="f-menu-divider"></div>
+
+    <div class="f-profile-actions">
+      <button onclick="changePassword()" class="f-p-btn"><i class='bx bx-key'></i> تغيير الباسورد</button>
+      <button id="adminPanelBtn" onclick="document.getElementById('adminModal').style.display='flex'; closeCustomDropdown('profileDropdownMenu');" class="f-p-btn f-admin-btn" style="display:none;"><i class='bx bx-shield-quarter'></i> الإدارة</button>
+    </div>
+
+    <div class="f-menu-divider"></div>
+
+    <div class="f-cloud-history">
+      <div class="f-history-title">
+        <i class='bx bx-cloud-download'></i> سجل المستندات السحابي
+      </div>
+      <div id="cloudDocsList" class="f-history-list">
+      </div>
+    </div>
+
+    <div class="f-menu-divider"></div>
+
+    <div class="f-profile-danger-zone">
+      <button onclick="logoutUser()" class="f-p-btn f-logout-btn"><i class='bx bx-log-out'></i> تسجيل خروج</button>
+      <button onclick="deleteAccount()" class="f-p-btn f-delete-btn"><i class='bx bx-trash'></i> حذف الحساب</button>
+    </div>
+
+  </div>
+</div>
     </div>
 
     <div class="nav-center">
@@ -267,150 +272,65 @@
         📄 محرر النصوص والمستندات
       </button>
     </div>
+<div id="questionsTab" class="input-section active">
+   <!-- شريط التحكم المستقبلي (يجمع كل شيء في سطر واحد أنيق) -->
+    <div class="futuristic-control-bar">
 
-    <div id="questionsTab" class="input-section active">
-      <div style="
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding: 10px;
-            background: transparent;
-            border: none;
-            margin-bottom: 20px;
-          ">
-        <button class="btn-icon" onclick="execUndo()" title="تراجع خطوة للخلف (Undo)">
-          ↩️
-        </button>
-        <button class="btn-icon" onclick="execRedo()" title="تقدم خطوة للأمام (Redo)">
-          ↪️
-        </button>
+      <!-- أزرار التراجع والتقدم -->
+      <div class="f-undo-redo-group">
+        <button class="f-action-btn" onclick="execUndo()" title="تراجع"><i class='bx bx-undo'></i></button>
+        <button class="f-action-btn" onclick="execRedo()" title="إعادة"><i class='bx bx-redo'></i></button>
       </div>
 
-      <div class="system-switcher-container" style="
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 15px;
-            background: var(--ui-input-bg);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid var(--ui-border);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          ">
-        <div style="
-              font-weight: 900;
-              color: var(--primary-color);
-              align-self: center;
-              margin-left: 10px;
-              font-size: 16px;
-            ">
-          أنظمة الإدخال والتنسيق المتقدم:
-        </div>
-        <button id="sysBtnArabic" class="btn-tool active" onclick="setQuestionSystem('arabic')" style="
-              border-color: var(--primary-color);
-              background: var(--primary-color);
-              color: white;
-              flex: 1;
-              justify-content: center;
-              min-width: 200px;
-            ">
-          🇸🇦 النظام العربي المطور
-        </button>
-        <button id="sysBtnForeign" class="btn-tool" onclick="setQuestionSystem('foreign')"
-          style="flex: 1; justify-content: center; min-width: 200px">
-          🇬🇧 نظام اللغات الأجنبية (LTR)
-        </button>
-        <button id="sysBtnScience" class="btn-tool" onclick="setQuestionSystem('science')"
-          style="flex: 1; justify-content: center; min-width: 200px">
-          ⚛️ النظام العلمي (الرياضيات)
-        </button>
-      </div>
+      <!-- مجموعة القوائم المنسدلة الذكية -->
+      <div class="f-dropdowns-group">
 
-      <div style="
-            margin-bottom: 20px;
-            background: var(--ui-container);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--ui-border);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          ">
-        <div style="
-              position: relative;
-              display: flex;
-              align-items: center;
-              gap: 15px;
-            ">
-          <span style="font-weight: bold; color: var(--ui-text); font-size: 15px">أدوات الإدراج:</span>
-          <button class="btn-icon-insert" onclick="toggleCustomDropdown('insertMenu')" title="إضافة عنصر جديد">
-            ➕
+        <!-- 1. قائمة أنظمة التنسيق -->
+        <div class="f-dropdown-container">
+          <button class="f-main-drop-btn sys-btn" onclick="toggleCustomDropdown('systemMenu')">
+            <i class='bx bx-slider-alt'></i> <span>أنظمة التنسيق</span> <i class='bx bx-chevron-down arrow'></i>
           </button>
-
-          <div id="insertMenu" class="floating-dropdown-menu" style="display: none">
-            <button id="btnInsertMCQ" onclick="
-                  insertQuestionTemplate('mcq');
-                  closeCustomDropdown('insertMenu');
-                ">
-              🔘 سؤال اختياري
-            </button>
-            <button id="btnInsertTF" onclick="
-                  insertQuestionTemplate('tf');
-                  closeCustomDropdown('insertMenu');
-                ">
-              ✅ سؤال صح/خطأ
-            </button>
-            <button id="btnInsertEssay" onclick="
-                  insertQuestionTemplate('essay');
-                  closeCustomDropdown('insertMenu');
-                ">
-              📝 سؤال مقالي
-            </button>
-            <button onclick="
-                  document.getElementById('ocrImageUpload').click();
-                  closeCustomDropdown('insertMenu');
-                ">
-              📄 استخراج نص من صورة (OCR)
-            </button>
-            <input type="file" id="ocrImageUpload" accept="image/*" style="display: none"
-              onchange="extractTextFromImage(event)" />
-
-            <div style="height: 1px; background: var(--ui-border); margin: 5px 0"></div>
-            <div style="height: 1px; background: var(--ui-border); margin: 5px 0"></div>
-            <button onclick="
-                  document.getElementById('qImageUpload').click();
-                  closeCustomDropdown('insertMenu');
-                ">
-              🖼️ إدراج صورة
-            </button>
-            <input type="file" id="qImageUpload" accept="image/*" style="display: none"
-              onchange="insertImageToQuestion(event)" />
+          <div id="systemMenu" class="f-glass-menu" style="display: none;">
+            <button onclick="setQuestionSystem('arabic'); closeCustomDropdown('systemMenu');"><span style="font-size:16px;">🇸🇦</span> النظام العربي المطور</button>
+            <button onclick="setQuestionSystem('foreign'); closeCustomDropdown('systemMenu');"><span style="font-size:16px;">🇬🇧</span> نظام اللغات (LTR)</button>
+            <button onclick="setQuestionSystem('science'); closeCustomDropdown('systemMenu');"><span style="font-size:16px;">⚛️</span> النظام العلمي</button>
           </div>
         </div>
 
-        <div style="
-              display: flex;
-              gap: 10px;
-              flex-wrap: wrap;
-              border-right: 1px solid var(--ui-border);
-              padding-right: 15px;
-            ">
-          <button class="btn-tool" onclick="showAnalytics()">
-            📊 تحليل البنك
+        <!-- 2. قائمة العمليات الذكية -->
+        <div class="f-dropdown-container">
+          <button class="f-main-drop-btn tools-btn" onclick="toggleCustomDropdown('smartToolsMenu')">
+            <i class='bx bx-magic-wand'></i> <span>العمليات الذكية</span> <i class='bx bx-chevron-down arrow'></i>
           </button>
-          <button class="btn-tool" onclick="shuffleQuestions()">
-            🔀 خلط شامل
-          </button>
-          <button class="btn-tool" onclick="smartFormatAndClean()">
-            ✨ إعادة تنسيق
-          </button>
+          <div id="smartToolsMenu" class="f-glass-menu" style="display: none;">
+            <button onclick="showAnalytics(); closeCustomDropdown('smartToolsMenu');"><i class='bx bx-pie-chart-alt-2'></i> تحليل البنك</button>
+            <button onclick="shuffleQuestions(); closeCustomDropdown('smartToolsMenu');"><i class='bx bx-shuffle'></i> خلط شامل</button>
+            <button onclick="smartFormatAndClean(); closeCustomDropdown('smartToolsMenu');" style="color: #10b981;"><i class='bx bx-brush'></i> إعادة تنسيق ذكي</button>
+            <div class="f-menu-divider"></div>
+            <!-- زر الأرشيف السحابي -->
+            <button onclick="document.getElementById('archiveBankModal').style.display='flex'; renderArchiveQuestionsList(); closeCustomDropdown('smartToolsMenu');" style="color: #8b5cf6;"><i class='bx bx-cloud'></i> الأرشيف السحابي</button>
+          </div>
         </div>
-      </div>
 
+        <!-- 3. قائمة أدوات الإدراج -->
+        <div class="f-dropdown-container">
+          <button class="f-main-drop-btn insert-btn" onclick="toggleCustomDropdown('insertMenu')">
+            <i class='bx bx-plus-circle'></i> <span>أدوات الإدراج</span> <i class='bx bx-chevron-down arrow'></i>
+          </button>
+          <div id="insertMenu" class="f-glass-menu" style="display: none;">
+            <button onclick="insertQuestionTemplate('mcq'); closeCustomDropdown('insertMenu');">🔘 سؤال اختياري</button>
+            <button onclick="insertQuestionTemplate('tf'); closeCustomDropdown('insertMenu');">✅ سؤال صح/خطأ</button>
+            <button onclick="insertQuestionTemplate('essay'); closeCustomDropdown('insertMenu');">📝 سؤال مقالي</button>
+            <div class="f-menu-divider"></div>
+            <button onclick="document.getElementById('ocrImageUpload').click(); closeCustomDropdown('insertMenu');">📄 استخراج نص (OCR)</button>
+            <input type="file" id="ocrImageUpload" accept="image/*" style="display: none" onchange="extractTextFromImage(event)" />
+            <button onclick="document.getElementById('qImageUpload').click(); closeCustomDropdown('insertMenu');">🖼️ إدراج صورة</button>
+            <input type="file" id="qImageUpload" accept="image/*" style="display: none" onchange="insertImageToQuestion(event)" />
+          </div>
+        </div>
+
+      </div>
+    </div>
       <div class="grid-layout">
         <div class="form-group">
           <label>1. محرر العناوين والأسئلة:</label>
@@ -1203,77 +1123,46 @@
 
   <div id="toastContainer"></div>
 
+<!-- بطاقة الـ VIP المستقبلية الفاخرة -->
   <div id="vipModal" class="custom-modal">
-    <div class="modal-content" style="border-top: 5px solid #f59e0b">
-      <h3 style="color: #f59e0b; margin-top: 0">
-        👑 تفعيل النسخة الاحترافية (VIP)
-      </h3>
-      <p id="vipModalText" style="color: var(--ui-text); margin-bottom: 20px; line-height: 1.6">
-        يرجى إدخال كود التفعيل الفريد للاستمرار.
-      </p>
-      <input type="text" id="vipCodeInput" placeholder="أدخل كود التفعيل هنا..." style="
-            text-align: center;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-          " />
-      <div style="display: flex; gap: 15px; justify-content: center">
-        <button onclick="verifyVIPCode()" style="
-              background: #10b981;
-              color: white;
-              border: none;
-              padding: 12px 30px;
-              border-radius: 8px;
-              font-weight: bold;
-              cursor: pointer;
-            ">
-          تفعيل الكود ✓
-        </button>
-        <button onclick="document.getElementById('vipModal').style.display = 'none'" style="
-              background: #e2e8f0;
-              color: #1e293b;
-              border: none;
-              padding: 12px 30px;
-              border-radius: 8px;
-              font-weight: bold;
-              cursor: pointer;
-            ">
-          إلغاء
-        </button>
+    <div class="modal-content f-vip-modal">
+      
+      <!-- الترويسة الذهبية -->
+      <div class="f-vip-header">
+        <div class="f-vip-crown-glow">
+          <i class='bx bxs-crown'></i>
+        </div>
+        <h3 class="f-vip-title">تفعيل النسخة الاحترافية (VIP)</h3>
+        <p id="vipModalText" class="f-vip-subtitle">يرجى إدخال كود التفعيل الفريد للاستمرار.</p>
       </div>
-      <div style="
-            margin-top: 25px;
-            padding-top: 15px;
-            border-top: 1px solid var(--ui-border);
-            font-size: 14px;
-            color: #64748b;
-          ">
-        للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر:<br />
-        <div style="
-    display: flex;
-    justify-content: center; /* هذه الخاصية مسؤولة عن التوسيط الأفقي */
-    align-items: center;     /* هذه الخاصية لتوسيط العناصر عمودياً */
-    gap: 40px;               /* المسافة بين الأيقونات */
-    margin-top: 15px;
-">
-          <!-- أيقونة واتساب -->
-          <a href="https://wa.me/+201155324374" target="_blank">
-            <img style="width: 80px;" src="images.jpeg" alt="واتساب">
-          </a>
 
-          <!-- أيقونة تيليجرام -->
-          <a href="https://t.me/+201155324374" target="_blank">
-            <img style="width: 50px;" src="Telegram_logo.svg.png" alt="تيليجرام">
-          </a>
-
-          <!-- أيقونة ماسنجر -->
-          <a href="https://m.me/eyad.m.d.2025" target="_blank">
-            <img style="width: 50px;" src="images.png" alt="ماسنجر">
-          </a>
+      <!-- حقل إدخال الكود -->
+      <div class="f-vip-body">
+        <div class="f-vip-input-group">
+          <i class='bx bx-key f-input-icon'></i>
+          <input type="text" id="vipCodeInput" class="f-vip-input" placeholder="أدخل كود التفعيل هنا..." autocomplete="off" />
         </div>
       </div>
+
+      <!-- أزرار التفعيل -->
+      <div class="f-vip-actions">
+        <button class="f-vip-btn f-vip-cancel" onclick="document.getElementById('vipModal').style.display='none'">إلغاء</button>
+        <button class="f-vip-btn f-vip-activate" onclick="verifyVIPCode()">
+          تفعيل الكود <i class='bx bx-check-shield'></i>
+        </button>
+      </div>
+
+      <!-- التواصل الاجتماعي (الفوتر) -->
+      <div class="f-vip-footer">
+        <p>للاشتراك والحصول على الأكواد المخصصة، تواصل معي عبر:</p>
+        <div class="f-vip-socials">
+          <!-- تم دمج روابطك الخاصة لتعمل مع الأيقونات المضيئة الجديدة -->
+          <a href="https://m.me/eyad.m.d.2025" target="_blank" class="f-social-btn f-messenger" title="ماسنجر"><i class='bx bxl-messenger'></i></a>
+          <a href="https://t.me/+201155324374" target="_blank" class="f-social-btn f-telegram" title="تيليجرام"><i class='bx bxl-telegram'></i></a>
+          <a href="https://wa.me/+201155324374" target="_blank" class="f-social-btn f-whatsapp" title="واتساب"><i class='bx bxl-whatsapp'></i></a>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1397,127 +1286,47 @@
     </div>
   </div>
 
+ <!-- نافذة المساعد الذكي المستقبلية -->
   <div id="aiModal" class="custom-modal">
-    <div class="modal-content" style="text-align: right; max-width: 700px">
-      <h3 style="
-            color: #8b5cf6;
-            margin-top: 0;
-            border-bottom: 2px solid #8b5cf6;
-            padding-bottom: 10px;
-          ">
-        🤖 مساعد التوليد المعرفي الذكي
-      </h3>
-      <div id="aiChatOutput" style="
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 15px;
-            height: 200px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-            display: none;
-            text-align: right;
-            font-size: 15px;
-            line-height: 1.6;
-          "></div>
-      <textarea id="aiTextInput" placeholder="اكتب سؤالك، أو ضع النص المراد تحويله لأسئلة هنا..." style="
-            height: 100px;
-            margin-bottom: 15px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 15px;
-            width: 100%;
-            font-family: inherit;
-            resize: vertical;
-            box-sizing: border-box;
-          "></textarea>
-      <div style="
-            background: #f8fafc;
-            border: 2px dashed #8b5cf6;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-          ">
-        <input type="file" id="aiFileInput" accept="image/*,.pdf,.txt" multiple style="display: none" onchange="
-              document.getElementById('aiFileName').innerText =
-                this.files.length > 1
-                  ? 'تم تحديد ' + this.files.length + ' ملفات 📁'
-                  : this.files[0]
-                    ? this.files[0].name
-                    : 'لم يتم التحديد'
-            " />
-        <button onclick="document.getElementById('aiFileInput').click()" style="
-              background: white;
-              border: 1px solid #8b5cf6;
-              color: #8b5cf6;
-              padding: 8px 20px;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: bold;
-              font-family: inherit;
-            ">
-          📂 إرفاق ملف للتحليل
-        </button>
-        <div id="aiFileName" style="margin-top: 10px; font-size: 12px; color: #64748b">
-          لم يتم تحديد ملف
-        </div>
+    <div class="modal-content f-ai-modal">
+      
+      <!-- الترويسة النابضة -->
+      <div class="f-ai-header">
+         <div class="f-ai-icon-pulse"><i class='bx bx-bot'></i></div>
+         <h3 class="f-ai-title">مساعد التوليد المعرفي الذكي</h3>
       </div>
-      <div style="
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-          ">
-        <button onclick="generateAIQuestions('general')" style="
-              background: linear-gradient(135deg, #3b82f6, #2563eb);
-              color: white;
-              border: none;
-              padding: 12px 20px;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: bold;
-              font-family: inherit;
-            ">
-          💬 إرسال
-        </button>
-        <button onclick="generateAIQuestions('quiz')" style="
-              background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-              color: white;
-              border: none;
-              padding: 12px 20px;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: bold;
-              font-family: inherit;
-            ">
-          ✨ توليد أسئلة
-        </button>
-        <button onclick="generateAIQuestions('classify')" style="
-              background: linear-gradient(135deg, #f59e0b, #d97706);
-              color: white;
-              border: none;
-              padding: 12px 20px;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: bold;
-              font-family: inherit;
-            ">
-          📊 تحليل وتوزيع الدرجات
-        </button>
-        <button onclick="document.getElementById('aiModal').style.display = 'none'" style="
-              background: #e2e8f0;
-              color: #1e293b;
-              border: none;
-              padding: 12px 20px;
-              border-radius: 8px;
-              font-weight: bold;
-              cursor: pointer;
-              font-family: inherit;
-            ">
-          إغلاق
-        </button>
+
+      <!-- مساحة الإدخال ورفع الملفات -->
+      <div class="f-ai-body">
+         
+         <!-- مساحة ظهور رد الذكاء الاصطناعي (مخفية حتى يتم الرد) -->
+         <div id="aiChatOutput" class="f-ai-chat-output" style="display: none;"></div>
+
+         <!-- حقل كتابة السؤال -->
+         <div class="f-ai-input-wrapper">
+            <textarea id="aiTextInput" class="f-ai-textarea" placeholder="اكتب سؤالك، أو ضع النص المراد تحويله لأسئلة هنا..."></textarea>
+         </div>
+
+         <!-- منطقة الإرفاق التفاعلية -->
+         <div class="f-ai-upload-zone" onclick="document.getElementById('aiFileInput').click()">
+            <input type="file" id="aiFileInput" accept="image/*,.pdf,.txt" multiple hidden onchange="document.getElementById('aiFileName').innerText = this.files.length > 1 ? 'تم تحديد ' + this.files.length + ' ملفات 📁' : (this.files[0] ? this.files[0].name : 'لم يتم التحديد')" />
+            <div class="f-ai-upload-icon"><i class='bx bx-cloud-upload'></i></div>
+            <span class="f-ai-upload-text">إرفاق ملف للتحليل</span>
+            <small id="aiFileName" class="f-ai-upload-status">لم يتم تحديد ملف</small>
+         </div>
       </div>
+
+      <!-- أزرار الإجراءات المستقبلية -->
+      <div class="f-ai-footer">
+         <button class="f-ai-btn f-ai-close" onclick="document.getElementById('aiModal').style.display='none'">إغلاق</button>
+         
+         <div class="f-ai-main-actions">
+            <button class="f-ai-btn f-ai-orange" onclick="generateAIQuestions('classify')"><i class='bx bx-bar-chart-square'></i> تحليل وتوزيع الدرجات</button>
+            <button class="f-ai-btn f-ai-purple" onclick="generateAIQuestions('quiz')"><i class='bx bx-sparkles'></i> توليد أسئلة</button>
+            <button class="f-ai-btn f-ai-blue" onclick="generateAIQuestions('general')"><i class='bx bx-send'></i> إرسال</button>
+         </div>
+      </div>
+
     </div>
   </div>
 
@@ -1582,19 +1391,18 @@
       document.getElementById(menuId).style.display = 'none';
     }
 
-    // إغلاق القوائم عند الضغط خارجها
+  // إغلاق القوائم الذكي عند الضغط خارجها
     document.addEventListener('click', function (event) {
-      const insertMenu = document.getElementById('insertMenu');
-      const profileMenu = document.getElementById('profileDropdownMenu');
-      const toggleBtnInsert = event.target.closest('button[onclick*="toggleCustomDropdown(\'insertMenu\')"]');
-      const toggleBtnProfile = event.target.closest('button[onclick*="toggleCustomDropdown(\'profileDropdownMenu\')"]');
-
-      if (insertMenu && insertMenu.style.display === 'flex' && !toggleBtnInsert && !insertMenu.contains(event.target)) {
-        insertMenu.style.display = 'none';
-      }
-      if (profileMenu && profileMenu.style.display === 'flex' && !toggleBtnProfile && !profileMenu.contains(event.target)) {
-        profileMenu.style.display = 'none';
-      }
+      const menus = ['insertMenu', 'profileDropdownMenu', 'systemMenu', 'smartToolsMenu'];
+      
+      menus.forEach(menuId => {
+        const menuEl = document.getElementById(menuId);
+        const toggleBtn = event.target.closest(`button[onclick*="toggleCustomDropdown('${menuId}')"]`);
+        
+        if (menuEl && menuEl.style.display === 'flex' && !toggleBtn && !menuEl.contains(event.target)) {
+          menuEl.style.display = 'none';
+        }
+      });
     });
 
     // المراقب السحري: يقوم بتبديل أزرار الناف بار وإغلاق نافذة الدخول تلقائياً بمجرد تسجيل الدخول
@@ -1685,6 +1493,7 @@
       </div>
     </div>
   </div>
+  
 </body>
 
 </html>

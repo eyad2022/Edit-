@@ -91,12 +91,10 @@ let historySaveTimeout;
 
 function setQuestionSystem(sys) {
     currentQuestionSystem = sys;
-    document.getElementById('sysBtnArabic').style = "background:var(--ui-container); color:var(--ui-text); flex: 1; justify-content: center; min-width: 200px;";
-    document.getElementById('sysBtnForeign').style = "background:var(--ui-container); color:var(--ui-text); flex: 1; justify-content: center; min-width: 200px;";
-    document.getElementById('sysBtnScience').style = "background:var(--ui-container); color:var(--ui-text); flex: 1; justify-content: center; min-width: 200px;";
 
-    let activeBtn = sys === 'arabic' ? 'sysBtnArabic' : sys === 'foreign' ? 'sysBtnForeign' : 'sysBtnScience';
-    document.getElementById(activeBtn).style = "background:var(--primary-color); color:white; border-color:var(--primary-color); flex: 1; justify-content: center; min-width: 200px;";
+    // 1. تحديد الزر الرئيسي للقائمة المنسدلة لتحديث اسمه
+    const mainBtnSpan = document.querySelector('.sys-btn span');
+    let systemName = '';
 
     const qInp = document.getElementById('questionsInput');
     const aInp = document.getElementById('answersInput');
@@ -106,42 +104,38 @@ function setQuestionSystem(sys) {
     const essayBtn = document.getElementById('btnInsertEssay');
 
     if (sys === 'arabic') {
-        qInp.dir = "auto";
-        qInp.style.textAlign = "start";
-        qInp.style.fontFamily = "inherit";
-        aInp.dir = "auto";
-        aInp.style.textAlign = "start";
-        aInp.style.fontFamily = "inherit";
+        systemName = 'النظام العربي';
+        if (qInp) { qInp.dir = "auto"; qInp.style.textAlign = "start"; qInp.style.fontFamily = "inherit"; }
+        if (aInp) { aInp.dir = "auto"; aInp.style.textAlign = "start"; aInp.style.fontFamily = "inherit"; }
         if (sciTb) sciTb.style.display = "none";
-        mcqBtn.innerHTML = "🔘 سؤال اختياري";
-        tfBtn.innerHTML = "✅ سؤال صح/خطأ";
-        essayBtn.innerHTML = "📝 سؤال مقالي";
+        if (mcqBtn) mcqBtn.innerHTML = "🔘 سؤال اختياري";
+        if (tfBtn) tfBtn.innerHTML = "✅ سؤال صح/خطأ";
+        if (essayBtn) essayBtn.innerHTML = "📝 سؤال مقالي";
     } else if (sys === 'foreign') {
-        qInp.dir = "ltr";
-        qInp.style.textAlign = "left";
-        qInp.style.fontFamily = "'Readex Pro', Arial, sans-serif";
-        aInp.dir = "ltr";
-        aInp.style.textAlign = "left";
-        aInp.style.fontFamily = "'Readex Pro', Arial, sans-serif";
+        systemName = 'نظام اللغات (LTR)';
+        if (qInp) { qInp.dir = "ltr"; qInp.style.textAlign = "left"; qInp.style.fontFamily = "'Readex Pro', Arial, sans-serif"; }
+        if (aInp) { aInp.dir = "ltr"; aInp.style.textAlign = "left"; aInp.style.fontFamily = "'Readex Pro', Arial, sans-serif"; }
         if (sciTb) sciTb.style.display = "none";
-        mcqBtn.innerHTML = "🔘 Add MCQ";
-        tfBtn.innerHTML = "✅ Add T/F";
-        essayBtn.innerHTML = "📝 Add Essay";
+        if (mcqBtn) mcqBtn.innerHTML = "🔘 Add MCQ";
+        if (tfBtn) tfBtn.innerHTML = "✅ Add T/F";
+        if (essayBtn) essayBtn.innerHTML = "📝 Add Essay";
     } else if (sys === 'science') {
-        qInp.dir = "auto";
-        qInp.style.textAlign = "left";
-        qInp.style.fontFamily = "inherit";
-        aInp.dir = "auto";
-        aInp.style.textAlign = "left";
-        aInp.style.fontFamily = "inherit";
+        systemName = 'النظام العلمي';
+        if (qInp) { qInp.dir = "auto"; qInp.style.textAlign = "left"; qInp.style.fontFamily = "inherit"; }
+        if (aInp) { aInp.dir = "auto"; aInp.style.textAlign = "left"; aInp.style.fontFamily = "inherit"; }
         if (sciTb) sciTb.style.display = "flex";
-        mcqBtn.innerHTML = "🔘 MCQ (Science)";
-        tfBtn.innerHTML = "✅ T/F (Science)";
-        essayBtn.innerHTML = "📝 Essay (Science)";
+        if (mcqBtn) mcqBtn.innerHTML = "🔘 MCQ (Science)";
+        if (tfBtn) tfBtn.innerHTML = "✅ T/F (Science)";
+        if (essayBtn) essayBtn.innerHTML = "📝 Essay (Science)";
     }
-    showToast("تم تفعيل " + document.getElementById(activeBtn).innerText, 'info');
-}
 
+    // 2. تحديث نص الزر في الواجهة الجديدة لتعرف النظام النشط حالياً
+    if (mainBtnSpan) {
+        mainBtnSpan.innerText = systemName;
+    }
+
+    showToast("تم تفعيل " + systemName, 'info');
+}
 function insertSci(code) {
     document.getElementById('questionsInput').focus();
     document.execCommand('insertHTML', false, code);
@@ -302,24 +296,23 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
 
-       // === 3. إظهار بيانات المستخدم في الواجهة ===
-            if (document.getElementById('currentUserName')) {
-                document.getElementById('currentUserName').innerText = data.name || "مستخدم";
-            }
-            if (document.getElementById('currentLoggedInUser')) {
-                document.getElementById('currentLoggedInUser').innerText = user.email;
-            }
-            document.getElementById('userProfileSection').style.display = 'block';
-
-            // 🟢 التعديل الأول: إخفاء أزرار الضيوف وإظهار أيقونة "حسابي" بعد الدخول 🟢
-            const guestNav = document.getElementById('guestNavButtons');
-            const loggedInNav = document.getElementById('loggedInNav');
+            // 🟢 التعديل الأول: إظهار الواجهة المستقبلية وحقن البيانات فيها 🟢
+            const futuristicProfile = document.querySelector('.f-profile-wrapper');
+            const guestNav = document.getElementById('guestNavButtons'); // أزرار (تسجيل / إنشاء حساب)
+            
+            if (futuristicProfile) futuristicProfile.style.display = 'block';
             if (guestNav) guestNav.style.display = 'none';
-            if (loggedInNav) loggedInNav.style.display = 'block';
+
+            if (document.getElementById('userNameDisplay')) {
+                document.getElementById('userNameDisplay').innerText = data.name || "مستخدم";
+            }
+            if (document.getElementById('userEmailDisplay')) {
+                document.getElementById('userEmailDisplay').innerText = user.email;
+            }
             // ---------------------------------------------------------
 
             if (user.email === 'ayadmsd67@gmail.com') {
-                document.getElementById('adminPanelBtn').style.display = 'inline-block';
+                document.getElementById('adminPanelBtn').style.display = 'inline-flex'; // تم التحديث ليتناسب مع الزر الجديد
             } else {
                 document.getElementById('adminPanelBtn').style.display = 'none';
             }
@@ -361,26 +354,26 @@ auth.onAuthStateChanged(async (user) => {
                         localStorage.removeItem('elalfey_vip_expiry');
                     }
 
-                    // الكود الخاص بطباعة تاريخ الانتهاء في الواجهة للطالب
-                    const expireEl = document.getElementById('vipExpireDateText');
+                    // ربط تاريخ الانتهاء بالبطاقة الذكية الجديدة
+                    const expireEl = document.getElementById('vipEndDateDisplay');
                     if (expireEl) {
                         if (liveData.vipExpiry === 'lifetime') {
-                            expireEl.innerText = "⭐ اشتراكك: نسخة مدى الحياة (VIP)";
+                            expireEl.innerText = "نسخة مدى الحياة";
                             expireEl.style.color = "#10b981";
                         } else if (liveData.vipExpiry && liveData.vipExpiry !== 'expired') {
                             let dateObj = new Date(liveData.vipExpiry);
-                            let readableDate = dateObj.toLocaleDateString('ar-EG') + ' الساعة ' + dateObj.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
-                            expireEl.innerText = "⏳ ينتهي اشتراكك في: " + readableDate;
-                            expireEl.style.color = "#10b981";
+                            expireEl.innerText = dateObj.toLocaleDateString('ar-EG');
+                            expireEl.style.color = "#0f172a";
                         } else {
-                            expireEl.innerText = "⚠️ انتهت فترة الاشتراك أو الـ 7 أيام المجانية";
+                            expireEl.innerText = "منتهي";
                             expireEl.style.color = "#ef4444"; 
                         }
                     }
 
+                    // ربط الأجهزة النشطة بالبطاقة الذكية الجديدة
                     let liveDevices = liveData.devices || [];
-                    const countEl = document.getElementById('activeDevicesCount');
-                    if (countEl) countEl.innerText = liveDevices.length;
+                    const countEl = document.getElementById('activeDevicesDisplay');
+                    if (countEl) countEl.innerText = liveDevices.length + " / 3";
 
                     if (!liveDevices.includes(localDeviceId)) {
                         showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
@@ -396,14 +389,14 @@ auth.onAuthStateChanged(async (user) => {
             sessionListener = null;
         }
         
-        document.getElementById('userProfileSection').style.display = 'none';
         document.getElementById('adminPanelBtn').style.display = 'none';
         
-        // 🔴 التعديل الثاني: إظهار أزرار الضيوف وإخفاء أيقونة "حسابي" بعد الخروج 🔴
+        // 🔴 التعديل الثاني: إخفاء الواجهة المستقبلية وإظهار أزرار الضيوف 🔴
+        const futuristicProfile = document.querySelector('.f-profile-wrapper');
         const guestNav = document.getElementById('guestNavButtons');
-        const loggedInNav = document.getElementById('loggedInNav');
+
+        if (futuristicProfile) futuristicProfile.style.display = 'none';
         if (guestNav) guestNav.style.display = 'flex';
-        if (loggedInNav) loggedInNav.style.display = 'none';
         // ---------------------------------------------------------
 
         // مسح صلاحية الـ VIP من المتصفح عند الخروج
@@ -743,7 +736,7 @@ function syncCurrentToHistory() {
 }
 
 function loadHistoryUI(hist) {
-    const container = document.getElementById('historyListContainer');
+    const container = document.getElementById('cloudDocsList');
     if (!hist || hist.length === 0) {
         container.innerHTML = `<p style="color:#64748b; font-size:13px; text-align:center;">السجل فارغ حالياً.</p>`;
         return;
@@ -3398,4 +3391,44 @@ function toggleSpeechRecognition(targetId, btnEl) {
 
     // تشغيل المايك
     speechRecog.start();
+}
+// إصلاح ذكي لإخفاء/إظهار زر الحساب المستقبلي بناءً على حالة تسجيل الدخول
+firebase.auth().onAuthStateChanged((user) => {
+    const profileBtnWrapper = document.querySelector('.f-profile-wrapper');
+    if (profileBtnWrapper) {
+        // إذا كان هناك مستخدم، أظهر الزر، وإلا قم بإخفائه
+        profileBtnWrapper.style.display = user ? 'block' : 'none';
+    }
+});
+// --- دوال التحكم في حساب المستخدم للواجهة الجديدة ---
+
+function logoutUser() {
+    firebase.auth().signOut().then(() => {
+        window.location.reload();
+    });
+}
+
+function changePassword() {
+    const user = firebase.auth().currentUser;
+    if (user && user.email) {
+        firebase.auth().sendPasswordResetEmail(user.email)
+            .then(() => alert('تم إرسال رابط تغيير كلمة المرور إلى إيميلك بنجاح!'))
+            .catch(error => alert('حدث خطأ: ' + error.message));
+    }
+}
+
+function deleteAccount() {
+    if (confirm('تحذير خطير: هل أنت متأكد من حذف حسابك نهائياً؟ سيتم مسح كل بياناتك ولن تتمكن من التراجع.')) {
+        firebase.auth().currentUser.delete()
+            .then(() => window.location.reload())
+            .catch(error => alert('لأسباب أمنية، يجب تسجيل الخروج ثم الدخول مجدداً قبل حذف الحساب.'));
+    }
+}
+
+function showStatsModal() {
+    const modal = document.getElementById('adminPanelModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        closeCustomDropdown('profileDropdownMenu'); // لإغلاق القائمة المنسدلة عند الفتح
+    }
 }

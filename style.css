@@ -2811,3 +2811,729 @@ button.action-btn:hover {
     .admin-section { padding: 25px 20px; }
     .custom-modal { padding: 15px; }
 }
+/* ========================================================
+   شريط التحكم المستقبلي (Futuristic Control Bar)
+   ======================================================== */
+.futuristic-control-bar {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(255,255,255,0.6);
+}
+body.dark-mode .futuristic-control-bar {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.f-undo-redo-group { display: flex; gap: 12px; }
+.f-action-btn {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: #ffffff; border: 1px solid #e2e8f0;
+    color: #64748b; font-size: 22px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+.f-action-btn:hover {
+    background: #6366f1; color: white; border-color: #6366f1;
+    transform: translateY(-3px); box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+body.dark-mode .f-action-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+
+.f-dropdowns-group { display: flex; gap: 15px; flex-wrap: wrap; }
+.f-dropdown-container { position: relative; }
+
+/* الأزرار الرئيسية المضيئة */
+.f-main-drop-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 22px; border-radius: 14px; border: none;
+    font-family: inherit; font-weight: 900; font-size: 14px;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: white; position: relative; overflow: hidden;
+}
+.f-main-drop-btn .arrow { font-size: 18px; margin-right: 5px; transition: 0.3s; }
+
+/* ألوان مخصصة لكل زر */
+.f-main-drop-btn.sys-btn { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.25); }
+.f-main-drop-btn.tools-btn { background: linear-gradient(135deg, #8b5cf6, #7c3aed); box-shadow: 0 6px 15px rgba(139, 92, 246, 0.25); }
+.f-main-drop-btn.insert-btn { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 6px 15px rgba(14, 165, 233, 0.25); }
+
+.f-main-drop-btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
+.f-main-drop-btn.sys-btn:hover { box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4); }
+.f-main-drop-btn.tools-btn:hover { box-shadow: 0 12px 25px rgba(139, 92, 246, 0.4); }
+.f-main-drop-btn.insert-btn:hover { box-shadow: 0 12px 25px rgba(14, 165, 233, 0.4); }
+
+/* القوائم المنسدلة الزجاجية (Glass Menus) */
+.f-glass-menu {
+    position: absolute; top: calc(100% + 12px); right: 0;
+    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+    border: 1px solid #e2e8f0; border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15); padding: 8px;
+    min-width: 220px; display: flex; flex-direction: column; gap: 4px;
+    z-index: 99999; animation: slideDownGlass 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top right;
+}
+body.dark-mode .f-glass-menu { background: rgba(30, 41, 59, 0.95); border-color: rgba(255,255,255,0.05); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+
+@keyframes slideDownGlass {
+    from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.f-glass-menu button {
+    background: transparent; border: none; padding: 12px 15px;
+    border-radius: 10px; font-family: inherit; font-weight: 800; font-size: 14px;
+    color: #475569; text-align: right; cursor: pointer; transition: 0.2s;
+    display: flex; align-items: center; gap: 10px;
+}
+body.dark-mode .f-glass-menu button { color: #cbd5e1; }
+.f-glass-menu button i { font-size: 18px; }
+.f-glass-menu button:hover { background: rgba(99, 102, 241, 0.1); color: #6366f1; transform: translateX(-5px); }
+body.dark-mode .f-glass-menu button:hover { background: rgba(99, 102, 241, 0.2); }
+
+.f-menu-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
+body.dark-mode .f-menu-divider { background: #334155; }
+
+/* تجاوب الموبايل */
+@media (max-width: 768px) {
+    .futuristic-control-bar { flex-direction: column; padding: 20px 15px; border-radius: 24px; }
+    .f-dropdowns-group { flex-direction: column; width: 100%; }
+    .f-dropdown-container, .f-main-drop-btn { width: 100%; justify-content: space-between; }
+    .f-glass-menu { width: 100%; position: static; margin-top: 8px; animation: none; box-shadow: none; border-color: transparent; background: rgba(0,0,0,0.03); }
+}
+.f-profile-wrapper {
+    position: relative;
+    z-index: 10000;
+}
+
+.f-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 8px 16px 8px 8px;
+    border-radius: 50px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 15px;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+body.dark-mode .f-profile-btn {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+}
+
+.f-profile-btn:hover {
+    background: #ffffff;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+    transform: translateY(-2px);
+}
+
+.f-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    position: relative;
+}
+
+.f-online-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+/* ========================================================
+   1. إصلاح قائمة الحساب (تفعيل التمرير + تبييض الخلفية)
+   ======================================================== */
+.f-profile-glass-menu {
+    position: absolute;
+    top: calc(100% + 15px);
+    right: 0 !important; 
+    left: auto !important;
+    width: 340px;
+    
+    /* 💡 إصلاح الألوان: خلفية بيضاء نقية ومشرقة مع تأثير زجاجي */
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    
+    /* 💡 إصلاح القص: تحديد أقصى طول وتفعيل التمرير الداخلي */
+    max-height: 75vh !important; /* القائمة لن تتخطى 75% من طول شاشتك */
+    overflow-y: auto !important; 
+    overflow-x: hidden !important;
+    
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 999999 !important;
+    transform-origin: top right;
+}
+
+/* 2. تجميل شريط التمرير داخل القائمة ليتناسب مع التصميم */
+.f-profile-glass-menu::-webkit-scrollbar { width: 5px; }
+.f-profile-glass-menu::-webkit-scrollbar-track { background: transparent; }
+.f-profile-glass-menu::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 10px; }
+.f-profile-glass-menu::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
+
+/* ========================================================
+   3. ضبط ألوان النصوص والأزرار لتكون واضحة جداً
+   ======================================================== */
+/* إجبار النصوص الرئيسية على أخذ لون داكن وواضح */
+.f-profile-info h4, 
+.f-profile-info p, 
+.f-stat-box span, 
+.f-stat-box strong, 
+.f-history-title, 
+.f-p-btn {
+    color: #1e293b !important; 
+}
+
+/* الحفاظ على ألوان الأيقونات المميزة */
+.f-profile-avatar-large i { color: #6366f1 !important; }
+.f-stat-box.highlight-vip i { color: #f59e0b !important; }
+.f-stat-box { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+
+/* أزرار الإدارة والخطر السفلية */
+.f-admin-btn { background: #1e293b !important; color: #ffffff !important; }
+.f-admin-btn i { color: #ffffff !important; }
+
+.f-logout-btn { background: #fff1f2 !important; color: #e11d48 !important; border-color: #fecdd3 !important; }
+.f-logout-btn i { color: #e11d48 !important; }
+.f-logout-btn:hover { background: #ffe4e6 !important; }
+
+.f-delete-btn { background: #e11d48 !important; color: #ffffff !important; border-color: #e11d48 !important; }
+.f-delete-btn i { color: #ffffff !important; }
+.f-delete-btn:hover { background: #be123c !important; }
+
+body.dark-mode .f-profile-glass-menu {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+}
+
+@keyframes slideDownProfile {
+    from { opacity: 0; transform: translateY(-15px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.f-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.f-profile-avatar-large {
+    width: 55px;
+    height: 55px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+.f-profile-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+body.dark-mode .f-profile-info h4 { color: #f8fafc; }
+
+.f-profile-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: bold;
+    word-break: break-all;
+}
+
+.f-profile-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.f-stat-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    transition: 0.3s;
+}
+
+body.dark-mode .f-stat-box {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.f-stat-box i {
+    font-size: 20px;
+    color: #3b82f6;
+}
+
+.f-stat-box div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.f-stat-box span {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 800;
+}
+
+.f-stat-box strong {
+    font-size: 13px;
+    color: #0f172a;
+    font-family: monospace;
+}
+
+body.dark-mode .f-stat-box strong { color: #f8fafc; }
+
+.f-stat-box.highlight-vip i { color: #f59e0b; }
+
+.f-menu-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.06);
+    width: 100%;
+}
+
+body.dark-mode .f-menu-divider { background: rgba(255, 255, 255, 0.06); }
+
+.f-profile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.f-p-btn {
+    background: transparent;
+    border: none;
+    padding: 10px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+body.dark-mode .f-p-btn { color: #cbd5e1; }
+
+.f-p-btn i { font-size: 18px; }
+
+.f-p-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+}
+
+.f-admin-btn {
+    grid-column: span 2;
+    background: #1e293b;
+    color: white;
+}
+
+.f-admin-btn:hover {
+    background: #0f172a;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.f-cloud-history {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.f-history-title {
+    font-size: 13px;
+    font-weight: 900;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.f-history-list {
+    max-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 5px;
+}
+
+.f-history-list::-webkit-scrollbar { width: 4px; }
+.f-history-list::-webkit-scrollbar-track { background: transparent; }
+.f-history-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.f-profile-danger-zone {
+    display: flex;
+    gap: 10px;
+}
+
+.f-logout-btn, .f-delete-btn {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+body.dark-mode .f-logout-btn, body.dark-mode .f-delete-btn {
+    background: rgba(255,255,255,0.02);
+    border-color: rgba(255,255,255,0.05);
+}
+
+.f-logout-btn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+    border-color: #fca5a5;
+}
+
+.f-delete-btn:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+@media (max-width: 768px) {
+    .f-profile-glass-menu {
+        position: absolute !important;
+        top: calc(100% + 15px) !important;
+        right: 0 !important; /* تثبيت القائمة من اليمين لتتساوى مع الزر */
+        left: auto !important;
+        width: calc(100vw - 30px) !important; /* تأخذ عرض الشاشة مع ترك مسافة أمان */
+        max-width: 340px !important;
+        margin: 0 !important;
+        border-radius: 20px !important;
+        z-index: 9999999 !important;
+        animation: slideDownProfile 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes slideUpProfile {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+}
+
+
+/* ========================================================
+   1. واجهة المساعد الذكي المستقبلية (Bright Holographic AI)
+   ======================================================== */
+.f-ai-modal {
+    /* زجاج نقي ومشرق مع توهج ملون */
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(168, 85, 247, 0.4) !important; /* حافة بنفسجية زاهية */
+    border-radius: 28px !important;
+    /* ظل بنفسجي وسماوي يعطي تأثير الهولوجرام المضيء */
+    box-shadow: 0 30px 60px rgba(168, 85, 247, 0.15), 
+                0 0 30px rgba(6, 182, 212, 0.1), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
+    padding: 0 !important;
+    overflow: hidden;
+    max-width: 650px !important;
+}
+
+body.dark-mode .f-ai-modal {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border-color: rgba(168, 85, 247, 0.6) !important;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(168, 85, 247, 0.2) !important;
+}
+
+/* ترويسة الروبوت */
+.f-ai-header {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(6, 182, 212, 0.15));
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+/* أيقونة الذكاء الاصطناعي بألوان زاهية ونابضة */
+.f-ai-icon-pulse {
+    width: 45px;
+    height: 45px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #a855f7, #06b6d4); /* تدرج من البنفسجي الزاهي للسماوي */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.6);
+    animation: pulseBrightAI 2s infinite;
+}
+@keyframes pulseBrightAI {
+    0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(168, 85, 247, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+}
+
+.f-ai-title {
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    background: linear-gradient(135deg, #7e22ce, #0284c7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 !important;
+}
+body.dark-mode .f-ai-title { background: linear-gradient(135deg, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.f-ai-body { padding: 25px; display: flex; flex-direction: column; gap: 20px; }
+
+/* حقول الكتابة والردود الزجاجية المشرقة */
+.f-ai-textarea, .f-ai-chat-output {
+    width: 100%;
+    padding: 20px;
+    border-radius: 16px;
+    border: 2px solid rgba(168, 85, 247, 0.2);
+    background: rgba(255, 255, 255, 0.7);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1e293b;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 5px 15px rgba(168, 85, 247, 0.05);
+}
+.f-ai-textarea { height: 120px; resize: none; }
+.f-ai-chat-output { height: 200px; overflow-y: auto; text-align: right; line-height: 1.6; }
+
+.f-ai-textarea:focus {
+    outline: none;
+    border-color: #a855f7;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.2), inset 0 2px 5px rgba(0,0,0,0.02);
+}
+
+body.dark-mode .f-ai-textarea, body.dark-mode .f-ai-chat-output { background: rgba(0,0,0,0.3); color: #f8fafc; border-color: rgba(168, 85, 247, 0.4); }
+body.dark-mode .f-ai-textarea:focus { background: rgba(0,0,0,0.5); box-shadow: 0 0 25px rgba(168, 85, 247, 0.3); }
+
+/* تجميل شريط التمرير */
+.f-ai-chat-output::-webkit-scrollbar { width: 6px; }
+.f-ai-chat-output::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #a855f7, #06b6d4); border-radius: 10px; }
+
+/* منطقة رفع الملفات الزاهية */
+.f-ai-upload-zone {
+    border: 2px dashed rgba(6, 182, 212, 0.5); /* لون سماوي زاهي */
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(6, 182, 212, 0.05);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.f-ai-upload-zone:hover {
+    border-color: #06b6d4;
+    background: rgba(6, 182, 212, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(6, 182, 212, 0.2);
+}
+.f-ai-upload-icon { font-size: 32px; color: #06b6d4; }
+.f-ai-upload-text { font-weight: 900; color: #06b6d4; font-size: 15px; }
+.f-ai-upload-status { color: #64748b; font-size: 13px; font-weight: bold; }
+
+/* الفوتر والأزرار المشرقة */
+.f-ai-footer {
+    padding: 20px 25px;
+    background: rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(168, 85, 247, 0.15);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+}
+body.dark-mode .f-ai-footer { background: rgba(15, 23, 42, 0.6); }
+
+.f-ai-main-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.f-ai-btn {
+    padding: 12px 24px; border-radius: 14px; font-family: inherit; font-weight: 900; font-size: 14px;
+    cursor: pointer; display: flex; align-items: center; gap: 8px; border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: white;
+}
+.f-ai-btn i { font-size: 18px; }
+.f-ai-btn:hover { transform: translateY(-4px) scale(1.02); filter: brightness(1.15); }
+
+.f-ai-close { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.f-ai-close:hover { background: #e2e8f0; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+/* أزرار متوهجة بألوان مشعة */
+.f-ai-orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); color: #fff; }
+.f-ai-purple { background: linear-gradient(135deg, #a855f7, #d946ef); box-shadow: 0 10px 25px rgba(168, 85, 247, 0.4); color: #fff; }
+.f-ai-blue { background: linear-gradient(135deg, #0ea5e9, #38bdf8); box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4); color: #fff; }
+
+
+/* ========================================================
+   2. واجهة تفعيل الـ VIP (Bright Gold Premium Edition)
+   ======================================================== */
+.f-vip-modal {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(251, 191, 36, 0.6) !important; /* حواف ذهبية زاهية */
+    border-radius: 28px !important;
+    /* ظل ذهبي يعطي إشراقة قوية للمربع */
+    box-shadow: 0 30px 60px rgba(245, 158, 11, 0.2), 
+                0 0 40px rgba(251, 191, 36, 0.15),
+                inset 0 0 0 1px rgba(255,255,255,1) !important;
+    padding: 0 !important; overflow: hidden; max-width: 550px !important; text-align: center;
+}
+
+body.dark-mode .f-vip-modal {
+    background: rgba(15, 23, 42, 0.85) !important; border-color: rgba(251, 191, 36, 0.5) !important;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 40px rgba(245, 158, 11, 0.2) !important;
+}
+
+/* الترويسة الذهبية المشرقة */
+.f-vip-header {
+    padding: 35px 25px 20px;
+    background: radial-gradient(circle at top, rgba(251, 191, 36, 0.15) 0%, transparent 70%);
+}
+
+.f-vip-crown-glow {
+    width: 65px; height: 65px; margin: 0 auto 15px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 34px; color: white;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
+    animation: pulseBrightGold 2.5s infinite;
+}
+@keyframes pulseBrightGold {
+    0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(251, 191, 36, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+}
+
+.f-vip-title {
+    font-size: 26px !important; font-weight: 900 !important;
+    background: linear-gradient(135deg, #d97706, #fbbf24);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin: 0 0 10px !important;
+}
+body.dark-mode .f-vip-title { background: linear-gradient(135deg, #fbbf24, #fef08a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.f-vip-subtitle { color: #475569; font-size: 15px; line-height: 1.6; margin: 0; font-weight: bold; }
+body.dark-mode .f-vip-subtitle { color: #cbd5e1; }
+
+/* حقل إدخال الكود المضيء */
+.f-vip-body { padding: 0 30px 20px; }
+.f-vip-input-group { position: relative; width: 100%; }
+.f-input-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #f59e0b; z-index: 10; }
+
+.f-vip-input {
+    width: 100%; padding: 20px 50px 20px 20px; border-radius: 16px;
+    border: 2px solid rgba(251, 191, 36, 0.3); background: rgba(255, 255, 255, 0.9);
+    font-family: inherit; font-size: 18px; font-weight: 900; color: #1e293b;
+    text-align: center; letter-spacing: 2px; transition: all 0.3s ease;
+    box-shadow: inset 0 5px 15px rgba(245, 158, 11, 0.05);
+}
+.f-vip-input:focus {
+    outline: none; border-color: #fbbf24; background: #ffffff;
+    box-shadow: 0 10px 30px rgba(251, 191, 36, 0.25), inset 0 2px 5px rgba(0,0,0,0.02);
+}
+body.dark-mode .f-vip-input { background: rgba(0,0,0,0.3); color: #f8fafc; border-color: rgba(251,191,36,0.4); }
+body.dark-mode .f-vip-input:focus { background: rgba(0,0,0,0.5); box-shadow: 0 0 25px rgba(251,191,36,0.3); }
+
+/* أزرار التفعيل المشرقة */
+.f-vip-actions { padding: 0 30px 25px; display: flex; gap: 15px; }
+
+.f-vip-btn {
+    padding: 18px; border-radius: 16px; font-family: inherit; font-weight: 900; font-size: 16px;
+    cursor: pointer; border: none; transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+
+.f-vip-cancel { flex: 1; background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+.f-vip-cancel:hover { background: #f1f5f9; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+.f-vip-activate {
+    flex: 2;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white;
+    box-shadow: 0 15px 35px rgba(245, 158, 11, 0.4);
+    position: relative; overflow: hidden;
+}
+.f-vip-activate:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 45px rgba(245, 158, 11, 0.5); }
+/* لمعة الزر */
+.f-vip-activate::after {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: linear-gradient(transparent, rgba(255,255,255,0.4), transparent);
+    transform: rotate(45deg); transition: 0.6s; opacity: 0;
+}
+.f-vip-activate:hover::after { opacity: 1; left: 100%; transition: 0.7s; }
+
+/* الفوتر الزاهي */
+.f-vip-footer { background: rgba(255, 255, 255, 0.6); padding: 25px; border-top: 1px solid rgba(251, 191, 36, 0.15); }
+body.dark-mode .f-vip-footer { background: rgba(15, 23, 42, 0.5); }
+
+.f-vip-footer p { font-size: 14px; color: #475569; margin: 0 0 15px; font-weight: 900; }
+
+.f-vip-socials { display: flex; justify-content: center; gap: 18px; }
+
+.f-social-btn {
+    width: 50px; height: 50px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; text-decoration: none; background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.05); color: #64748b;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+}
+.f-social-btn:hover { transform: translateY(-5px); color: white; border-color: transparent; }
+.f-social-btn.f-messenger:hover { background: #0084ff; box-shadow: 0 10px 25px rgba(0, 132, 255, 0.4); }
+.f-social-btn.f-telegram:hover { background: #0088cc; box-shadow: 0 10px 25px rgba(0, 136, 204, 0.4); }
+.f-social-btn.f-whatsapp:hover { background: #25d366; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4); }
+
+@media (max-width: 600px) {
+    .f-ai-footer, .f-ai-main-actions, .f-vip-actions { flex-direction: column; align-items: stretch; }
+    .f-ai-btn, .f-vip-cancel, .f-vip-activate { justify-content: center; width: 100%; }
+    .f-ai-close { order: 4; margin-top: 10px; }
+}
