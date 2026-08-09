@@ -4209,18 +4209,18 @@ body.dark-mode .f-vip-footer {
    قاعدة العمليات الطافية المستقبلية (Holographic Glass Dock)
    ======================================================== */
 .f-bottom-actions-grid {
-    /* 1. جعل الـ display يعتمد على كود الموقع الأساسي ليعمل في تبويبه الصحيح فقط */
-    display: none; /* الموقع سيعيد ضبطه لـ flex تلقائياً عند فتحه */
+    /* تظهر افتراضياً عند فتح الصفحة، ونترك التحكم لـ JavaScript للإخفاء والإظهار */
+    display: flex; 
     flex-wrap: nowrap !important;
     justify-content: center;
     gap: 12px;
     
-    /* 2. مسافات الطفو */
+    /* مسافات الطفو */
     margin-top: 40px;
     margin-bottom: 20px;
     padding: 20px;
     
-    /* 3. خلفية الصندوق: زجاج هولوجرامي مضيء */
+    /* خلفية الصندوق: زجاج هولوجرامي مضيء */
     background: linear-gradient(135deg, rgba(106, 172, 235, 0.75), rgba(127, 148, 162, 0.4)) !important;
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
