@@ -103,16 +103,16 @@
     });
 
     // 5. تفعيل الأزرار
-    document.getElementById('mh-reload').addEventListener('click', function() { window.location.reload(); });
-    document.getElementById('mh-cut').addEventListener('click', function() { document.execCommand('cut'); menu.style.display = 'none'; });
-    document.getElementById('mh-copy').addEventListener('click', function() { document.execCommand('copy'); menu.style.display = 'none'; });
-    document.getElementById('mh-paste').addEventListener('click', async function() { 
+    document.getElementById('mh-reload').addEventListener('click', function () { window.location.reload(); });
+    document.getElementById('mh-cut').addEventListener('click', function () { document.execCommand('cut'); menu.style.display = 'none'; });
+    document.getElementById('mh-copy').addEventListener('click', function () { document.execCommand('copy'); menu.style.display = 'none'; });
+    document.getElementById('mh-paste').addEventListener('click', async function () {
         try {
             const text = await navigator.clipboard.readText();
             document.execCommand('insertText', false, text);
         } catch (err) { alert('يرجى استخدام Ctrl+V'); }
-        menu.style.display = 'none'; 
+        menu.style.display = 'none';
     });
-    document.getElementById('mh-select-all').addEventListener('click', function() { document.execCommand('selectAll'); menu.style.display = 'none'; });
+    document.getElementById('mh-select-all').addEventListener('click', function () { document.execCommand('selectAll'); menu.style.display = 'none'; });
 
 })();

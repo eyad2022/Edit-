@@ -51,7 +51,7 @@ function generateDeviceFingerprint() {
         const ctx = canvas.getContext('2d');
         canvas.width = 200; canvas.height = 50;
         ctx.textBaseline = "top"; ctx.font = "14px 'Arial'";
-        ctx.fillStyle = "#f60"; ctx.fillRect(125,1,62,20);
+        ctx.fillStyle = "#f60"; ctx.fillRect(125, 1, 62, 20);
         ctx.fillStyle = "#069"; ctx.fillText("M&H Editor Pro", 2, 15);
         const canvasData = canvas.toDataURL();
 
@@ -204,7 +204,7 @@ function getEditorText(id) {
     if (!el) return '';
     const clone = el.cloneNode(true);
     clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
-    
+
     // إزالة الـ div و p بأمان دون تدمير الـ HTML الداخلي كالجداول
     Array.from(clone.querySelectorAll('div, p')).forEach(block => {
         const frag = document.createDocumentFragment();
@@ -215,7 +215,7 @@ function getEditorText(id) {
         frag.appendChild(document.createTextNode('\n'));
         block.replaceWith(frag);
     });
-    
+
     let temp = document.createElement('div');
     temp.innerHTML = clone.innerHTML;
     let finalStr = '';
@@ -223,14 +223,14 @@ function getEditorText(id) {
     function traverse(node) {
         if (node.nodeType === 3) {
             finalStr += node.nodeValue;
-        } 
+        }
         else if (node.nodeName === 'IMG') {
             finalStr += '\n' + node.outerHTML + '\n';
         }
         else if (node.nodeName === 'TABLE') {
             // المحافظة على الجدول ككتلة واحدة مترابطة
             finalStr += '\n' + node.outerHTML.replace(/\n/g, '').replace(/\r/g, '') + '\n';
-        } 
+        }
         else {
             node.childNodes.forEach(traverse);
         }
@@ -299,7 +299,7 @@ auth.onAuthStateChanged(async (user) => {
             // 🟢 التعديل الأول: إظهار الواجهة المستقبلية وحقن البيانات فيها 🟢
             const futuristicProfile = document.querySelector('.f-profile-wrapper');
             const guestNav = document.getElementById('guestNavButtons'); // أزرار (تسجيل / إنشاء حساب)
-            
+
             if (futuristicProfile) futuristicProfile.style.display = 'block';
             if (guestNav) guestNav.style.display = 'none';
 
@@ -318,7 +318,7 @@ auth.onAuthStateChanged(async (user) => {
             }
 
             if (data.history) loadHistoryUI(data.history);
-            
+
             // تحديث الصلاحية محلياً من السحابة
             if (data.vipExpiry) localStorage.setItem('elalfey_vip_expiry', data.vipExpiry);
 
@@ -366,7 +366,7 @@ auth.onAuthStateChanged(async (user) => {
                             expireEl.style.color = "#0f172a";
                         } else {
                             expireEl.innerText = "منتهي";
-                            expireEl.style.color = "#ef4444"; 
+                            expireEl.style.color = "#ef4444";
                         }
                     }
 
@@ -388,9 +388,9 @@ auth.onAuthStateChanged(async (user) => {
             sessionListener();
             sessionListener = null;
         }
-        
+
         document.getElementById('adminPanelBtn').style.display = 'none';
-        
+
         // 🔴 التعديل الثاني: إخفاء الواجهة المستقبلية وإظهار أزرار الضيوف 🔴
         const futuristicProfile = document.querySelector('.f-profile-wrapper');
         const guestNav = document.getElementById('guestNavButtons');
@@ -455,14 +455,14 @@ async function handleResetPassword() {
 async function handleLoginCloud() {
     const email = document.getElementById('loginEmailInput').value.trim();
     const pass = document.getElementById('loginPasswordInput').value.trim();
-    
+
     if (!email || !pass) return showToast('يرجى ملء الحقول المطلوبة', 'error');
 
     try {
         showToast('جاري تسجيل الدخول...', 'info');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.signInWithEmailAndPassword(email, pass);
-        
+
         if (!cred.user.emailVerified) {
             await auth.signOut();
             return showToast('⚠️ حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني (Inbox أو Spam) والضغط على رابط التفعيل أولاً.', 'error');
@@ -511,7 +511,7 @@ async function handleSignupCloud() {
             email: email,
             devices: [localDeviceId],
             history: [],
-            trialStart: existingTrial ? existingTrial : null, 
+            trialStart: existingTrial ? existingTrial : null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -521,11 +521,11 @@ async function handleSignupCloud() {
         });
 
         await auth.signOut();
-        
+
         setTimeout(() => {
             showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
         }, 2000);
-        
+
         // تفريغ الحقول وإغلاق النافذة
         document.getElementById('signupPasswordInput').value = '';
         document.getElementById('signupConfirmPasswordInput').value = '';
@@ -544,16 +544,16 @@ async function handleSignupCloud() {
 // ==================================================
 async function handleGoogleSignIn() {
     const provider = new firebase.auth.GoogleAuthProvider();
-    
+
     try {
         showToast('جاري الاتصال بحساب جوجل...', 'info');
         const result = await auth.signInWithPopup(provider);
         const user = result.user;
-        
+
         // التحقق مما إذا كان المستخدم جديداً في قاعدة البيانات
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
-        
+
         if (!docSnap.exists) {
             // إنشاء ملف للمستخدم الجديد
             let existingTrial = localStorage.getItem('elalfey_trial_start');
@@ -562,10 +562,10 @@ async function handleGoogleSignIn() {
                 email: user.email,
                 devices: [localDeviceId],
                 history: [],
-                trialStart: existingTrial ? existingTrial : null, 
+                trialStart: existingTrial ? existingTrial : null,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            
+
             // تسجيل الجهاز لمنع تعدد الحسابات العشوائي
             const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
             await deviceRegRef.set({
@@ -573,10 +573,10 @@ async function handleGoogleSignIn() {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
-        
+
         showToast('تم تسجيل الدخول بنجاح!', 'success');
         document.getElementById('authModal').style.display = 'none';
-        
+
     } catch (error) {
         if (error.code === 'auth/popup-closed-by-user') {
             showToast('تم إلغاء تسجيل الدخول', 'info');
@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginInputs.forEach(id => {
         const inputElement = document.getElementById(id);
         if (inputElement) {
-            inputElement.addEventListener('keypress', function(event) {
+            inputElement.addEventListener('keypress', function (event) {
                 if (event.key === 'Enter') {
                     event.preventDefault(); // منع السلوك الافتراضي للمتصفح
                     handleLoginCloud(); // تشغيل دالة تسجيل الدخول
@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     signupInputs.forEach(id => {
         const inputElement = document.getElementById(id);
         if (inputElement) {
-            inputElement.addEventListener('keypress', function(event) {
+            inputElement.addEventListener('keypress', function (event) {
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     handleSignupCloud(); // تشغيل دالة إنشاء الحساب
@@ -651,7 +651,7 @@ async function handleLogoutCloud() {
 
         // 4. تسجيل الخروج النهائي من فايربيز
         await auth.signOut();
-        
+
         // إغلاق أي قوائم مفتوحة
         if (document.getElementById('profileDropdownMenu')) {
             document.getElementById('profileDropdownMenu').style.display = 'none';
@@ -773,10 +773,10 @@ function requireVIP(actionType, param) {
     // 1. التحقق من تسجيل الدخول أولاً (منع الزوار غير المسجلين)
     if (!auth.currentUser) {
         showToast('⚠️ يرجى إنشاء حساب مجاني أو تسجيل الدخول أولاً!', 'error');
-        
+
         // --- التعديل هنا: استخدام دالة فتح نافذة تسجيل الدخول الجديدة ---
         if (typeof openLoginModal === 'function') {
-            openLoginModal(); 
+            openLoginModal();
         } else {
             // كود احتياطي
             const authModal = document.getElementById('authModal');
@@ -792,7 +792,7 @@ function requireVIP(actionType, param) {
     // 2. التحقق من صلاحية الاشتراك أو الفترة التجريبية في السحابة
     let expiry = localStorage.getItem('elalfey_vip_expiry');
     let isVIP = false;
-    
+
     if (expiry === 'lifetime') {
         isVIP = true;
     } else if (expiry && parseInt(expiry) > Date.now()) {
@@ -800,9 +800,9 @@ function requireVIP(actionType, param) {
     }
 
     // 3. السماح أو الرفض
-    if (isVIP) { 
-        proceedWithAction(actionType, param); 
-        return; 
+    if (isVIP) {
+        proceedWithAction(actionType, param);
+        return;
     } else {
         pendingAction = actionType;
         pendingActionParam = param;
@@ -940,7 +940,7 @@ function proceedWithAction(actionType, param) {
 
 window.addEventListener('DOMContentLoaded', async () => {
 
-  // حقن أدوات الإدارة بالتصميم الاحترافي
+    // حقن أدوات الإدارة بالتصميم الاحترافي
     const adminToolsContainer = document.getElementById('adminDynamicToolsContainer');
     if (adminToolsContainer) {
         adminToolsContainer.innerHTML = `
@@ -1444,7 +1444,7 @@ function smartFormatAndClean(skipSync = false) {
 
     document.getElementById('questionsInput').innerHTML = qT;
     document.getElementById('answersInput').innerHTML = aT;
-    
+
     if (!skipSync) {
         showToast('تم التنسيق الذكي وتوقع الإجابات بنجاح');
     }
@@ -1502,9 +1502,9 @@ async function generateAIQuestions(mode = 'quiz') {
 
     let systemInstruction = mode === 'quiz' ?
         "أنت مساعد تعليمي. استخرج أسئلة من النص التالي. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" :
-        mode === 'classify' ? 
-        "أنت خبير تربوي وموجه امتحانات. مهمتك هي قراءة الأسئلة المرفقة، ثم:\n1. تصنيف كل سؤال حسب مستوى الصعوبة (سهل، متوسط، قدرات عليا).\n2. اقتراح توزيع عادل ومنطقي للدرجات لكل سؤال بناءً على صعوبته وطوله.\n3. تقديم جدول إحصائي نهائي يوضح (عدد الأسئلة، الدرجة الكلية المقترحة، ونسبة كل مستوى صعوبة).\nأجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>) لتبدو جميلة عند عرضها." :
-        "أنت مساعد ذكي موسوعي. أجب على السؤال التالي بشكل مباشر ومهني باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
+        mode === 'classify' ?
+            "أنت خبير تربوي وموجه امتحانات. مهمتك هي قراءة الأسئلة المرفقة، ثم:\n1. تصنيف كل سؤال حسب مستوى الصعوبة (سهل، متوسط، قدرات عليا).\n2. اقتراح توزيع عادل ومنطقي للدرجات لكل سؤال بناءً على صعوبته وطوله.\n3. تقديم جدول إحصائي نهائي يوضح (عدد الأسئلة، الدرجة الكلية المقترحة، ونسبة كل مستوى صعوبة).\nأجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>) لتبدو جميلة عند عرضها." :
+            "أنت مساعد ذكي موسوعي. أجب على السؤال التالي بشكل مباشر ومهني باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
     let promptText = `${systemInstruction}\n\nالمحتوى المطلوب معالجته:\n${txt}`;
 
     try {
@@ -1640,7 +1640,7 @@ function insertImageToQuestion(e) {
                 const imgHTML = `<br><img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`;
                 document.getElementById('questionsInput').focus();
                 document.execCommand('insertHTML', false, imgHTML);
-                
+
                 // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
                 syncTextToDatabase();
                 autoSaveData();
@@ -1666,7 +1666,7 @@ function insertImage(e) {
                 c.height = i.height * scale;
                 c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
                 document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`);
-                
+
                 // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
                 syncTextToDatabase();
                 autoSaveData();
@@ -1692,7 +1692,7 @@ function insertImage(e) {
                 c.height = i.height * scale;
                 c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
                 document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`);
-                
+
                 // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
                 syncTextToDatabase();
                 autoSaveData();
@@ -2189,7 +2189,7 @@ function applySystemLanguageSettings() {
     const userLang = navigator.language || navigator.userLanguage;
     const isArabic = userLang.toLowerCase().startsWith('ar');
 
-   // إجبار الموقع على البقاء بالاتجاه العربي (RTL) دائماً لتجنب تدمير التصميم
+    // إجبار الموقع على البقاء بالاتجاه العربي (RTL) دائماً لتجنب تدمير التصميم
     document.documentElement.dir = 'rtl';
     document.documentElement.lang = 'ar';
     document.documentElement.style.setProperty('--text-align', 'right');
@@ -2742,7 +2742,7 @@ function runSmartOnboardingTour(forceStart = false) {
     }
 
     if (!forceStart && localStorage.getItem('elalfey_tour_completed') === 'true') {
-        return; 
+        return;
     }
 
     localStorage.setItem('elalfey_tour_completed', 'true');
@@ -2765,7 +2765,7 @@ function runSmartOnboardingTour(forceStart = false) {
         // --- 3. أدوات بنك الأسئلة العلوية ---
         { selector: 'button[onclick="execUndo()"]', title: 'تراجع (Undo) ↩️', text: 'هل مسحت شيئاً بالخطأ؟ استخدم هذا الزر للتراجع عن آخر خطوة قمت بها.' },
         { selector: 'button[onclick="execRedo()"]', title: 'إعادة (Redo) ↪️', text: 'للتقدم خطوة للأمام إذا تراجعت عن أمر وتريد إعادته.' },
-        
+
         { selector: '.system-switcher-container', title: 'أنظمة الكتابة الذكية ⚙️', text: 'تضبط هذه الأزرار اتجاه المحرر وترقيم الخيارات حسب لغة ونوع المادة التي تدرسها.' },
         { selector: '#sysBtnArabic', title: 'النظام العربي 🇸🇦', text: 'للمواد العربية. يجعل الكتابة من اليمين لليسار ويرقم الخيارات بـ (أ، ب، ج، د).' },
         { selector: '#sysBtnForeign', title: 'نظام اللغات 🇬🇧', text: 'لمواد اللغات. يقلب المحرر من اليسار لليمين (LTR) ويرقم الخيارات بـ (A, B, C, D).' },
@@ -2782,7 +2782,7 @@ function runSmartOnboardingTour(forceStart = false) {
         { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط تنسيق الأسئلة 🛠️', text: 'أدوات التحكم بالنص: جعله عريضاً (B)، مائلاً، محاذاته، وتغيير لونه وحجمه.' },
         { selector: '.btn-voice', title: 'الإملاء الصوتي 🎙️', text: 'هل تعبت من الكتابة؟ اضغط هنا، وتحدث ليقوم النظام بتحويل كلامك إلى نص مكتوب داخل المحرر فوراً.' },
         { selector: '#questionsInput', title: 'مساحة بناء الأسئلة 📝', text: 'هنا تكتب أسئلتك. ضع الخيارات تحت بعضها، ولا تنسَ وضع علامة [✓] بجوار الخيار الصحيح ليتعرف عليه النظام.' },
-        
+
         { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط تنسيق الإجابات 🛠️', text: 'شريط أدوات منفصل للتحكم في شكل ولون وحجم خطوط مفتاح الإجابات.' },
         { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتم توليد الإجابات هنا آلياً عند الضغط على (التنسيق الذكي)، أو يمكنك كتابتها يدوياً إذا رغبت في ذلك.' },
 
@@ -2926,7 +2926,7 @@ function runSmartOnboardingTour(forceStart = false) {
             const skipBtn = document.getElementById('tourSkipBtn');
             if (skipBtn) skipBtn.onclick = endTour;
 
-        }, 400); 
+        }, 400);
     }
 
     setTimeout(() => showStep(0, 1), 1000);
@@ -3078,26 +3078,26 @@ function exportQuestionsToJSON() {
         showToast('لا توجد أسئلة للتصدير', 'error');
         return;
     }
-    
+
     // إحضار الجداول والترويسات الموجودة أعلى الامتحان
     const currentPreamble = getRawPreamble('questionsInput');
-    
+
     // تجهيز الكائن الشامل الذي يضم الأسئلة والجداول العلوية
     const exportData = {
         preamble: currentPreamble,
         questions: questionsDatabase
     };
-    
+
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchorNode = document.createElement('a');
-    
+
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "MH_Bank_" + Date.now() + ".json");
-    
+
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-    
+
     showToast('تم تصدير بنك الأسئلة (مع الترويسة والجداول) بنجاح', 'success');
 }
 function importQuestionsFromJSON(event) {
@@ -3105,28 +3105,28 @@ function importQuestionsFromJSON(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            
+
             // التوافق مع الملفات القديمة (التي تحتوي أسئلة فقط)
             if (Array.isArray(importedData)) {
                 questionsDatabase = importedData;
                 smartFormatAndClean(true);
                 autoSaveData();
                 showToast('تم استيراد وعرض بنك الأسئلة بنجاح', 'success');
-            } 
+            }
             // التوافق مع الملفات الجديدة (التي تحتوي على أسئلة + جداول وترويسة)
             else if (importedData && importedData.questions) {
                 questionsDatabase = importedData.questions;
-                
+
                 // استعادة الجداول والترويسات ووضعها في بداية المحرر
                 if (importedData.preamble) {
                     document.getElementById('questionsInput').innerHTML = importedData.preamble;
                 } else {
                     document.getElementById('questionsInput').innerHTML = '';
                 }
-                
+
                 smartFormatAndClean(true);
                 autoSaveData();
                 showToast('تم استيراد بنك الأسئلة (مع الجداول) بنجاح', 'success');
@@ -3138,7 +3138,7 @@ function importQuestionsFromJSON(event) {
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; 
+    event.target.value = '';
 }
 // تسجيل الـ Service Worker لتفعيل PWA والعمل بدون إنترنت
 if ('serviceWorker' in navigator) {
@@ -3153,8 +3153,8 @@ let chartsInitialized = false;
 // دالة فتح لوحة الإدارة مع جلب البيانات الحقيقية
 async function openAdminPanel() {
     document.getElementById('adminPanelModal').style.display = 'flex';
-    
-    if (chartsInitialized) return; 
+
+    if (chartsInitialized) return;
 
     try {
         // جلب البيانات من Firebase (كمثال: جلب عدد المستخدمين وعدد الأسئلة)
@@ -3165,11 +3165,11 @@ async function openAdminPanel() {
         const codesSnap = await db.collection('codes').get();
         const codesCount = codesSnap.size;
         */
-       
+
         // نظراً لأنني لا أعرف أسماء الكوليكشنز الدقيقة لديك، سأضع الأكواد جاهزة للربط:
         let activeUsers = 120; // استبدل بـ usersCount
-        let generatedQuestions = questionsDatabase ? questionsDatabase.length : 0; 
-        
+        let generatedQuestions = questionsDatabase ? questionsDatabase.length : 0;
+
         chartsInitialized = true;
 
         // 1. رسم بياني لنشاط المستخدمين
@@ -3223,33 +3223,33 @@ async function extractTextFromImage(e) {
     if (!file) return;
 
     showToast('جاري قراءة الصورة واستخراج النص.. قد يستغرق هذا بضع ثوانٍ ⏳', 'info');
-    
+
     try {
         // استخدام Tesseract لدعم اللغتين العربية والإنجليزية معاً
         const result = await Tesseract.recognize(
             file,
-            'ara+eng', 
+            'ara+eng',
             { logger: m => console.log(m) } // يمكنك إزالة هذا السطر لاحقاً، هو فقط لمتابعة التقدم في الـ Console
         );
-        
+
         const extractedText = result.data.text;
-        
+
         // إدراج النص المستخرج في محرر الأسئلة
         document.getElementById('questionsInput').focus();
-        
+
         // تحويل الأسطر إلى فواصل <br> ليتم إدراجها بشكل صحيح كـ HTML
         const formattedText = extractedText.replace(/\n/g, '<br>');
         document.execCommand('insertHTML', false, formattedText + '<br>');
-        
+
         showToast('✅ تم استخراج النص بنجاح! يمكنك تعديله الآن.', 'success');
-        
+
         syncTextToDatabase();
         autoSaveData();
     } catch (error) {
         console.error(error);
         showToast('❌ حدث خطأ أثناء تحليل الصورة، تأكد من وضوحها.', 'error');
     }
-    
+
     e.target.value = ''; // تفريغ الحقل
 }
 // ==================================================
@@ -3284,7 +3284,7 @@ async function handleChangePassword() {
 
     try {
         showToast('جاري التحقق من الباسورد القديم وتغييره...', 'info');
-        
+
         // 1. إعادة المصادقة باستخدام الباسورد القديم (للتأكد من هوية صاحب الحساب)
         const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPass);
         await user.reauthenticateWithCredential(credential);
@@ -3294,7 +3294,7 @@ async function handleChangePassword() {
 
         showToast('✅ تم تغيير كلمة المرور بنجاح!', 'success');
         document.getElementById('changePasswordModal').style.display = 'none';
-        
+
     } catch (error) {
         if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
             showToast('❌ الباسورد القديم الذي أدخلته غير صحيح!', 'error');
@@ -3313,7 +3313,7 @@ function toggleSpeechRecognition(targetId, btnEl) {
         showToast('متصفحك لا يدعم الإملاء الصوتي. يرجى استخدام Google Chrome.', 'error');
         return;
     }
-    
+
     // 2. إيقاف التسجيل إذا كان الزر مضغوطاً مسبقاً (يعمل كزر تشغيل/إيقاف)
     if (speechRecog && btnEl.classList.contains('listening')) {
         speechRecog.stop();
@@ -3322,11 +3322,11 @@ function toggleSpeechRecognition(targetId, btnEl) {
         btnEl.style.color = '#8b5cf6';
         return;
     }
-    
+
     // 3. تهيئة الميكروفون
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     speechRecog = new SpeechRecognition();
-    
+
     // تحديد اللغة بناءً على نظامك (عربي أو إنجليزي)
     let isForeign = (typeof currentQuestionSystem !== 'undefined' && currentQuestionSystem === 'foreign');
     speechRecog.lang = isForeign ? 'en-US' : 'ar-SA';
@@ -3334,7 +3334,7 @@ function toggleSpeechRecognition(targetId, btnEl) {
     speechRecog.interimResults = true;
 
     // 4. عند بدء التحدث
-    speechRecog.onstart = function() {
+    speechRecog.onstart = function () {
         btnEl.classList.add('listening');
         btnEl.innerHTML = '🔴 تحدث...';
         btnEl.style.color = '#ef4444';
@@ -3342,21 +3342,21 @@ function toggleSpeechRecognition(targetId, btnEl) {
     };
 
     // 5. عند التقاط الكلمات
-    speechRecog.onresult = function(event) {
+    speechRecog.onresult = function (event) {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
                 finalTranscript += event.results[i][0].transcript;
             }
         }
-        
+
         // إدراج النص المكتوب في المحرر مكان وقوف المؤشر
         if (finalTranscript) {
             const editor = document.getElementById(targetId);
             if (editor) {
                 editor.focus();
                 document.execCommand('insertText', false, finalTranscript + ' ');
-                
+
                 // حفظ البيانات آلياً (استدعاء دوالك الأصلية)
                 if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
                 if (typeof autoSaveData === 'function') autoSaveData();
@@ -3365,9 +3365,9 @@ function toggleSpeechRecognition(targetId, btnEl) {
     };
 
     // 6. التعامل مع الأخطاء (هنا ستعرف سبب المشكلة بالضبط)
-    speechRecog.onerror = function(event) {
+    speechRecog.onerror = function (event) {
         let errorMsg = 'حدث خطأ غير معروف في الميكروفون.';
-        
+
         if (event.error === 'not-allowed') {
             errorMsg = '❌ المتصفح يمنع الميكروفون! اضغط على (علامة القفل 🔒) أعلى المتصفح بجوار الرابط واسمح للميكروفون.';
         } else if (event.error === 'no-speech') {
@@ -3375,7 +3375,7 @@ function toggleSpeechRecognition(targetId, btnEl) {
         } else if (event.error === 'network') {
             errorMsg = '❌ الإملاء الصوتي يحتاج إلى اتصال بالإنترنت.';
         }
-        
+
         showToast(errorMsg, 'error');
         btnEl.classList.remove('listening');
         btnEl.innerHTML = '🎙️ إملاء';
@@ -3383,7 +3383,7 @@ function toggleSpeechRecognition(targetId, btnEl) {
     };
 
     // 7. عند الانتهاء أو التوقف
-    speechRecog.onend = function() {
+    speechRecog.onend = function () {
         btnEl.classList.remove('listening');
         btnEl.innerHTML = '🎙️ إملاء';
         btnEl.style.color = '#8b5cf6';
