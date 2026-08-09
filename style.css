@@ -4209,8 +4209,8 @@ body.dark-mode .f-vip-footer {
    قاعدة العمليات الطافية المستقبلية (Holographic Glass Dock)
    ======================================================== */
 .f-bottom-actions-grid {
-    /* 1. إجبار جميع الأزرار على الاصطفاف في سطر واحد */
-    display: flex !important;
+    /* 1. جعل الـ display يعتمد على كود الموقع الأساسي ليعمل في تبويبه الصحيح فقط */
+    display: none; /* الموقع سيعيد ضبطه لـ flex تلقائياً عند فتحه */
     flex-wrap: nowrap !important;
     justify-content: center;
     gap: 12px;
@@ -4236,6 +4236,12 @@ body.dark-mode .f-vip-footer {
     overflow-x: auto;
 }
 
+/* إخفاء الصندوق تماماً عند الطباعة */
+@media print {
+    .f-bottom-actions-grid {
+        display: none !important;
+    }
+}
 /* إخفاء شريط التمرير للنظافة البصرية */
 .f-bottom-actions-grid::-webkit-scrollbar { display: none; }
 
