@@ -935,7 +935,7 @@ function proceedWithAction(actionType, param) {
     if (actionType === 'export') executeExport(param);
     else if (actionType === 'multi') generateMultiModels();
     else if (actionType === 'multi_bubble_dummy') generateMultiEmptyBubbles();
-    else if (actionType === 'ai') document.getElementById('aiModal').style.display = 'flex';
+    else if (actionType === 'ai') openAiModal();
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1502,27 +1502,139 @@ function showAnalytics() {
     document.getElementById('analyticsModal').style.display = 'flex';
 }
 
+// ========================================================
+// 🧠 محرك الذكاء الاصطناعي مع الذاكرة السحابية الدائمة
+// ========================================================
+let aiChatsVault = []; // الخزنة التي ستحتوي على كل محادثاتك
+let currentAiChatId = null; // رقم المحادثة المفتوحة حالياً
+let aiChatContext = ""; // السياق المتراكم للمحادثة الحالية
+
+// 1. دالة فتح النافذة وجلب المحادثات من السحابة
+async function openAiModal() {
+    document.getElementById('aiModal').style.display = 'flex';
+    const user = auth.currentUser;
+    
+    if (user && aiChatsVault.length === 0) {
+        try {
+            const docSnap = await db.collection('users').doc(user.uid).get();
+            if (docSnap.exists && docSnap.data().aiChats) {
+                aiChatsVault = docSnap.data().aiChats;
+            }
+        } catch(e) { console.error("Cloud Error:", e); }
+        renderAiHistoryList();
+    }
+    
+    // إذا كانت الخزنة فارغة، ابدأ محادثة جديدة تلقائياً
+    if (aiChatsVault.length === 0 && !currentAiChatId) {
+        startNewAIChat();
+    } else if (aiChatsVault.length > 0 && !currentAiChatId) {
+        // افتح آخر محادثة كنت تتكلم فيها
+        loadSpecificAiChat(aiChatsVault[0].id);
+    }
+}
+
+// 2. دالة حفظ المحادثات في حسابك السحابي
+async function syncAiChatsToCloud() {
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            // نحتفظ بآخر 30 محادثة لكي لا يمتلئ الحساب
+            if (aiChatsVault.length > 30) aiChatsVault = aiChatsVault.slice(0, 30);
+            await db.collection('users').doc(user.uid).set({ aiChats: aiChatsVault }, { merge: true });
+        } catch(e) { console.error('AI Sync failed', e); }
+    }
+}
+
+// 3. عرض قائمة المحادثات في الشريط الجانبي
+function renderAiHistoryList() {
+    const listDiv = document.getElementById('aiHistoryList');
+    if (aiChatsVault.length === 0) {
+        listDiv.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 20px;">لا توجد محادثات سابقة.</div>';
+        return;
+    }
+    let html = '';
+    aiChatsVault.forEach(chat => {
+        let activeClass = (chat.id === currentAiChatId) ? 'active' : '';
+        html += `<div class="f-history-item ${activeClass}" onclick="loadSpecificAiChat('${chat.id}')">💬 ${chat.title}</div>`;
+    });
+    listDiv.innerHTML = html;
+}
+
+// 4. دالة بدء محادثة جديدة كلياً
+function startNewAIChat() {
+    currentAiChatId = null;
+    aiChatContext = "";
+    document.getElementById('currentChatTitle').innerText = 'محادثة جديدة';
+    document.getElementById('aiChatOutput').innerHTML = `
+        <div class="chat-message ai-message">
+            <div class="msg-avatar"><i class="bx bx-bot"></i></div>
+            <div class="msg-bubble">مرحباً يا هندسة! تم مسح الذاكرة السابقة وبدء محادثة جديدة. كيف يمكنني مساعدتك الآن؟</div>
+        </div>
+    `;
+    document.getElementById('aiTextInput').value = '';
+    document.getElementById('aiFileInput').value = '';
+    document.getElementById('aiFileName').innerText = 'إرفاق ملف للتحليل';
+    renderAiHistoryList();
+}
+
+// 5. استدعاء محادثة قديمة من الأرشيف
+function loadSpecificAiChat(id) {
+    const chat = aiChatsVault.find(c => c.id === id);
+    if (!chat) return;
+    
+    currentAiChatId = chat.id;
+    aiChatContext = chat.context;
+    document.getElementById('currentChatTitle').innerText = chat.title;
+    document.getElementById('aiChatOutput').innerHTML = chat.html;
+    
+    renderAiHistoryList(); // لتحديث اللون النشط
+    const outputDiv = document.getElementById('aiChatOutput');
+    outputDiv.scrollTop = outputDiv.scrollHeight; // النزول لآخر رسالة
+}
+
+// 6. المحرك الأساسي للإرسال والاستقبال
 async function generateAIQuestions(mode = 'quiz') {
-    const txt = document.getElementById('aiTextInput').value.trim();
-    const files = document.getElementById('aiFileInput').files;
+    const txtInput = document.getElementById('aiTextInput');
+    const txt = txtInput.value.trim();
+    const filesInput = document.getElementById('aiFileInput');
+    const files = filesInput.files;
     const outputDiv = document.getElementById('aiChatOutput');
 
-    if (!txt && files.length === 0) return showToast('يرجى كتابة نص المادة العلمية أو إرفاق ملفات', 'error');
+    if (!txt && files.length === 0) return showToast('يرجى كتابة رسالتك أو إرفاق ملفات', 'error');
 
-    const apiKey = "AQ.Ab8RN6IvZM5OdpXCh3_PJDyn_lXFHufz04OH-zdtUtg6APgZrA";
+    // رسم رسالة المستخدم
+    let userContentHTML = txt.replace(/\n/g, '<br>');
+    if (files.length > 0) userContentHTML += `<br><small style="color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;">📎 مرفق ${files.length} ملفات</small>`;
+    
+    outputDiv.innerHTML += `
+        <div class="chat-message user-message">
+            <div class="msg-avatar"><i class="bx bx-user"></i></div>
+            <div class="msg-bubble">${userContentHTML}</div>
+        </div>
+    `;
+    
+    const loadingId = 'loading-' + Date.now();
+    outputDiv.innerHTML += `
+        <div id="${loadingId}" class="chat-message ai-message">
+            <div class="msg-avatar"><i class="bx bx-bot"></i></div>
+            <div class="msg-bubble"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+        </div>
+    `;
+    outputDiv.scrollTop = outputDiv.scrollHeight;
 
-    let systemInstruction = mode === 'quiz' ?
-        "أنت مساعد تعليمي. استخرج أسئلة من النص التالي. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" :
-        mode === 'classify' ?
-            "أنت خبير تربوي وموجه امتحانات. مهمتك هي قراءة الأسئلة المرفقة، ثم:\n1. تصنيف كل سؤال حسب مستوى الصعوبة (سهل، متوسط، قدرات عليا).\n2. اقتراح توزيع عادل ومنطقي للدرجات لكل سؤال بناءً على صعوبته وطوله.\n3. تقديم جدول إحصائي نهائي يوضح (عدد الأسئلة، الدرجة الكلية المقترحة، ونسبة كل مستوى صعوبة).\nأجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>) لتبدو جميلة عند عرضها." :
-            "أنت مساعد ذكي موسوعي. أجب على السؤال التالي بشكل مباشر ومهني باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
-    let promptText = `${systemInstruction}\n\nالمحتوى المطلوب معالجته:\n${txt}`;
+    txtInput.value = '';
+    filesInput.value = '';
+    document.getElementById('aiFileName').innerText = 'إرفاق ملف للتحليل';
+
+    let systemInstruction = mode === 'quiz' ? 
+        "أنت مساعد تعليمي. استخرج أسئلة من النص. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" : 
+        mode === 'classify' ? 
+        "أنت خبير تربوي وموجه امتحانات. قم بتحليل وصياغة وتوزيع درجات بأسلوب احترافي. أجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>)." : 
+        "أنت مساعد ذكي موسوعي ومبرمج. أجب باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
+    
+    let promptText = `${systemInstruction}\n\nالسياق السابق للمحادثة لكي تتذكره:\n${aiChatContext}\n\nطلب المستخدم الحالي:\n${txt}`;
 
     try {
-        showToast('جاري معالجة طلبك بواسطة المحرك الذكي...', 'info');
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '<div style="text-align: center; color: #8b5cf6; font-weight: bold;">جاري التفكير وتحليل الملفات... ⏳</div>';
-
         let parts = [{ text: promptText }];
 
         if (files.length > 0) {
@@ -1535,8 +1647,7 @@ async function generateAIQuestions(mode = 'quiz') {
                             const img = new Image();
                             img.onload = () => {
                                 const c = document.createElement('canvas'); const scale = Math.min(1, 1024 / img.width);
-                                c.width = img.width * scale;
-                                c.height = img.height * scale;
+                                c.width = img.width * scale; c.height = img.height * scale;
                                 c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
                                 r(c.toDataURL('image/jpeg', 0.8).split(',')[1]);
                             };
@@ -1548,17 +1659,13 @@ async function generateAIQuestions(mode = 'quiz') {
                 }
                 else if (f.type === 'application/pdf') {
                     const b = await new Promise(r => {
-                        const rd = new FileReader();
-                        rd.onload = () => r(rd.result.split(',')[1]);
-                        rd.readAsDataURL(f);
+                        const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(f);
                     });
                     parts.push({ inlineData: { data: b, mimeType: 'application/pdf' } });
                 }
                 else if (f.type === 'text/plain') {
                     const tx = await new Promise(r => {
-                        const rd = new FileReader();
-                        rd.onload = () => r(rd.result);
-                        rd.readAsText(f);
+                        const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsText(f);
                     });
                     parts[0].text += `\n\n--- محتوى ملف (${f.name}) ---\n${tx}`;
                 }
@@ -1566,33 +1673,25 @@ async function generateAIQuestions(mode = 'quiz') {
         }
 
         const res = await fetch('/api/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                parts: parts
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: parts })
         });
 
-        if (!res.ok) {
-            const errData = await res.json();
-            alert("السبب التقني هو: " + errData.error);
-            throw new Error(errData.error || 'حدث خطأ');
-        }
-
+        if (!res.ok) throw new Error((await res.json()).error || 'حدث خطأ');
         const data = await res.json();
-        if (!data.candidates || data.candidates.length === 0) throw new Error("لم يقم النموذج بتوليد أي بيانات.");
+        if (!data.candidates || data.candidates.length === 0) throw new Error("لا توجد استجابة.");
 
         let aiResponse = data.candidates[0].content.parts[0].text.trim();
 
+        // تحديث الذاكرة المتراكمة
+        aiChatContext += `\nالمستخدم: ${txt}\nالذكاء الاصطناعي: ${aiResponse}\n`;
+
+        let finalBubbleHtml = '';
         if (mode === 'quiz') {
             let jsonStr = aiResponse;
             const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
             if (jsonMatch) jsonStr = jsonMatch[0];
 
             const gQs = JSON.parse(jsonStr);
-
             let qInput = document.getElementById('questionsInput');
             let generatedHTML = "<br>";
 
@@ -1613,26 +1712,57 @@ async function generateAIQuestions(mode = 'quiz') {
 
             qInput.innerHTML += generatedHTML;
             smartFormatAndClean();
-
-            outputDiv.innerHTML = `<div style="color: #10b981; font-weight: bold; text-align: center;">✅ تم تحليل الملفات وتوليد وإدراج ${gQs.length} أسئلة بنجاح!</div>`;
-            showToast('تم إدراج الأسئلة الذكية في المحرر', 'success');
-
+            finalBubbleHtml = `<span style="color: #10b981;">✅ تم توليد ${gQs.length} سؤال وإدراجهم في المحرر! يمكنك تعديلهم هناك أو سؤالي هنا عن أي تعديل.</span>`;
         } else {
-            let formattedHtml = aiResponse
+            finalBubbleHtml = aiResponse
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
                 .replace(/\n/g, '<br>');
-
-            outputDiv.innerHTML = `<div style="color: #1e293b;">${formattedHtml}</div>`;
-            showToast('تم استلام الإجابة', 'success');
         }
 
-    } catch (e) {
-        console.error(e);
-        let errorMsg = e.message.includes('JSON') ? 'لم يقم النموذج بإرجاع الأسئلة بالتنسيق المطلوب، يرجى المحاولة مرة أخرى.' : e.message;
-        outputDiv.innerHTML = `<div style="color: #ef4444; font-weight: bold;">❌ توقف النظام مؤقتاً.. <a href="https://wa.me/201155324374" target="_blank" style="color: #10b981; text-decoration: underline;">راسلني علي الواتس اب وسوف أحل هذه المشكلة 📞</a></div>`;
+        document.getElementById(loadingId).remove();
+        outputDiv.innerHTML += `
+            <div class="chat-message ai-message">
+                <div class="msg-avatar"><i class="bx bx-bot"></i></div>
+                <div class="msg-bubble">${finalBubbleHtml}</div>
+            </div>
+        `;
+        outputDiv.scrollTop = outputDiv.scrollHeight;
 
-        showToast('حدث خطأ في عملية التوليد', 'error');
+        // 💡 حفظ المحادثة بأكملها في الخزنة السحابية 💡
+        const currentHtml = outputDiv.innerHTML;
+        if (!currentAiChatId) {
+            // محادثة جديدة، إنشاء ID وعنوان
+            currentAiChatId = 'chat_' + Date.now();
+            let chatTitle = txt.substring(0, 25) + (txt.length > 25 ? '...' : '');
+            if (!txt && files.length > 0) chatTitle = 'تحليل ملفات 📎';
+            
+            aiChatsVault.unshift({ id: currentAiChatId, title: chatTitle, context: aiChatContext, html: currentHtml, date: Date.now() });
+            document.getElementById('currentChatTitle').innerText = chatTitle;
+        } else {
+            // تحديث محادثة موجودة ورفعها لأول القائمة
+            let existingChat = aiChatsVault.find(c => c.id === currentAiChatId);
+            if (existingChat) {
+                existingChat.context = aiChatContext;
+                existingChat.html = currentHtml;
+                existingChat.date = Date.now();
+                aiChatsVault = aiChatsVault.filter(c => c.id !== currentAiChatId);
+                aiChatsVault.unshift(existingChat);
+            }
+        }
+        
+        renderAiHistoryList();
+        syncAiChatsToCloud(); // رفع الخزنة لحسابك في فايربيز
+
+    } catch (e) {
+        document.getElementById(loadingId).remove();
+        outputDiv.innerHTML += `
+            <div class="chat-message ai-message">
+                <div class="msg-avatar" style="background: #ef4444;"><i class="bx bx-error"></i></div>
+                <div class="msg-bubble" style="color: #ef4444;">❌ حدث خطأ تقني: ${e.message}</div>
+            </div>
+        `;
+        outputDiv.scrollTop = outputDiv.scrollHeight;
     }
 }
 
@@ -1955,9 +2085,9 @@ function getBubbleSheetContent(qDb, emptyCount = 0, modelBadgeHtml = '', modelIn
 
     // 💡 تكبير حجم الدوائر والخطوط للرؤية الواضحة
     if (totalQsInExam > 80) {
-        safeBubbleSize = (pos === 'above') ? 16 : 19; // تم التكبير من 15 إلى 19
-    } else if (totalQsInExam > 50) {
-        safeBubbleSize = (pos === 'above') ? 19 : 22;
+        safeBubbleSize = (pos === 'above') ? 19 : 22; // تم التكبير من 15 إلى 19
+    } else if (totalQsInExam > 60) {
+        safeBubbleSize = (pos === 'above') ? 23 : 26;
     }
 
     const userBubbleSize = safeBubbleSize + 'px';
@@ -1984,21 +2114,23 @@ function getBubbleSheetContent(qDb, emptyCount = 0, modelBadgeHtml = '', modelIn
     const hC = document.getElementById('bHdrColor').value;
     const hb = document.getElementById('bHdrBorderColor').value;
     const hbg = document.getElementById('bHdrBgColor').value;
-
-    if (hs === 'advanced') {
+if (hs === 'advanced') {
         let ig = '';
         for (let c = 0; c < 6; c++) {
-            let cb = `<input type="text" style="border:1px solid ${hb};color:${hC}; height:14px; width:12px; font-size:10px; margin-bottom:2px; text-align:center; outline:none; padding:0;" maxlength="1">`;
-            for (let r = 0; r <= 9; r++) { cb += `<div style="width:11px;height:11px;font-size:7px;border:1px solid ${hb};border-radius:50%;color:${hC};margin-bottom:1px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${r}</div>`; }
-            ig += `<div style="display:flex;flex-direction:column;gap:1px;align-items:center;">${cb}</div>`;
+            // تصغير مربع الإدخال والدوائر درجة واحدة لامتصاص النص
+            let cb = `<input type="text" style="border:1px solid ${hb};color:${hC}; height:16px; width:14px; font-size:11px; margin-bottom:1px; text-align:center; outline:none; padding:0; font-weight:bold;" maxlength="1">`;
+            for (let r = 0; r <= 9; r++) { cb += `<div style="width:12px;height:12px;font-size:8px;border:1px solid ${hb};border-radius:50%;color:${hC};margin-bottom:1px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${r}</div>`; }
+            ig += `<div style="display:flex;flex-direction:column;gap:0px;align-items:center; margin-left:2px;">${cb}</div>`;
         }
-        bH = `<div style="border:1px solid ${hb};background:${hbg};color:${hC}; padding:6px 10px; margin-bottom:6px; direction:${dir}; text-align:${align}; display:flex; justify-content:space-between; align-items:center; border-radius:6px; page-break-inside: avoid;">
-            <div style="flex:1; display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:bold;">
-                <div>${f1}</div><div style="display:flex;gap:20px;"><div>${f2}</div><div>${f3}</div></div>
+        bH = `<div style="border:1px solid ${hb};background:${hbg};color:${hC}; padding:2px 6px; margin-bottom:2px; direction:${dir}; text-align:${align}; display:flex; justify-content:space-between; align-items:center; border-radius:6px; page-break-inside: avoid;">
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:2px; font-size:11px; line-height:1.3; font-weight:bold; padding-inline-end: 10px;">
+                <div style="word-break: break-word;">${f1}</div>
+                <div style="word-break: break-word;">${f2}</div>
+                <div style="word-break: break-word;">${f3}</div>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center; border-inline-start:1px dashed ${hb}; padding-inline-start:10px;">
-                <div style="font-size:10px; margin-bottom:2px; font-weight:900;">${idTitle}</div>
-                <div style="display:flex;gap:2px;background:#fff;padding:2px;border:1px solid ${hb}; border-radius:4px;">${ig}</div>
+            <div style="display:flex;flex-direction:column;align-items:center; border-inline-start:1px dashed ${hb}; padding-inline-start:8px; flex-shrink: 0;">
+                <div style="font-size:9px; margin-bottom:1px; font-weight:900;">${idTitle}</div>
+                <div style="display:flex;gap:1px;background:#fff;padding:1px;border:1px solid ${hb}; border-radius:4px;">${ig}</div>
             </div>
         </div>`;
     } else if (hs === 'basic') {
@@ -2065,13 +2197,13 @@ function getBubbleSheetContent(qDb, emptyCount = 0, modelBadgeHtml = '', modelIn
     let bTopCenter = document.getElementById('bHdrTopCenter') ? document.getElementById('bHdrTopCenter').value : '';
     let bTopLeft = document.getElementById('bHdrTopLeft') ? document.getElementById('bHdrTopLeft').value : '';
 
-    let bubbleTopHeader = '';
+ let bubbleTopHeader = '';
     if (bTopRight || bTopCenter || bTopLeft) {
         bubbleTopHeader = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px; font-size: 14px; font-weight: 900; color: ${hC}; direction:${dir}; text-align:${align}; border-bottom: 2px solid ${hb}; padding-bottom: 6px;">
-            <div style="flex: 1; text-align: ${isForeign ? 'left' : 'right'};">${bTopRight}</div>
-            <div style="flex: 1; text-align: center;">${bTopCenter}</div>
-            <div style="flex: 1; text-align: ${isForeign ? 'right' : 'left'};">${bTopLeft}</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 4px; font-size: 11px; line-height: 1.2; font-weight: 900; color: ${hC}; direction:${dir}; text-align:${align}; border-bottom: 2px solid ${hb}; padding-bottom: 4px;">
+            <div style="flex: 1; text-align: ${isForeign ? 'left' : 'right'}; word-wrap: break-word;">${bTopRight}</div>
+            <div style="flex: 1; text-align: center; word-wrap: break-word;">${bTopCenter}</div>
+            <div style="flex: 1; text-align: ${isForeign ? 'right' : 'left'}; word-wrap: break-word;">${bTopLeft}</div>
         </div>`;
     }
 
@@ -2250,8 +2382,8 @@ async function generateMultiModels() {
             bgCSS = getBackgroundCSS(m);
         } else {
             let align = posType.replace('header_', '');
-            modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 15px;">
-                <span style="display:inline-block; font-weight: 900; font-size: 20px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 8px 25px; border-radius: 8px; background: rgba(255,255,255,0.9);">
+            modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 3px;">
+                <span style="display:inline-block; font-weight: 900; font-size: 18px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 4px 20px; border-radius: 8px; background: rgba(255,255,255,0.9);">
                     نموذج الاختبار (${m})
                     ${machineCodeHtml}
                 </span>
@@ -3122,32 +3254,28 @@ function getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement)
                 <div style="flex:2; border-bottom: 1px dashed ${sColor}; text-align:${isForeign ? 'right' : 'left'};">${f1} </div>
             </div>`;
     }
-    else if (hStyle === 'advanced') {
-        // التصميم الثالث: متقدم مع شبكة بابل شيت صغيرة لرقم الجلوس (لا تؤثر على مساحة الصفحة)
+else if (hStyle === 'advanced') {
         let ig = '';
         for (let c = 0; c < 6; c++) {
-            let cb = `<div style="border:1px solid ${sColor}; height:14px; margin-bottom:2px; background:#fff;"></div>`;
+            let cb = `<div style="border:1px solid ${sColor}; height:14px; margin-bottom:1px; background:#fff;"></div>`;
             for (let r = 0; r <= 9; r++) {
-                cb += `<div style="width:11px;height:11px;font-size:8px;border:1px solid ${sColor};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1px auto;">${r}</div>`;
+                cb += `<div style="width:12px;height:12px;font-size:8px;border:1px solid ${sColor};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1px auto;font-weight:bold;">${r}</div>`;
             }
-            ig += `<div style="display:flex;flex-direction:column;width:14px;gap:1px;">${cb}</div>`;
+            ig += `<div style="display:flex;flex-direction:column;width:14px;gap:0px; margin-left:2px;">${cb}</div>`;
         }
         headerInfoHtml = `
-            <div style="border: 2px solid ${sColor}; padding: 6px 12px; margin-bottom: 8px; border-radius: 6px; direction:${dir}; text-align:${align}; font-size: 13px; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.7);">
-                <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
-                    <div>${f1} ....................................................................</div>
-                    <div style="display:flex; gap: 20px;">
-                        <div style="flex:1;">${f2} ......................................</div>
-                        <div style="flex:1;">${f3} ......................................</div>
-                    </div>
+            <div style="border: 2px solid ${sColor}; padding: 2px 8px; margin-bottom: 2px; border-radius: 6px; direction:${dir}; text-align:${align}; font-size: 11px; line-height: 1.3; font-weight: bold; color: ${sColor}; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.7);">
+                <div style="flex:1; display:flex; flex-direction:column; gap:2px; padding-inline-end: 10px;">
+                    <div style="word-break: break-word;">${f1} .....................................................</div>
+                    <div style="word-break: break-word;">${f2} ......................................</div>
+                    <div style="word-break: break-word;">${f3} ......................................</div>
                 </div>
-                <div style="display:flex; flex-direction:column; align-items:center; border-inline-start: 2px dashed ${sColor}; padding-inline-start: 15px; margin-inline-start: 15px;">
-                    <div style="font-size:11px; margin-bottom:4px;">${seatTitle}</div>
-                    <div style="display:flex; gap: 2px;">${ig}</div>
+                <div style="display:flex; flex-direction:column; align-items:center; border-inline-start: 2px dashed ${sColor}; padding-inline-start: 10px; flex-shrink: 0;">
+                    <div style="font-size:10px; margin-bottom:1px;">${seatTitle}</div>
+                    <div style="display:flex; gap: 1px;">${ig}</div>
                 </div>
             </div>`;
     }
-
     let modelHeaderHtml = modelName ? `<div style="text-align:center; margin-bottom: 8px;"><span style="border: 2px dashed ${sColor}; padding: 4px 20px; font-weight: 900; border-radius: 8px; color: ${sColor}; font-size: 15px;">${modelName}</span></div>` : '';
 
     // ترتيب ظهور الترويسة مع اسم النموذج (Top or Above Student)

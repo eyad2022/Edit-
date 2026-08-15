@@ -1678,7 +1678,44 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
         max-height: 75vh;
     }
 }
+/* ========================================================
+   تنسيقات القائمة الجانبية لأرشيف المحادثات
+   ======================================================== */
+.f-history-item {
+    padding: 12px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(168, 85, 247, 0.1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: 0.2s;
+}
+.f-history-item:hover { background: rgba(168, 85, 247, 0.1); }
+.f-history-item.active { 
+    background: rgba(168, 85, 247, 0.15); 
+    border-color: rgba(168, 85, 247, 0.5); 
+    color: #a855f7; 
+}
 
+body.dark-mode .f-ai-sidebar { background: rgba(15, 23, 42, 0.5) !important; }
+body.dark-mode .f-history-item { background: rgba(30, 41, 59, 0.5); color: #cbd5e1; }
+body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: rgba(168, 85, 247, 0.5); }
+
+/* تجاوب الموبايل للواجهة الجديدة */
+@media (max-width: 768px) {
+    .f-ai-modal { flex-direction: column !important; }
+    .f-ai-sidebar { 
+        width: 100% !important; 
+        border-left: none !important; 
+        border-bottom: 1px solid rgba(168, 85, 247, 0.2); 
+        max-height: 200px; /* لكي لا تأخذ كل الشاشة في الموبايل */
+    }
+}
 
 @media print {
     @page {
@@ -1763,8 +1800,8 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
         break-inside: avoid !important;
         display: block !important;
         width: 100% !important;
-        padding: 12px 15px !important;
-        margin-bottom: 25px !important;
+        padding: 6px 12px !important; /* تقليل الحشو الداخلي */
+        margin-bottom: 8px !important; /* تقليل المسافة بين كل سؤال والذي يليه من 25 إلى 8 */
         clear: both !important;
         border-width: 1px !important;
         border-right-width: 4px !important;
@@ -1777,18 +1814,17 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
         box-shadow: none !important;
     }
 
-    .q-text {
+   .q-text {
         font-size: 14pt !important;
-        margin-bottom: 10px !important;
-        line-height: 1.4 !important;
+        margin-bottom: 2px !important; /* شفط المسافة بين السؤال والخيارات أسفله */
+        line-height: 1.2 !important; /* تقليل تباعد الأسطر إذا كان السؤال طويلاً */
     }
-
     .options-list.layout-row {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: wrap !important;
         justify-content: flex-start !important;
-        gap: 15px !important;
+        gap: 6px 15px !important; /* تقليل الفراغ الطولي لـ 6 بيكسل */
         width: 100% !important;
     }
 
@@ -1805,10 +1841,10 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
         text-align: start !important;
     }
 
-    .options-list.layout-grid {
+ .options-list.layout-grid {
         display: grid !important;
         grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)) !important;
-        gap: 10px !important;
+        gap: 4px 10px !important; /* تقليل الفراغات الطولية والعرضية في الشبكة */
     }
 
     .options-list.layout-grid .option-item {
@@ -1821,10 +1857,10 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
         text-align: start !important;
     }
 
-    .options-list.layout-col {
+.options-list.layout-col {
         display: flex !important;
         flex-direction: column !important;
-        gap: 6px !important;
+        gap: 2px !important; /* ضغط الخيارات لتكون أسفل بعضها مباشرة */
     }
 
     .options-list.layout-col .option-item {
