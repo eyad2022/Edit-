@@ -1766,84 +1766,88 @@ async function generateAIQuestions(mode = 'quiz') {
     }
 }
 
-function insertImageToQuestion(e) {
-    if (e.target.files[0]) {
-        const rd = new FileReader();
-        rd.onload = ev => {
-            const i = new Image();
-            i.onload = () => {
-                const c = document.createElement('canvas');
-                let scale = 1;
-                if (i.width > 800) scale = 800 / i.width;
-                c.width = i.width * scale;
-                c.height = i.height * scale;
-                c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-                const imgHTML = `<br><img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`;
-                document.getElementById('questionsInput').focus();
+// ========================================================
+// 🖼️ منظومة رفع الصور السحابية فائقة السرعة (ImgBB)
+// ========================================================
+
+const IMGBB_API_KEY = 'db4be77f5ac0fe30203605b676a20fc5';
+
+// 1. دالة الرفع للسيرفر الخارجي
+async function uploadImageToImgBB(base64Data) {
+    const formData = new FormData();
+    // نأخذ بيانات الصورة ونزيل منها البادئة لكي يقبلها سيرفر ImgBB
+    const base64String = base64Data.split(',')[1];
+    formData.append('image', base64String);
+
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        if (data.success) {
+            return data.data.url; // السيرفر يرد علينا برابط مباشر قصير للصورة
+        } else {
+            throw new Error('فشل الرفع');
+        }
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
+// 2. المحرك الأساسي لالتقاط وضغط الصورة ثم إرسالها
+function handleImageInsertion(e, targetId = null) {
+    if (!e.target.files[0]) return;
+    
+    // إظهار رسالة للمستخدم أثناء الرفع
+    showToast('جاري رفع الصورة للسحابة... ⏳', 'info');
+    
+    const rd = new FileReader();
+    rd.onload = ev => {
+        const i = new Image();
+        i.onload = async () => {
+            // ضغط وتصغير أبعاد الصورة قليلاً قبل الرفع لتسريع الإنترنت
+            const c = document.createElement('canvas');
+            let scale = 1;
+            if (i.width > 800) scale = 800 / i.width;
+            c.width = i.width * scale;
+            c.height = i.height * scale;
+            c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
+            
+            const compressedBase64 = c.toDataURL('image/jpeg', 0.8);
+            
+            // 🚀 إرسال الصورة المضغوطة لسيرفر ImgBB بدلاً من حفظها في فايربيز
+            const imageUrl = await uploadImageToImgBB(compressedBase64);
+            
+            if (imageUrl) {
+                const imgHTML = `<br><img src="${imageUrl}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`;
+                
+                if (targetId) {
+                    document.getElementById(targetId).focus();
+                }
                 document.execCommand('insertHTML', false, imgHTML);
-
-                // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
-                syncTextToDatabase();
-                autoSaveData();
-                // -------------------------------------------------------------
-            };
-            i.src = ev.target.result;
+                
+                if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
+                if (typeof autoSaveData === 'function') autoSaveData();
+                showToast('✅ تم إدراج الصورة بنجاح!', 'success');
+            } else {
+                showToast('❌ فشل رفع الصورة، تحقق من اتصالك بالإنترنت.', 'error');
+            }
         };
-        rd.readAsDataURL(e.target.files[0]);
-    }
+        i.src = ev.target.result;
+    };
+    rd.readAsDataURL(e.target.files[0]);
     e.target.value = '';
 }
 
-function insertImage(e) {
-    if (e.target.files[0]) {
-        const rd = new FileReader();
-        rd.onload = ev => {
-            const i = new Image();
-            i.onload = () => {
-                const c = document.createElement('canvas');
-                let scale = 1;
-                if (i.width > 800) scale = 800 / i.width;
-                c.width = i.width * scale;
-                c.height = i.height * scale;
-                c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-                document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`);
-
-                // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
-                syncTextToDatabase();
-                autoSaveData();
-                // -------------------------------------------------------------
-            };
-            i.src = ev.target.result;
-        };
-        rd.readAsDataURL(e.target.files[0]);
-    }
-    e.target.value = '';
+// 3. توجيه الأزرار في الواجهة لتعمل على المنظومة الجديدة
+function insertImageToQuestion(e) {
+    handleImageInsertion(e, 'questionsInput');
 }
 
 function insertImage(e) {
-    if (e.target.files[0]) {
-        const rd = new FileReader();
-        rd.onload = ev => {
-            const i = new Image();
-            i.onload = () => {
-                const c = document.createElement('canvas');
-                let scale = 1;
-                if (i.width > 800) scale = 800 / i.width;
-                c.width = i.width * scale;
-                c.height = i.height * scale;
-                c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-                document.execCommand('insertHTML', false, `<img src="${c.toDataURL('image/jpeg', 0.8)}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`);
-
-                // --- تم إضافة السطرين هنا لحفظ الصورة في الذاكرة فوراً ---
-                syncTextToDatabase();
-                autoSaveData();
-                // -------------------------------------------------------------
-            };
-            i.src = ev.target.result;
-        };
-        rd.readAsDataURL(e.target.files[0]);
-    }
-    e.target.value = '';
+    handleImageInsertion(e);
 }
 
 function insertTable() {
