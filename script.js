@@ -3700,7 +3700,7 @@ async function captureAndGradeEnterprise() {
     try {
         // 🚀 إرسال الصورة ومفاتيح الإجابات إلى سيرفر البايثون
         // ملاحظة: عند رفع السيرفر على الإنترنت، استبدل localhost برابط السيرفر الجديد
-        const response = await fetch('http://localhost:5000/api/grade', {
+      const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
