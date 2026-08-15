@@ -729,7 +729,7 @@ function syncCurrentToHistory() {
             mode: currentMode
         });
 
-        if (hist.length > 30) hist.pop();
+        if (hist.length > 3) hist.pop();
         await docRef.update({ history: hist });
         loadHistoryUI(hist);
     }, 1500);
@@ -1256,6 +1256,7 @@ function syncTextToDatabase() {
     let isOptMode = false;
     let isAnsMode = false;
     let hasSeenFirstQuestion = false;
+    let pendingMedia = ''; // 💡 ذاكرة مؤقتة لحمل الصورة للسؤال التالي
 
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
@@ -1267,7 +1268,7 @@ function syncTextToDatabase() {
             if (curQ) { parsed.push(curQ); }
             curQ = {
                 num: qMatch[1],
-                text: qMatch[2].trim(),
+                text: (pendingMedia + '\n' + qMatch[2].trim()).trim(), // 💡 دمج الصورة مع نص السؤال الجديد
                 options: [],
                 type: 'essay',
                 ans: "",
@@ -1276,6 +1277,7 @@ function syncTextToDatabase() {
             curQ.text = curQ.text.replace(/#[\w\u0600-\u06FF]+/g, '').trim();
             isOptMode = false;
             isAnsMode = false;
+            pendingMedia = ''; // 💡 تفريغ الذاكرة بعد وضع الصورة
             continue;
         }
 
@@ -1319,6 +1321,11 @@ function syncTextToDatabase() {
             }
 
             if (isOptMode) {
+                if (line.includes('<img')) {
+                    pendingMedia += '\n' + line; // 💡 تخزين الصورة للسؤال التالي
+                    continue; 
+                }
+                
                 parsed.push(curQ);
                 curQ = null;
                 isOptMode = false;
@@ -1328,7 +1335,11 @@ function syncTextToDatabase() {
             }
         } else {
             if (hasSeenFirstQuestion) {
-                parsed.push({ type: 'heading', text: line });
+                if (line.includes('<img')) {
+                    pendingMedia += '\n' + line; // 💡 التقاط الصورة بين الأسئلة
+                } else {
+                    parsed.push({ type: 'heading', text: line });
+                }
             }
         }
     }
@@ -1804,7 +1815,7 @@ function buildQAndA_HTML(dataArray, pColor) {
 
         hN += `<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both;"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${studentQText}</div>`;
         if (q.type === 'mcq') {
-            hN += `<ul class="${lC}" dir="${qDir}" style="direction: ${qDir};">`;
+            hN += `<ul class="${lC}" dir="${qDir}" style="direction: ${qDir}; width: auto; overflow: hidden; margin-top: 5px;">`;
             q.options.forEach(o => hN += `<li class="option-item" dir="${qDir}" style="display: flex; gap: 6px; text-align: ${qDir === 'rtl' ? 'right' : 'left'};"><span style="flex-shrink: 0;">(${o.l})</span> <span>${o.t}</span></li>`);
             hN += `</ul>`;
         }
@@ -1849,7 +1860,7 @@ function buildQAndA_HTML(dataArray, pColor) {
         hA += `<div class="${cC}" dir="${qDir}" style="direction: ${qDir}; text-align: ${qDir === 'rtl' ? 'right' : 'left'}; clear: both; ${qM !== 'text' ? `border-right-color:${pColor};` : ''}"><div class="q-text" dir="${qDir}" style="text-align: ${qDir === 'rtl' ? 'right' : 'left'};">${qNumStr}. ${aT}</div>`;
 
         if (q.type === 'mcq') {
-            hA += `<ul class="${lC}" dir="${qDir}" style="direction: ${qDir};">`;
+            hA += `<ul class="${lC}" dir="${qDir}" style="direction: ${qDir}; width: auto; overflow: hidden; margin-top: 5px;">`;
             q.options.forEach(o => {
                 let clA = q.ans ? q.ans.toString().replace(/\s/g, '').trim() : '';
                 let clO = o.l.toString().replace(/\s/g, '').trim();
@@ -1867,44 +1878,53 @@ function buildQAndA_HTML(dataArray, pColor) {
         hA += `</div>`;
     });
 
+    // إرجاع الكود الأصلي بدون مربعات سوداء لورقة الأسئلة
     hA = `<style>#wordPrintPreviewArea .ans-key-heading { display: none !important; }</style>` + hA;
 
     return { noAns: hN, withAns: hA };
 }
 
-function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = '') {
+
+// ========================================================
+// 📄 دالة البناء الأساسية للصفحات (مُصححة لمنع التداخل)
+// ========================================================
+function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = '', isBubbleSheet = false) {
     let hdr = '';
     let std = '';
     let cols = '';
 
-    // التحقق من النظام المختار للتحويل التلقائي للإنجليزية
     let isForeign = (currentQuestionSystem === 'foreign');
     let dir = isForeign ? 'ltr' : 'rtl';
     let align = isForeign ? 'left' : 'right';
 
-    if (currentMode === 'questions' && !isAnswers) {
+    // الترويسة الأساسية تظهر فقط في ورقة الأسئلة والإجابات، ولا تظهر في البابل شيت أبداً
+    if (currentMode === 'questions' && !isBubbleSheet) {
         hdr = document.getElementById('enableHdr').value === 'yes' ?
-            `<div class="exam-header-print" style="direction:${dir}; text-align:${align};">
+            `<div class="exam-header-print" style="direction:${dir}; text-align:${align}; margin-bottom: 15px;">
                  <div class="${isForeign ? 'left' : 'right'}">${document.getElementById('hdrRight').value}</div>
                  <div class="center">${document.getElementById('hdrCenter').value}</div>
                  <div class="${isForeign ? 'right' : 'left'}">${document.getElementById('hdrLeft').value}</div>
-               </div>` :
-            '';
+               </div>` : '';
 
-        // ترجمة بيانات الطالب التلقائية
-        let stdText = isForeign ?
-            `<div>Student Name: ....................................................</div><div>Seat No: .........................</div>` :
-            `<div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div>`;
+        // صندوق الطالب الأساسي لورقة الأسئلة فقط
+        if (!isAnswers) {
+            let stdText = isForeign ?
+                `<div>Student Name: ....................................................</div><div>Seat No: .........................</div>` :
+                `<div>اسم الطالب: ....................................................</div><div>رقم الجلوس: .........................</div>`;
+            std = document.getElementById('enableStudentBox').value === 'yes' ? `<div class="student-info-print" style="direction:${dir};">${stdText}</div>` : '';
+        }
 
-        std = document.getElementById('enableStudentBox').value === 'yes' ? `<div class="student-info-print" style="direction:${dir};">${stdText}</div>` : '';
         cols = document.getElementById('columnsLayout').value === '2' ? 'two-columns-layout' : '';
     }
 
+    let topMargin = isBubbleSheet ? '2mm' : '10mm';
+    let bottomMargin = isBubbleSheet ? '2mm' : '10mm';
+
     return `
-    <div class="pdf-page" style="background:${bgCSS}; direction:${dir}; text-align:${align};">
-        <table style="width: 100%; border-collapse: collapse; border: none; direction:${dir};">
+    <div class="pdf-page" style="background:${bgCSS}; direction:${dir}; text-align:${align}; position: relative;">
+        <table style="width: 100%; border-collapse: collapse; border: none; direction:${dir}; position: relative; z-index: 10;">
             <thead style="display: table-header-group;">
-                <tr><td style="height: 30mm; border: none; padding: 0;"></td></tr>
+                <tr><td style="height: ${topMargin}; border: none; padding: 0;"></td></tr>
             </thead>
             <tbody>
                 <tr><td style="border: none; padding: 0;">
@@ -1913,20 +1933,36 @@ function generatePageHTML(contentHTML, bgCSS, isAnswers = false, modelBadge = ''
                 </td></tr>
             </tbody>
             <tfoot style="display: table-footer-group;">
-                <tr><td style="height: 25mm; border: none; padding: 0;"></td></tr>
+                <tr><td style="height: ${bottomMargin}; border: none; padding: 0;"></td></tr>
             </tfoot>
         </table>
     </div>`;
 }
 
-function getBubbleSheetContent(qDb, emptyCount = 0) {
+// ========================================================
+// 📄 دالة البابل شيت (محاذاة ليزرية + ضمان الصفحة الواحدة + ترتيب الترويسات)
+// ========================================================
+function getBubbleSheetContent(qDb, emptyCount = 0, modelBadgeHtml = '', modelIndex = 0) {
     const sh = document.getElementById('bubbleShape').value;
     const pos = document.getElementById('bubbleTextPosition').value;
     const oC = parseInt(document.getElementById('bubbleOptionsCount').value);
     const lT = document.getElementById('bubbleLettersType').value;
     const sC = document.getElementById('bubbleStrokeColor').value;
-    const userBubbleSize = document.getElementById('bubbleSize').value + 'px';
     const userColumnsCount = parseInt(document.getElementById('bubbleColumns').value);
+
+    const totalQsInExam = qDb.filter(q => q.type !== 'heading').length || 110;
+    let safeBubbleSize = parseInt(document.getElementById('bubbleSize').value);
+
+    // 💡 تكبير حجم الدوائر والخطوط للرؤية الواضحة
+    if (totalQsInExam > 80) {
+        safeBubbleSize = (pos === 'above') ? 16 : 19; // تم التكبير من 15 إلى 19
+    } else if (totalQsInExam > 50) {
+        safeBubbleSize = (pos === 'above') ? 19 : 22;
+    }
+
+    const userBubbleSize = safeBubbleSize + 'px';
+    const fontSize = (safeBubbleSize * 0.55) + 'px'; // تكبير نسبة الخط داخل الدائرة ليكون أوضح
+    const labelSize = '11px';
 
     const lA = { 'arabic': ['أ', 'ب', 'ج', 'د', 'هـ', 'و'], 'english': ['A', 'B', 'C', 'D', 'E', 'F'], 'numbers': ['1', '2', '3', '4', '5', '6'] }[lT];
 
@@ -1934,13 +1970,13 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
     let dir = isForeign ? 'ltr' : 'rtl';
     let align = isForeign ? 'left' : 'right';
 
-    let f1 = isForeign ? 'Student Name: ...........................................................' : document.getElementById('bHdrField1').value;
-    let f2 = isForeign ? 'Subject: .........................................' : document.getElementById('bHdrField2').value;
-    let f3 = isForeign ? 'Grade/Class: .........................' : document.getElementById('bHdrField3').value;
+    let f1 = isForeign ? 'Student Name: ...........' : document.getElementById('bHdrField1').value;
+    let f2 = isForeign ? 'Subject: ...........' : document.getElementById('bHdrField2').value;
+    let f3 = isForeign ? 'Class: .......' : document.getElementById('bHdrField3').value;
     let idTitle = isForeign ? 'Seat Number' : document.getElementById('bHdrIdTitle').value;
 
-    let mcqTitle = isForeign ? 'Multiple Choice Questions (MCQ)' : 'قسم أسئلة الاختيار من متعدد';
-    let tfTitle = isForeign ? 'True/False Questions (T/F)' : 'قسم أسئلة الصواب والخطأ';
+    let mcqTitle = isForeign ? 'Multiple Choice Questions' : 'قسم أسئلة الاختيار من متعدد';
+    let tfTitle = isForeign ? 'True/False Questions' : 'قسم أسئلة الصواب والخطأ';
     let tfLetters = isForeign ? ['T', 'F'] : ['ص', 'خ'];
 
     let bH = '';
@@ -1948,67 +1984,62 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
     const hC = document.getElementById('bHdrColor').value;
     const hb = document.getElementById('bHdrBorderColor').value;
     const hbg = document.getElementById('bHdrBgColor').value;
-    const hz = document.getElementById('bHdrSize').value + 'px';
 
     if (hs === 'advanced') {
         let ig = '';
         for (let c = 0; c < 6; c++) {
-            let cb = `<input type="text" class="bubble-id-input" style="border-color:${hb};color:${hC}; height:20px; font-size:12px; margin-bottom:4px;" maxlength="1">`;
-            for (let r = 0; r <= 9; r++) { cb += `<div class="bubble-shape shape-circle" style="width:14px;height:14px;font-size:9px;border:1px solid ${hb};color:${hC};margin-bottom:2px;">${r}</div>`; }
-            ig += `<div class="bubble-id-col">${cb}</div>`;
+            let cb = `<input type="text" style="border:1px solid ${hb};color:${hC}; height:14px; width:12px; font-size:10px; margin-bottom:2px; text-align:center; outline:none; padding:0;" maxlength="1">`;
+            for (let r = 0; r <= 9; r++) { cb += `<div style="width:11px;height:11px;font-size:7px;border:1px solid ${hb};border-radius:50%;color:${hC};margin-bottom:1px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${r}</div>`; }
+            ig += `<div style="display:flex;flex-direction:column;gap:1px;align-items:center;">${cb}</div>`;
         }
-        bH = `<div class="bubble-advanced-header" style="border:2px solid ${hb};background:${hbg};color:${hC};font-size:${hz}; padding:8px 15px; margin-bottom:10px; direction:${dir}; text-align:${align};">
-            <div class="bubble-student-info"><div>${f1}</div><div style="display:flex;gap:25px;"><div>${f2}</div><div>${f3}</div></div></div>
-            <div style="display:flex;flex-direction:column;align-items:center;"><div>${idTitle}</div><div class="bubble-student-id-grid" style="border-color:${hb};background:#fff; padding:4px;">${ig}</div></div>
+        bH = `<div style="border:1px solid ${hb};background:${hbg};color:${hC}; padding:6px 10px; margin-bottom:6px; direction:${dir}; text-align:${align}; display:flex; justify-content:space-between; align-items:center; border-radius:6px; page-break-inside: avoid;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:bold;">
+                <div>${f1}</div><div style="display:flex;gap:20px;"><div>${f2}</div><div>${f3}</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center; border-inline-start:1px dashed ${hb}; padding-inline-start:10px;">
+                <div style="font-size:10px; margin-bottom:2px; font-weight:900;">${idTitle}</div>
+                <div style="display:flex;gap:2px;background:#fff;padding:2px;border:1px solid ${hb}; border-radius:4px;">${ig}</div>
+            </div>
         </div>`;
-    }
-    else if (hs === 'basic') {
-        bH = `<div class="student-info-print" style="border:2px solid ${hb};background:${hbg};color:${hC};font-size:${hz}; padding:8px 15px; margin-bottom:10px; direction:${dir}; text-align:${align}; display:flex; justify-content:space-between;"><div>${f1}</div><div>${f2}</div><div>${f3}</div></div>`;
+    } else if (hs === 'basic') {
+        bH = `<div style="border:1px solid ${hb};background:${hbg};color:${hC};font-size:12px; font-weight:bold; padding:6px 10px; margin-bottom:6px; direction:${dir}; text-align:${align}; display:flex; justify-content:space-between; border-radius:6px; page-break-inside: avoid;"><div>${f1}</div><div>${f2}</div><div>${f3}</div></div>`;
     }
 
     const renderBubbleSection = (title, qList, qType, gridCols) => {
         if (qList.length === 0) return '';
-        let secHtml = `<div style="border: 2px solid ${sC}; padding: 6px 10px; margin-bottom: 6px; border-radius: 8px; background: rgba(255,255,255,0.8); direction:${dir}; text-align:${align};">`;
-        secHtml += `<h4 style="margin-top: 0; color: ${sC}; text-align: center; margin-bottom: 12px; border-bottom: 1px dashed ${sC}; padding-bottom: 4px; font-weight: 900; font-size: 13px;">${title}</h4>`;
+        let secHtml = `<div style="border: 1px solid ${sC}; padding: 4px 6px; margin-bottom: 4px; border-radius: 6px; background: transparent; direction:${dir}; text-align:${align};">`;
+        secHtml += `<div style="text-align: center; color: ${sC}; margin-bottom: 6px; border-bottom: 1px dashed ${sC}; padding-bottom: 2px; font-weight: 900; font-size: 11px;">${title}</div>`;
 
-        secHtml += `<div class="bubble-container bubble-col-${gridCols}" style="display: grid; color:${sC}; direction:${dir};">`;
+        // 💡 تقليل الفراغ الطولي قليلاً جداً لتعويض مساحة الدوائر الكبيرة وضمان بقائها في صفحة واحدة
+        let rowGap = (pos === 'above') ? '2px' : '1px';
+        secHtml += `<div style="display: grid; grid-template-columns: repeat(${gridCols}, 1fr); gap: ${rowGap} 6px; color:${sC}; direction:${dir};">`;
 
         qList.forEach((q) => {
             let i = q.num;
-            let rowClass = pos === 'above' ? 'bubble-row spacing-above' : 'bubble-row';
-            let rowMargin = pos === 'above' ? 'margin-top: 22px;' : '';
-
-            secHtml += `<div class="${rowClass}" style="${rowMargin} margin-bottom: 8px; display: flex; align-items: center; gap: 4px; width:100%; direction:${dir};">`;
-            secHtml += `<div class="bubble-q-num" style="width: 25px; font-size: 14px; font-weight:bold; flex-shrink:0; text-align:${align};">${i}.</div>`;
-            secHtml += `<div class="bubble-options-wrapper" style="gap: ${pos === 'beside' ? '8px' : '4px'}; flex:1; justify-content:flex-start;">`;
-
-            let bSize = userBubbleSize;
-            let fontSize = (parseInt(userBubbleSize) * 0.45) + 'px';
+            secHtml += `<div style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; width:100%; direction:${dir}; margin:0; padding:0; overflow:hidden;">`;
+            secHtml += `<div style="width: 20px; font-size: 11px; font-weight:900; flex-shrink:0; text-align:${align}; margin:0; padding:0; line-height:1;">${i}.</div>`;
+            secHtml += `<div style="display: flex; align-items: center; gap: 4px; flex:1; justify-content:flex-start; margin:0; padding:0;">`;
 
             const createBubbleHTML = (letter) => {
-                let lbl = (pos === 'above' || pos === 'beside') ? `<span class="bubble-label" style="color:${sC};">${letter}</span>` : '';
+                let lbl = (pos === 'above' || pos === 'beside') ? `<span style="color:${sC}; font-size:${labelSize}; font-weight:900; line-height:1; display:block;">${letter}</span>` : '';
                 let ins = (pos === 'inside') ? letter : '';
+                let flexDir = pos === 'above' ? 'column' : 'row';
+                let itemGap = pos === 'beside' ? '2px' : '1px';
 
                 return `
-                <div class="bubble-item pos-${pos}">
+                <div style="display:flex; flex-direction:${flexDir}; align-items:center; justify-content:center; gap:${itemGap}; margin:0; padding:0; line-height:1;">
                     ${pos === 'beside' ? lbl : ''}
-                    <div class="bubble-shape shape-${sh}" style="width:${bSize}; height:${sh === 'oval' ? 'auto' : bSize}; border-color:${sC}; color:${sC}; font-size:${fontSize};">
+                    ${pos === 'above' ? lbl : ''}
+                    <div class="shape-${sh}" style="display:flex; align-items:center; justify-content:center; width:${userBubbleSize}; height:${sh === 'oval' ? 'auto' : userBubbleSize}; ${sh === 'oval' ? 'aspect-ratio: 1.4/1;' : ''} border:1px solid ${sC}; color:${sC}; font-size:${fontSize}; font-weight:bold; line-height:1; padding:0; margin:0; box-sizing:border-box; flex-shrink:0;">
                         ${ins}
                     </div>
-                    ${pos === 'above' ? lbl : ''}
                 </div>`;
             };
 
             if (qType === 'mcq') {
-                for (let o = 0; o < oC; o++) {
-                    let l = lA[o] || '';
-                    secHtml += pos !== 'hidden' ? createBubbleHTML(l) : createBubbleHTML('');
-                }
+                for (let o = 0; o < oC; o++) { let l = lA[o] || ''; secHtml += pos !== 'hidden' ? createBubbleHTML(l) : createBubbleHTML(''); }
             } else if (qType === 'tf_inline') {
-                for (let o = 0; o < 2; o++) {
-                    let l = tfLetters[o];
-                    secHtml += pos !== 'hidden' ? createBubbleHTML(l) : createBubbleHTML('');
-                }
+                for (let o = 0; o < 2; o++) { let l = tfLetters[o]; secHtml += pos !== 'hidden' ? createBubbleHTML(l) : createBubbleHTML(''); }
             }
             secHtml += `</div></div>`;
         });
@@ -2021,20 +2052,44 @@ function getBubbleSheetContent(qDb, emptyCount = 0) {
     if (qDb.filter(q => q.type !== 'heading').length === 0) {
         let dummyMCQ = Array.from({ length: 60 }, (_, i) => ({ num: i + 1 }));
         let dummyTF = Array.from({ length: 50 }, (_, i) => ({ num: i + 1 }));
-
-        bHt += renderBubbleSection(isForeign ? mcqTitle + ' (60 Questions)' : mcqTitle + ' (60 سؤال)', dummyMCQ, 'mcq', userColumnsCount);
-        bHt += renderBubbleSection(isForeign ? tfTitle + ' (50 Questions)' : tfTitle + ' (50 سؤال)', dummyTF, 'tf_inline', userColumnsCount);
+        bHt += renderBubbleSection(isForeign ? mcqTitle + ' (60)' : mcqTitle + ' (60)', dummyMCQ, 'mcq', userColumnsCount);
+        bHt += renderBubbleSection(isForeign ? tfTitle + ' (50)' : tfTitle + ' (50)', dummyTF, 'tf_inline', userColumnsCount);
     } else {
         let mcqQs = qDb.filter(q => q.type === 'mcq');
         let tfQs = qDb.filter(q => q.type === 'tf_inline');
-
         bHt += renderBubbleSection(mcqTitle, mcqQs, 'mcq', userColumnsCount);
         bHt += renderBubbleSection(tfTitle, tfQs, 'tf_inline', userColumnsCount);
     }
 
-    return bH + bHt;
-}
+    let bTopRight = document.getElementById('bHdrTopRight') ? document.getElementById('bHdrTopRight').value : '';
+    let bTopCenter = document.getElementById('bHdrTopCenter') ? document.getElementById('bHdrTopCenter').value : '';
+    let bTopLeft = document.getElementById('bHdrTopLeft') ? document.getElementById('bHdrTopLeft').value : '';
 
+    let bubbleTopHeader = '';
+    if (bTopRight || bTopCenter || bTopLeft) {
+        bubbleTopHeader = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px; font-size: 14px; font-weight: 900; color: ${hC}; direction:${dir}; text-align:${align}; border-bottom: 2px solid ${hb}; padding-bottom: 6px;">
+            <div style="flex: 1; text-align: ${isForeign ? 'left' : 'right'};">${bTopRight}</div>
+            <div style="flex: 1; text-align: center;">${bTopCenter}</div>
+            <div style="flex: 1; text-align: ${isForeign ? 'right' : 'left'};">${bTopLeft}</div>
+        </div>`;
+    }
+
+    // 💡 التعديل الحاسم هنا: وضع modelBadgeHtml أسفل الترويسة المستقلة، وفوق صندوق الـ OMR مباشرة
+    let omrWrapper = `
+    ${bubbleTopHeader}
+    ${modelBadgeHtml} 
+    <div style="position: relative; padding: 12px; border: 1px solid #000; border-radius: 6px; background: #fff; box-sizing: border-box; width: 100%; max-width: 100%; margin-top: 0; page-break-inside: avoid; overflow: hidden;">
+        <div class="omr-mark" style="position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
+        <div class="omr-mark" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
+        <div class="omr-mark" style="position: absolute; bottom: -6px; left: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
+        <div class="omr-mark" style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
+        ${bH}
+        ${bHt}
+    </div>`;
+
+    return omrWrapper;
+}
 async function executeExport(printType) {
     applyUserSettings();
     const pA = document.getElementById('wordPrintPreviewArea');
@@ -2055,7 +2110,7 @@ async function executeExport(printType) {
     else {
         pA.className = 'print-mode-questions';
         if (printType === 'bubble') {
-            pA.innerHTML = generatePageHTML(getBubbleSheetContent(questionsDatabase, emptyBCount), getBackgroundCSS(), true);
+            pA.innerHTML = generatePageHTML(getBubbleSheetContent(questionsDatabase, emptyBCount, ''), getBackgroundCSS(), true, '', true);
         } else {
             let qP = getRawPreamble('questionsInput');
             if (qP) qP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${qP}</div>`;
@@ -2107,7 +2162,8 @@ async function generateMultiEmptyBubbles() {
             modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 20px;"><span style="font-weight: 900; font-size: 22px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 5px 25px; border-radius: 8px; background: rgba(255,255,255,0.9);">نموذج الاختبار (${m})</span></div>`;
         }
 
-        fH += generatePageHTML(getBubbleSheetContent(dummyDb, 0), bgCSS, true, modelBadgeHtml);
+        // 💡 التمرير للمكان الصحيح أسفل الترويسة
+        fH += generatePageHTML(getBubbleSheetContent(dummyDb, 0, modelBadgeHtml), bgCSS, true, '', true);
     }
 
     pA.innerHTML = fH;
@@ -2126,9 +2182,9 @@ async function generateMultiModels() {
     let fH = '';
 
     let qP = getRawPreamble('questionsInput');
-    if (qP) qP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${qP}</div>`;
+    if (qP) qP = `<div dir="auto" style="width: 100%; margin-bottom: 20px; clear: both; unicode-bidi: plaintext; text-align: start;">${qP}</div>`;
     let aP = getRawPreamble('answersInput');
-    if (aP) aP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${aP}</div>`;
+    if (aP) aP = `<div dir="auto" style="width: 100%; margin-bottom: 20px; clear: both; unicode-bidi: plaintext; text-align: start;">${aP}</div>`;
 
     const numType = document.getElementById('modelNumberType').value;
     const posType = document.getElementById('modelLabelPos').value;
@@ -2137,40 +2193,94 @@ async function generateMultiModels() {
     if (numType === 'arabic') mods = ['أ', 'ب', 'ج', 'د'];
     else if (numType === 'number') mods = ['1', '2', '3', '4'];
 
+    // 💡 الجديد هنا: إنشاء سجل الامتحان لحفظه في "خزنة التصحيح" للكاميرا
+    let examTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان دوري';
+    if (!examTitle) examTitle = 'امتحان دوري';
+    
+    // 💡 إضافة الوقت والدقيقة لتمييز الامتحانات عن بعضها بوضوح
+    let timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    let dateString = new Date().toLocaleDateString('ar-EG');
+    
+    let gradingRecord = {
+        id: 'EXAM_' + Date.now(),
+        title: examTitle + ' (' + timeString + ' - ' + dateString + ')',
+        modelsKeys: {} 
+    };
+
     for (let i = 0; i < mods.length; i++) {
         let m = mods[i];
 
-        let headings = questionsDatabase.filter(q => q.type === 'heading');
-        let questionsOnly = questionsDatabase.filter(q => q.type !== 'heading').sort(() => Math.random() - 0.5);
+        let mcqs = questionsDatabase.filter(q => q.type === 'mcq').sort(() => Math.random() - 0.5);
+        let tfs = questionsDatabase.filter(q => q.type === 'tf_inline').sort(() => Math.random() - 0.5);
+        let essays = questionsDatabase.filter(q => q.type === 'essay').sort(() => Math.random() - 0.5);
 
-        let qIdx = 0;
+        let mcqIdx = 0, tfIdx = 0, essayIdx = 0;
+        
         let sDb = questionsDatabase.map(q => {
             if (q.type === 'heading') return q;
-            return questionsOnly[qIdx++];
+            if (q.type === 'mcq') return mcqs[mcqIdx++];
+            if (q.type === 'tf_inline') return tfs[tfIdx++];
+            if (q.type === 'essay') return essays[essayIdx++];
         });
 
         let typeCounters = { mcq: 1, tf_inline: 1, essay: 1 };
+        
+        // 💡 الجديد هنا: حفظ مفتاح الإجابة الخاص بهذا النموذج تحديداً في الخزنة
+        let currentModelAnswers = [];
         sDb.forEach(q => {
             if (q.type !== 'heading') {
                 q.num = typeCounters[q.type]++;
+                currentModelAnswers.push(q.ans || ''); // استخراج الإجابة
             }
         });
+        gradingRecord.modelsKeys[i] = currentModelAnswers; // حفظ إجابات النموذج (0=A, 1=B...)
 
         let hs = buildQAndA_HTML(sDb, document.getElementById('userPrimaryColor').value);
         let bgCSS = getBackgroundCSS();
         let modelBadgeHtml = '';
 
+        let machineCodeHtml = `<div style="display:flex; justify-content:center; gap:6px; margin-top:8px;">`;
+        for (let d = 0; d < 4; d++) {
+            let isDark = (d === i) ? '#000' : '#fff';
+            machineCodeHtml += `<div style="width:12px; height:12px; border:2px solid #000; background:${isDark};"></div>`;
+        }
+        machineCodeHtml += `</div>`;
+
         if (posType === 'watermark') {
             bgCSS = getBackgroundCSS(m);
         } else {
             let align = posType.replace('header_', '');
-            modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 20px;"><span style="font-weight: 900; font-size: 22px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 5px 25px; border-radius: 8px; background: rgba(255,255,255,0.9);">نموذج الاختبار (${m})</span></div>`;
+            modelBadgeHtml = `<div style="text-align: ${align}; width: 100%; margin-bottom: 15px;">
+                <span style="display:inline-block; font-weight: 900; font-size: 20px; color: var(--primary-color); border: 3px dashed var(--primary-color); padding: 8px 25px; border-radius: 8px; background: rgba(255,255,255,0.9);">
+                    نموذج الاختبار (${m})
+                    ${machineCodeHtml}
+                </span>
+            </div>`;
         }
 
-        fH += generatePageHTML(qP + hs.noAns, bgCSS, false, modelBadgeHtml);
-        fH += generatePageHTML(aP + hs.withAns, bgCSS, true, modelBadgeHtml);
-        fH += generatePageHTML(getBubbleSheetContent(sDb, 0), bgCSS, true, modelBadgeHtml);
+        fH += generatePageHTML(qP + hs.noAns, bgCSS, false, modelBadgeHtml, false);
+        fH += generatePageHTML(aP + hs.withAns, bgCSS, true, modelBadgeHtml, false);
+        // نمرر اسم النموذج داخل الدالة ليطبع أسفل الترويسة المستقلة، ونضع '' في الدالة الأم
+        fH += generatePageHTML(getBubbleSheetContent(sDb, 0, modelBadgeHtml, i), bgCSS, true, '', true);
     }
+
+    // 💡 الحفظ المزدوج: في المتصفح + السحابة (ليعمل على أي جهاز)
+    localforage.getItem('elalfey_grading_vault').then(async (vault) => {
+        let currentVault = vault || [];
+        currentVault.unshift(gradingRecord); 
+        if (currentVault.length > 50) currentVault.pop(); // الاحتفاظ بآخر 50 امتحان فقط
+        
+        await localforage.setItem('elalfey_grading_vault', currentVault);
+
+        const user = auth.currentUser;
+        if (user) {
+            try {
+                await db.collection('users').doc(user.uid).set({
+                    omrVault: currentVault
+                }, { merge: true });
+            } catch(e) { console.error("Cloud sync failed", e); }
+        }
+    });
 
     pA.innerHTML = fH;
     if (window.MathJax) await MathJax.typesetPromise([pA]);
@@ -2603,7 +2713,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    async function renderArchiveQuestionsList() {
+    window.renderArchiveQuestionsList = async function() {
         const container = document.getElementById('archiveQuestionsListContainer');
         const user = firebase.auth().currentUser;
 
@@ -3430,5 +3540,231 @@ function showStatsModal() {
     if (modal) {
         modal.style.display = 'flex';
         closeCustomDropdown('profileDropdownMenu'); // لإغلاق القائمة المنسدلة عند الفتح
+    }
+}
+// ========================================================
+// 📷 المحرك المؤسسي للتصحيح الإلكتروني (Enterprise OMR Engine)
+// ========================================================
+let scannerStream = null;
+let gradingVault = []; 
+
+async function openScannerModal() {
+    const selectEl = document.getElementById('scannerExamSelect');
+    selectEl.innerHTML = '<option value="">جاري المزامنة مع السحابة... ☁️</option>';
+    document.getElementById('scannerModal').style.display = 'flex';
+    document.getElementById('scannerResult').innerHTML = `
+        <div style="padding: 30px; color: #64748b; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <i class='bx bx-qr-scan' style="font-size: 40px; opacity: 0.5;"></i>
+            اختر الامتحان من الأعلى، وجه الكاميرا، واضغط مسح.
+        </div>`;
+
+    const user = auth.currentUser;
+    let cloudVault = [];
+    
+    // 1. جلب الامتحانات من حسابك السحابي أولاً (إذا فتحت من جهاز آخر)
+    if (user) {
+        try {
+            const docSnap = await db.collection('users').doc(user.uid).get();
+            if (docSnap.exists && docSnap.data().omrVault) {
+                cloudVault = docSnap.data().omrVault;
+                await localforage.setItem('elalfey_grading_vault', cloudVault); // تحديث الجهاز المحلي
+            }
+        } catch(e) { console.error('Cloud fetch failed', e); }
+    }
+
+    // 2. الاعتماد على النسخة السحابية إن وجدت، أو المحلية
+    gradingVault = await localforage.getItem('elalfey_grading_vault') || [];
+    if (cloudVault.length > 0) gradingVault = cloudVault;
+
+    if (gradingVault.length === 0) {
+        selectEl.innerHTML = '<option value="">الخزنة فارغة! قم بتوليد نماذج أولاً.</option>';
+    } else {
+        selectEl.innerHTML = '';
+        gradingVault.forEach(exam => {
+            let opt = document.createElement('option');
+            opt.value = exam.id;
+            opt.innerText = exam.title;
+            selectEl.appendChild(opt);
+        });
+    }
+
+    // تشغيل الكاميرا
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+    })
+    .then(function(stream) {
+        scannerStream = stream;
+        const video = document.getElementById('scannerVideo');
+        video.srcObject = stream;
+        video.play();
+    })
+    .catch(function(err) {
+        showToast('❌ لا يمكن الوصول للكاميرا. يرجى إعطاء الصلاحية للمتصفح.', 'error');
+    });
+}
+
+function closeScannerModal() {
+    document.getElementById('scannerModal').style.display = 'none';
+    if (scannerStream) {
+        scannerStream.getTracks().forEach(track => track.stop());
+        scannerStream = null;
+    }
+}
+async function deleteExamFromVault() {
+    const selectEl = document.getElementById('scannerExamSelect');
+    const selectedId = selectEl.value;
+
+    if (!selectedId) return showToast('يرجى اختيار امتحان لحذفه', 'error');
+    if (!confirm('هل أنت متأكد من حذف مفاتيح إجابة هذا الامتحان؟')) return;
+
+    // الحذف من الذاكرة المحلية
+    gradingVault = gradingVault.filter(exam => exam.id !== selectedId);
+    await localforage.setItem('elalfey_grading_vault', gradingVault);
+
+    // الحذف من السحابة بقوة (باستخدام set لتجنب أخطاء update)
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            await db.collection('users').doc(user.uid).set({ omrVault: gradingVault }, { merge: true });
+        } catch(e) { console.error('Cloud delete failed', e); }
+    }
+
+    showToast('تم حذف الامتحان المحدد بنجاح 🗑️', 'success');
+    
+    // تحديث القائمة
+    selectEl.innerHTML = '';
+    if (gradingVault.length === 0) {
+        selectEl.innerHTML = '<option value="">الخزنة فارغة حالياً</option>';
+    } else {
+        gradingVault.forEach(exam => {
+            let opt = document.createElement('option');
+            opt.value = exam.id;
+            opt.innerText = exam.title;
+            selectEl.appendChild(opt);
+        });
+    }
+}
+
+// دالة تفريغ الخزنة بالكامل
+async function clearEntireVault() {
+    if (!confirm('⚠️ تحذير: هل أنت متأكد من مسح جميع الامتحانات من الخزنة نهائياً؟')) return;
+
+    gradingVault = [];
+    await localforage.setItem('elalfey_grading_vault', []);
+
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            await db.collection('users').doc(user.uid).set({ omrVault: [] }, { merge: true });
+        } catch(e) {}
+    }
+
+    showToast('تم تفريغ الخزنة بالكامل بنجاح 🗑️', 'success');
+    
+    const selectEl = document.getElementById('scannerExamSelect');
+    selectEl.innerHTML = '<option value="">الخزنة فارغة حالياً</option>';
+}
+
+async function captureAndGradeEnterprise() {
+    const video = document.getElementById('scannerVideo');
+    const canvas = document.getElementById('scannerCanvas');
+    const resultDiv = document.getElementById('scannerResult');
+    const selectedExamId = document.getElementById('scannerExamSelect').value;
+    
+    if (!video.videoWidth) return;
+    if (!selectedExamId) {
+        showToast('يرجى اختيار امتحان من القائمة أولاً', 'error');
+        return;
+    }
+
+    // استدعاء بيانات الامتحان المختار من الخزنة
+    const targetExam = gradingVault.find(e => e.id === selectedExamId);
+    if(!targetExam) return;
+
+    // التقاط الصورة الحقيقية من الكاميرا
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // تحويل الصورة إلى نص (Base64) لإرسالها
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+
+    resultDiv.innerHTML = `
+        <div style="width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(16, 185, 129, 0.05);">
+            <i class="bx bx-loader-alt bx-spin" style="font-size: 45px; color: #10b981;"></i>
+            <span style="font-weight: 900; color: #10b981; font-size: 16px;">جاري إرسال الورقة للمعالجة...</span>
+            <span style="font-size: 12px; color: #94a3b8;">خوارزميات الذكاء الاصطناعي تقوم بتحليل البيكسلات...</span>
+        </div>`;
+
+    try {
+        // 🚀 إرسال الصورة ومفاتيح الإجابات إلى سيرفر البايثون
+        // ملاحظة: عند رفع السيرفر على الإنترنت، استبدل localhost برابط السيرفر الجديد
+        const response = await fetch('http://localhost:5000/api/grade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: imageData,
+                modelsKeys: targetExam.modelsKeys
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
+        }
+
+        // استلام النتيجة الدقيقة من السيرفر وعرضها
+        const percentage = result.percentage;
+        let gradeColor = percentage >= 85 ? '#10b981' : percentage >= 65 ? '#3b82f6' : percentage >= 50 ? '#f59e0b' : '#ef4444';
+        let gradeText = percentage >= 85 ? 'ممتاز' : percentage >= 65 ? 'جيد جداً' : percentage >= 50 ? 'مقبول' : 'راسب';
+
+        resultDiv.innerHTML = `
+            <div style="width: 100%; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="text-align: right;">
+                        <span style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">رقم الجلوس</span><br>
+                        <strong style="color: #fff; font-size: 16px; font-family: monospace;">#${result.studentId}</strong>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="color: #94a3b8; font-size: 11px;">النموذج (رؤية حاسوبية)</span><br>
+                        <strong style="color: #c084fc; font-size: 15px;"><i class='bx bx-barcode-reader'></i> نموذج ${result.detectedModel}</strong>
+                    </div>
+                    <div style="text-align: left; background: ${gradeColor}20; padding: 5px 15px; border-radius: 20px; border: 1px solid ${gradeColor}50;">
+                        <span style="color: ${gradeColor}; font-weight: 900; font-size: 15px;">التقييم: ${gradeText}</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.05);">
+                    <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                        <span style="color: #64748b; font-size: 11px;">إجمالي الأسئلة</span><br>
+                        <strong style="color: #fff; font-size: 20px;">${result.totalQuestions}</strong>
+                    </div>
+                    <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                        <span style="color: #64748b; font-size: 11px;">إجابة صحيحة</span><br>
+                        <strong style="color: #10b981; font-size: 20px;">${result.correctAnswers}</strong>
+                    </div>
+                    <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                        <span style="color: #64748b; font-size: 11px;">خاطئة / متروكة</span><br>
+                        <strong style="color: #ef4444; font-size: 20px;">${result.wrongAnswers}</strong>
+                    </div>
+                    <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                        <span style="color: #64748b; font-size: 11px;">النسبة المئوية</span><br>
+                        <strong style="color: ${gradeColor}; font-size: 20px;">${result.percentage}%</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        showToast('تم التصحيح بدقة 100% عبر السيرفر!', 'success');
+
+    } catch (err) {
+        resultDiv.innerHTML = `
+            <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(239, 68, 68, 0.1);">
+                <i class='bx bx-error-circle' style="font-size: 40px; color: #ef4444; margin-bottom: 10px;"></i><br>
+                <strong style="color: #ef4444; font-size: 15px;">خطأ في الاتصال بالسيرفر</strong><br>
+                <span style="color: #fca5a5; font-size: 13px;">تأكد من تشغيل ملف البايثون (app.py). التفاصيل: ${err.message}</span>
+            </div>`;
     }
 }

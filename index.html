@@ -1153,7 +1153,15 @@
         >
           <i class="icon">🔀</i> توليد نماذج متعددة
         </button>
-
+<!-- زر التصحيح بالكاميرا -->
+        <button
+          class="action-btn"
+          style="background: linear-gradient(135deg, #86e3b3, #686625) !important; box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3);"
+          onclick="openScannerModal()"
+        >
+          <i class="icon" style="font-size: 30px !important; background: rgba(255,255,255,0.2);">📷</i> 
+          <span>تصحيح بالكاميرا</span>
+        </button>
         <button
           class="action-btn btn-json-export"
           onclick="exportQuestionsToJSON()"
@@ -1434,6 +1442,23 @@
               <option value="basic">بسيطة</option>
               <option value="none">بدون ترويسة</option>
             </select>
+          </div>
+          <!-- الحقول الجديدة الخاصة بترويسة البابل شيت المستقلة -->
+          <div class="form-group">
+            <label>النص الأيمن (ترويسة عليا)</label>
+            <input type="text" id="bHdrTopRight" value="إدارة الامتحانات" />
+          </div>
+          <div class="form-group">
+            <label>النص الأوسط</label>
+            <input
+              type="text"
+              id="bHdrTopCenter"
+              value="ورقة إجابة (بابل شيت)"
+            />
+          </div>
+          <div class="form-group">
+            <label>النص الأيسر</label>
+            <input type="text" id="bHdrTopLeft" value="العام الدراسي 2026" />
           </div>
           <div class="form-group">
             <label>الحقل الأول</label
@@ -2596,5 +2621,80 @@
         </div>
       </div>
     </div>
+<!-- ======================================================== -->
+    <!-- 📷 منظومة التصحيح الإلكتروني المؤسسية (Enterprise OMR) -->
+    <!-- ======================================================== -->
+    <div id="scannerModal" class="custom-modal" style="z-index: 9999999;">
+      <div class="modal-content" style="max-width: 800px; padding: 0; overflow: hidden; background: #0f172a; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(16, 185, 129, 0.2); border-radius: 24px;">
+        
+        <!-- الترويسة -->
+        <div style="padding: 20px 25px; background: linear-gradient(135deg, #064e3b, #0f172a); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <h3 style="color: #10b981; margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+            <i class='bx bx-scan' style="font-size: 28px;"></i> نظام التصحيح الإلكتروني (OMR)
+          </h3>
+          <button onclick="closeScannerModal()" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; transition: 0.3s;">
+            <i class='bx bx-x'></i>
+          </button>
+        </div>
+
+        <!-- شاشة الكاميرا والموجهات -->
+        <div style="position: relative; width: 100%; height: 55vh; min-height: 400px; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden;">
+          <video id="scannerVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+          
+          <!-- الموجهات البصرية للكاميرا (Fiducial Guides) -->
+          <div style="position: absolute; inset: 0; border: 50px solid rgba(0,0,0,0.65); pointer-events: none;"></div>
+          <div style="position: absolute; top: 50px; bottom: 50px; left: 50px; right: 50px; border: 2px dashed #10b981; border-radius: 8px; pointer-events: none; box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.2);">
+             <!-- زوايا الاستهداف الأربعة -->
+             <div style="position: absolute; top: 10px; left: 10px; width: 25px; height: 25px; border-top: 4px solid #10b981; border-left: 4px solid #10b981;"></div>
+             <div style="position: absolute; top: 10px; right: 10px; width: 25px; height: 25px; border-top: 4px solid #10b981; border-right: 4px solid #10b981;"></div>
+             <div style="position: absolute; bottom: 10px; left: 10px; width: 25px; height: 25px; border-bottom: 4px solid #10b981; border-left: 4px solid #10b981;"></div>
+             <div style="position: absolute; bottom: 10px; right: 10px; width: 25px; height: 25px; border-bottom: 4px solid #10b981; border-right: 4px solid #10b981;"></div>
+          </div>
+          
+          <div style="position: absolute; bottom: 60px; background: rgba(16, 185, 129, 0.9); color: white; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: bold; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+            طابق المربعات السوداء في زوايا الورقة مع هذا الإطار
+          </div>
+          <canvas id="scannerCanvas" style="display: none;"></canvas>
+        </div>
+
+        <!-- لوحة التحكم والنتائج (محدثة بخزنة الامتحانات) -->
+        <div style="padding: 25px; background: #1e293b; display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+           <div style="flex: 1; min-width: 250px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px;">
+              <i class='bx bx-archive' style="color: #f59e0b; font-size: 24px;"></i>
+              <div style="display: flex; flex-direction: column; text-align: right; width: 100%;">
+                <span style="font-size: 11px; color: #94a3b8;">اختر الامتحان المراد تصحيحه:</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="scannerExamSelect" style="flex:1; background: transparent; color: #10b981; border: none; font-family: inherit; font-size: 14px; font-weight: 900; outline: none; margin-top: 4px; padding: 0; cursor: pointer;">
+                      <option value="">جاري تحميل الخزنة...</option>
+                    </select>
+                    <!-- زر حذف امتحان واحد -->
+                    <button onclick="deleteExamFromVault()" title="حذف الامتحان المحدد فقط" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; padding: 0; flex-shrink: 0;">
+                        <i class='bx bx-trash' style="font-size: 16px;"></i>
+                    </button>
+                    <!-- زر تفريغ الخزنة بالكامل -->
+                    <button onclick="clearEntireVault()" title="تفريغ الخزنة بالكامل" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 0 10px; height: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 11px; font-weight: bold; flex-shrink: 0;">
+                        مسح الكل
+                    </button>
+                </div>
+              </div>
+            </div>
+            
+            <button onclick="captureAndGradeEnterprise()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 900; font-family: inherit; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); transition: 0.3s; flex-shrink: 0;">
+              <i class='bx bx-camera' style="font-size: 22px;"></i> مسح وتصحيح
+            </button>
+          </div>
+          
+          <div id="scannerResult" style="background: rgba(0,0,0,0.2); border-radius: 16px; padding: 0; color: #fff; min-height: 120px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
+            <div style="padding: 30px; color: #64748b; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <i class='bx bx-qr-scan' style="font-size: 40px; opacity: 0.5;"></i>
+              سيتم عرض التقرير الأكاديمي للطالب هنا بعد المسح
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </body>
 </html>
