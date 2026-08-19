@@ -3906,7 +3906,7 @@ async function captureAndGradeEnterprise() {
     }
 }
 // ========================================================
-// 📁 منظومة التصحيح عبر رفع الصور من الاستوديو
+// 📁 منظومة التصحيح عبر رفع الصور من الاستوديو (مع ضغط ذكي)
 // ========================================================
 async function handleImageUpload(event) {
     const file = event.target.files[0];
@@ -3917,95 +3917,109 @@ async function handleImageUpload(event) {
     
     if (!selectedExamId) {
         showToast('يرجى اختيار امتحان من القائمة أولاً', 'error');
-        event.target.value = ''; // تفريغ الملف
+        event.target.value = ''; 
         return;
     }
 
     const targetExam = gradingVault.find(e => e.id === selectedExamId);
     if(!targetExam) return;
 
-    // إظهار رسالة التحميل
     resultDiv.innerHTML = `
         <div style="width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(139, 92, 246, 0.05);">
             <i class="bx bx-loader-alt bx-spin" style="font-size: 45px; color: #8b5cf6;"></i>
-            <span style="font-weight: 900; color: #8b5cf6; font-size: 16px;">جاري تحليل الصورة المرفوعة...</span>
+            <span style="font-weight: 900; color: #8b5cf6; font-size: 16px;">جاري ضغط ومعالجة الصورة... ⏳</span>
         </div>`;
 
     const reader = new FileReader();
-    reader.onload = async function(e) {
-        const base64Image = e.target.result;
-        
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 45000); 
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = async function() {
+            // 💡 السحر هنا: ضغط الصورة لتسريع الإرسال وتقليل الحمل على السيرفر
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200; // عرض مثالي للتصحيح السريع
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
 
-            // محاولة جلب اختيار المدرس اليدوي إن وجد (للتوافق مع التحديثات)
-            const manualSelect = document.getElementById('manualModelSelect');
-            const manualModelValue = manualSelect ? manualSelect.value : 'auto';
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // تحويل الصورة لـ Base64 بحجم صغير جداً
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
-            const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    image: base64Image,
-                    modelsKeys: targetExam.modelsKeys,
-                    manualModel: manualModelValue
-                }),
-                signal: controller.signal
-            });
+            try {
+                // زيادة وقت السماح للسيرفر لـ 60 ثانية تحسباً لبطء الإنترنت
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); 
 
-            clearTimeout(timeoutId);
-            const result = await response.json();
+                const manualSelect = document.getElementById('manualModelSelect');
+                const manualModelValue = manualSelect ? manualSelect.value : 'auto';
 
-            if (!result.success) throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
+                const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: compressedBase64,
+                        modelsKeys: targetExam.modelsKeys,
+                        manualModel: manualModelValue
+                    }),
+                    signal: controller.signal
+                });
 
-            const percentage = result.percentage;
-            let gradeColor = percentage >= 85 ? '#10b981' : percentage >= 65 ? '#3b82f6' : percentage >= 50 ? '#f59e0b' : '#ef4444';
-            let gradeText = percentage >= 85 ? 'ممتاز' : percentage >= 65 ? 'جيد جداً' : percentage >= 50 ? 'مقبول' : 'راسب';
+                clearTimeout(timeoutId);
+                const result = await response.json();
 
-            resultDiv.innerHTML = `
-                <div style="width: 100%; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="text-align: right;">
-                            <span style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">رقم الجلوس</span><br>
-                            <strong style="color: #fff; font-size: 16px; font-family: monospace;">${result.studentId}</strong>
+                if (!result.success) throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
+
+                const percentage = result.percentage;
+                let gradeColor = percentage >= 85 ? '#10b981' : percentage >= 65 ? '#3b82f6' : percentage >= 50 ? '#f59e0b' : '#ef4444';
+                let gradeText = percentage >= 85 ? 'ممتاز' : percentage >= 65 ? 'جيد جداً' : percentage >= 50 ? 'مقبول' : 'راسب';
+
+                resultDiv.innerHTML = `
+                    <div style="width: 100%; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div style="text-align: right;">
+                                <span style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">رقم الجلوس</span><br>
+                                <strong style="color: #fff; font-size: 16px; font-family: monospace;">${result.studentId}</strong>
+                            </div>
+                            <div style="text-align: center;">
+                                <span style="color: #94a3b8; font-size: 11px;">النموذج</span><br>
+                                <strong style="color: #c084fc; font-size: 15px;"><i class='bx bx-barcode-reader'></i> ${result.detectedModel}</strong>
+                            </div>
+                            <div style="text-align: left; background: ${gradeColor}20; padding: 5px 15px; border-radius: 20px; border: 1px solid ${gradeColor}50;">
+                                <span style="color: ${gradeColor}; font-weight: 900; font-size: 15px;">التقييم: ${gradeText}</span>
+                            </div>
                         </div>
-                        <div style="text-align: center;">
-                            <span style="color: #94a3b8; font-size: 11px;">النموذج</span><br>
-                            <strong style="color: #c084fc; font-size: 15px;"><i class='bx bx-barcode-reader'></i> ${result.detectedModel}</strong>
-                        </div>
-                        <div style="text-align: left; background: ${gradeColor}20; padding: 5px 15px; border-radius: 20px; border: 1px solid ${gradeColor}50;">
-                            <span style="color: ${gradeColor}; font-weight: 900; font-size: 15px;">التقييم: ${gradeText}</span>
+
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.05);">
+                            <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                                <span style="color: #64748b; font-size: 11px;">الأسئلة</span><br><strong style="color: #fff; font-size: 20px;">${result.totalQuestions}</strong>
+                            </div>
+                            <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                                <span style="color: #64748b; font-size: 11px;">صحيحة</span><br><strong style="color: #10b981; font-size: 20px;">${result.correctAnswers}</strong>
+                            </div>
+                            <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                                <span style="color: #64748b; font-size: 11px;">خاطئة</span><br><strong style="color: #ef4444; font-size: 20px;">${result.wrongAnswers}</strong>
+                            </div>
+                            <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
+                                <span style="color: #64748b; font-size: 11px;">النسبة</span><br><strong style="color: ${gradeColor}; font-size: 20px;">${result.percentage}%</strong>
+                            </div>
                         </div>
                     </div>
+                `;
+                showToast('تم التصحيح بنجاح!', 'success');
 
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.05);">
-                        <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                            <span style="color: #64748b; font-size: 11px;">الأسئلة</span><br><strong style="color: #fff; font-size: 20px;">${result.totalQuestions}</strong>
-                        </div>
-                        <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                            <span style="color: #64748b; font-size: 11px;">صحيحة</span><br><strong style="color: #10b981; font-size: 20px;">${result.correctAnswers}</strong>
-                        </div>
-                        <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                            <span style="color: #64748b; font-size: 11px;">خاطئة</span><br><strong style="color: #ef4444; font-size: 20px;">${result.wrongAnswers}</strong>
-                        </div>
-                        <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                            <span style="color: #64748b; font-size: 11px;">النسبة</span><br><strong style="color: ${gradeColor}; font-size: 20px;">${result.percentage}%</strong>
-                        </div>
-                    </div>
-                </div>
-            `;
-            showToast('تم التصحيح بدقة 100%!', 'success');
-
-        } catch (err) {
-            resultDiv.innerHTML = `
-            <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(239, 68, 68, 0.1);">
-                <i class='bx bx-error-circle' style="font-size: 40px; color: #ef4444; margin-bottom: 10px;"></i><br>
-                <strong style="color: #ef4444; font-size: 15px;">خطأ في التصحيح</strong><br>
-                <span style="color: #fca5a5; font-size: 13px;">التفاصيل: ${err.message}</span>
-            </div>`;
-        }
-        event.target.value = ''; // تفريغ الملف لتمكين رفع نفس الصورة مرة أخرى إن أردت
+            } catch (err) {
+                resultDiv.innerHTML = `
+                <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(239, 68, 68, 0.1);">
+                    <i class='bx bx-error-circle' style="font-size: 40px; color: #ef4444; margin-bottom: 10px;"></i><br>
+                    <strong style="color: #ef4444; font-size: 15px;">خطأ في التصحيح</strong><br>
+                    <span style="color: #fca5a5; font-size: 13px;">تأكد من جودة الصورة وأنك صورت الورقة كاملة. التفاصيل: ${err.message}</span>
+                </div>`;
+            }
+            event.target.value = ''; 
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
