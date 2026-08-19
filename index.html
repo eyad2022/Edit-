@@ -2636,12 +2636,26 @@
                 </div>
               </div>
             </div>
-            
+            <!-- قائمة اختيار النموذج -->
+        <div style="margin-bottom: 15px; text-align: right;">
+          <label style="color: #94a3b8; font-size: 13px; margin-bottom: 5px; display: block;">تحديد نموذج الاختبار:</label>
+          <select id="manualModelSelect" style="width: 100%; background: #1e293b; color: #fff; border: 1px solid #334155; padding: 10px; border-radius: 8px; font-size: 15px; outline: none;">
+            <option value="auto">🤖 تحديد النموذج تلقائياً (ذكاء اصطناعي)</option>
+            <option value="0">نموذج أ</option>
+            <option value="1">نموذج ب</option>
+            <option value="2">نموذج ج</option>
+            <option value="3">نموذج د</option>
+          </select>
+        </div>
             <button onclick="captureAndGradeEnterprise()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 900; font-family: inherit; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); transition: 0.3s; flex-shrink: 0;">
               <i class='bx bx-camera' style="font-size: 22px;"></i> مسح وتصحيح
             </button>
           </div>
-          
+          <!-- زر رفع الصورة من الاستوديو (الفكرة العبقرية) -->
+        <input type="file" id="uploadImageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+        <button class="word-btn" style="background: #8b5cf6; color: white; border: none; margin-top: 10px;" onclick="document.getElementById('uploadImageInput').click()">
+          <span style="font-size: 20px">📁</span> رفع وتصحيح صورة من الاستوديو
+        </button>
           <div id="scannerResult" style="background: rgba(0,0,0,0.2); border-radius: 16px; padding: 0; color: #fff; min-height: 120px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
             <div style="padding: 30px; color: #64748b; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 10px;">
               <i class='bx bx-qr-scan' style="font-size: 40px; opacity: 0.5;"></i>
