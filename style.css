@@ -2246,8 +2246,8 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
     height: 580px;
     max-height: 90vh;
     background: rgba(10, 10, 25, 0.85) !important;
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 45px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-top: 2px solid rgba(255, 255, 255, 0.35);
@@ -2576,7 +2576,6 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
 .auth-container .form-box.register .animation {
     transform: translateX(120%);
     opacity: 0;
-    filter: blur(10px);
     transition: 0.7s ease;
     transition-delay: calc(0.1s * var(--j));
 }
@@ -2584,14 +2583,12 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
 .auth-container.active .form-box.register .animation {
     transform: translateX(0%);
     opacity: 1;
-    filter: blur(0);
     transition-delay: calc(0.1s * var(--i));
 }
 
 .auth-container .form-box.login .animation {
     transform: translateX(0);
     opacity: 1;
-    filter: blur(0);
     transition: 0.7s ease;
     transition-delay: calc(0.1s * var(--j));
 }
@@ -2599,14 +2596,12 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
 .auth-container.active .form-box.login .animation {
     transform: translateX(-120%);
     opacity: 0;
-    filter: blur(10px);
     transition-delay: calc(0.1s * var(--i));
 }
 
 .auth-container .info-text.login .animation {
     transform: translateX(0);
     opacity: 1;
-    filter: blur(0);
     transition: 0.7s ease;
     transition-delay: calc(0.1s * var(--j));
 }
@@ -2614,14 +2609,12 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
 .auth-container.active .info-text.login .animation {
     transform: translateX(120%);
     opacity: 0;
-    filter: blur(10px);
     transition-delay: calc(0.1s * var(--i));
 }
 
 .auth-container .info-text.register .animation {
     transform: translateX(-120%);
     opacity: 0;
-    filter: blur(10px);
     transition: 0.7s ease;
     transition-delay: calc(0.1s * var(--j));
 }
@@ -2629,7 +2622,6 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
 .auth-container.active .info-text.register .animation {
     transform: translateX(0%);
     opacity: 1;
-    filter: blur(0);
     transition-delay: calc(0.1s * var(--i));
 }
 

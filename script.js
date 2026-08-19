@@ -3809,45 +3809,43 @@ async function captureAndGradeEnterprise() {
         return;
     }
 
-    // استدعاء بيانات الامتحان المختار من الخزنة
     const targetExam = gradingVault.find(e => e.id === selectedExamId);
     if(!targetExam) return;
 
-    // التقاط الصورة الحقيقية من الكاميرا
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // تحويل الصورة إلى نص (Base64) لإرسالها
     const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
+    // 💡 رسالة ذكية تنبه المدرس باحتمالية تأخر السيرفر بسبب النوم
     resultDiv.innerHTML = `
         <div style="width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(16, 185, 129, 0.05);">
             <i class="bx bx-loader-alt bx-spin" style="font-size: 45px; color: #10b981;"></i>
             <span style="font-weight: 900; color: #10b981; font-size: 16px;">جاري إرسال الورقة للمعالجة...</span>
-            <span style="font-size: 12px; color: #94a3b8;">خوارزميات الذكاء الاصطناعي تقوم بتحليل البيكسلات...</span>
+            <span style="font-size: 12px; color: #f59e0b; text-align: center;">💡 تنويه: إذا كانت هذه أول ورقة اليوم، قد يستغرق السيرفر 30 ثانية للاستيقاظ. يرجى الانتظار!</span>
         </div>`;
 
     try {
-        // 🚀 إرسال الصورة ومفاتيح الإجابات إلى سيرفر البايثون
-        // ملاحظة: عند رفع السيرفر على الإنترنت، استبدل localhost برابط السيرفر الجديد
-      const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
+        // 💡 إضافة نظام Abort Controller لقطع الاتصال إذا تأخر السيرفر جداً (45 ثانية)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000); 
+
+        const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 image: imageData,
                 modelsKeys: targetExam.modelsKeys
-            })
+            }),
+            signal: controller.signal // ربط المؤقت بالطلب
         });
 
+        clearTimeout(timeoutId); // إلغاء المؤقت إذا رد السيرفر بنجاح
         const result = await response.json();
 
-        if (!result.success) {
-            throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
-        }
+        if (!result.success) throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
 
-        // استلام النتيجة الدقيقة من السيرفر وعرضها
         const percentage = result.percentage;
         let gradeColor = percentage >= 85 ? '#10b981' : percentage >= 65 ? '#3b82f6' : percentage >= 50 ? '#f59e0b' : '#ef4444';
         let gradeText = percentage >= 85 ? 'ممتاز' : percentage >= 65 ? 'جيد جداً' : percentage >= 50 ? 'مقبول' : 'راسب';
@@ -3870,33 +3868,38 @@ async function captureAndGradeEnterprise() {
 
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.05);">
                     <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                        <span style="color: #64748b; font-size: 11px;">إجمالي الأسئلة</span><br>
-                        <strong style="color: #fff; font-size: 20px;">${result.totalQuestions}</strong>
+                        <span style="color: #64748b; font-size: 11px;">الأسئلة</span><br><strong style="color: #fff; font-size: 20px;">${result.totalQuestions}</strong>
                     </div>
                     <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                        <span style="color: #64748b; font-size: 11px;">إجابة صحيحة</span><br>
-                        <strong style="color: #10b981; font-size: 20px;">${result.correctAnswers}</strong>
+                        <span style="color: #64748b; font-size: 11px;">صحيحة</span><br><strong style="color: #10b981; font-size: 20px;">${result.correctAnswers}</strong>
                     </div>
                     <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                        <span style="color: #64748b; font-size: 11px;">خاطئة / متروكة</span><br>
-                        <strong style="color: #ef4444; font-size: 20px;">${result.wrongAnswers}</strong>
+                        <span style="color: #64748b; font-size: 11px;">خاطئة</span><br><strong style="color: #ef4444; font-size: 20px;">${result.wrongAnswers}</strong>
                     </div>
                     <div style="padding: 15px 10px; background: #0f172a; text-align: center;">
-                        <span style="color: #64748b; font-size: 11px;">النسبة المئوية</span><br>
-                        <strong style="color: ${gradeColor}; font-size: 20px;">${result.percentage}%</strong>
+                        <span style="color: #64748b; font-size: 11px;">النسبة</span><br><strong style="color: ${gradeColor}; font-size: 20px;">${result.percentage}%</strong>
                     </div>
                 </div>
             </div>
         `;
-        
-        showToast('تم التصحيح بدقة 100% عبر السيرفر!', 'success');
+        showToast('تم التصحيح بدقة 100%!', 'success');
 
     } catch (err) {
-        resultDiv.innerHTML = `
+        // 💡 التقاط خطأ الـ Timeout تحديداً
+        if (err.name === 'AbortError') {
+            resultDiv.innerHTML = `
+            <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(245, 158, 11, 0.1);">
+                <i class='bx bx-time-five' style="font-size: 40px; color: #f59e0b; margin-bottom: 10px;"></i><br>
+                <strong style="color: #f59e0b; font-size: 15px;">انتهى وقت الاتصال بالسيرفر!</strong><br>
+                <span style="color: #fcd34d; font-size: 13px;">لقد استيقظ السيرفر الآن بالفعل. من فضلك اضغط على (مسح وتصحيح) مرة أخرى وستعمل فوراً.</span>
+            </div>`;
+        } else {
+            resultDiv.innerHTML = `
             <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(239, 68, 68, 0.1);">
                 <i class='bx bx-error-circle' style="font-size: 40px; color: #ef4444; margin-bottom: 10px;"></i><br>
-                <strong style="color: #ef4444; font-size: 15px;">خطأ في الاتصال بالسيرفر</strong><br>
-                <span style="color: #fca5a5; font-size: 13px;">تأكد من تشغيل ملف البايثون (app.py). التفاصيل: ${err.message}</span>
+                <strong style="color: #ef4444; font-size: 15px;">خطأ في الاتصال</strong><br>
+                <span style="color: #fca5a5; font-size: 13px;">التفاصيل: ${err.message}</span>
             </div>`;
+        }
     }
 }
