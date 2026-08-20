@@ -2211,16 +2211,29 @@ if (hs === 'advanced') {
         </div>`;
     }
 
-    // 💡 التعديل الحاسم هنا: وضع modelBadgeHtml أسفل الترويسة المستقلة، وفوق صندوق الـ OMR مباشرة
+// 💡 تصميم الـ Anchor Marks الاحترافي الخالي من البراويز مع الباركود الهجين
+   // 💡 إخراج الترويسة لتكون فوق إطار الباركود
     let omrWrapper = `
     ${bubbleTopHeader}
     ${modelBadgeHtml} 
-    <div style="position: relative; padding: 12px; border: 1px solid #000; border-radius: 6px; background: #fff; box-sizing: border-box; width: 100%; max-width: 100%; margin-top: 0; page-break-inside: avoid; overflow: hidden;">
-        <div class="omr-mark" style="position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
-        <div class="omr-mark" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
-        <div class="omr-mark" style="position: absolute; bottom: -6px; left: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
-        <div class="omr-mark" style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; background: #000; z-index: 10;"></div>
-        ${bH}
+    ${bH} 
+    
+    <div style="position: relative; padding: 45px 25px; border: 2px solid ${hb}; border-radius: 12px; background: #fff; box-sizing: border-box; width: 100%; max-width: 100%; margin-top: 10px; page-break-inside: avoid;">
+        
+        <!-- نظام الباركود الهجين يحاوط الأسئلة فقط -->
+        <div class="omr-mark" style="position: absolute; top: 10px; left: 10px; width: 50px; height: 50px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+            <div class="omr-qr" id="qr-TL-${Date.now()}" data-qr="TL" style="width: 34px; height: 34px; background: #fff; padding: 2px;"></div>
+        </div>
+        <div class="omr-mark" style="position: absolute; top: 10px; right: 10px; width: 50px; height: 50px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+            <div class="omr-qr" id="qr-TR-${Date.now()}" data-qr="TR" style="width: 34px; height: 34px; background: #fff; padding: 2px;"></div>
+        </div>
+        <div class="omr-mark" style="position: absolute; bottom: 10px; left: 10px; width: 50px; height: 50px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+            <div class="omr-qr" id="qr-BL-${Date.now()}" data-qr="BL" style="width: 34px; height: 34px; background: #fff; padding: 2px;"></div>
+        </div>
+        <div class="omr-mark" style="position: absolute; bottom: 10px; right: 10px; width: 50px; height: 50px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 10;">
+            <div class="omr-qr" id="qr-BR-${Date.now()}" data-qr="BR" style="width: 34px; height: 34px; background: #fff; padding: 2px;"></div>
+        </div>
+        
         ${bHt}
     </div>`;
 
@@ -2253,19 +2266,61 @@ async function executeExport(printType) {
             let aP = getRawPreamble('answersInput');
             if (aP) aP = `<div dir="auto" style="width: 100%; margin-bottom: 30px; clear: both; unicode-bidi: plaintext; text-align: start;">${aP}</div>`;
 
-            const hs = buildQAndA_HTML(questionsDatabase, document.getElementById('userPrimaryColor').value);
+            let primaryCol = document.getElementById('userPrimaryColor') ? document.getElementById('userPrimaryColor').value : '#4A00E0';
+            const hs = buildQAndA_HTML(questionsDatabase, primaryCol);
             let fH = '';
-            if (printType === 'student' || printType === 'both') fH += generatePageHTML(qP + hs.noAns, getBackgroundCSS(), false);
+            
+            if (printType === 'student' || printType === 'both') {
+                fH += generatePageHTML(qP + hs.noAns, getBackgroundCSS(), false);
+                
+                // 💡 التعديل السحري: ميزة الحفظ التلقائي للخزنة (للامتحان الموحد) 
+                let examTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان دوري';
+                let timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                let dateString = new Date().toLocaleDateString('ar-EG');
+                
+                let gradingRecord = {
+                    id: 'EXAM_SINGLE_' + Date.now(),
+                    title: examTitle + ' (نسخة موحدة - ' + timeString + ')',
+                    modelsKeys: { "0": [] } 
+                };
+                
+                let ansList = [];
+                questionsDatabase.forEach(q => {
+                    if (q.type !== 'heading') {
+                        ansList.push(q.ans || '');
+                    }
+                });
+                gradingRecord.modelsKeys["0"] = ansList;
+
+                localforage.getItem('elalfey_grading_vault').then(async (vault) => {
+                    let currentVault = vault || [];
+                    // تجنب الحفظ المتكرر لنفس النسخة في الخزنة
+                    if (currentVault.length === 0 || currentVault[0].modelsKeys["0"].join() !== ansList.join()) {
+                        currentVault.unshift(gradingRecord);
+                        if (currentVault.length > 50) currentVault.pop();
+                        await localforage.setItem('elalfey_grading_vault', currentVault);
+                        
+                        const user = auth.currentUser;
+                        if (user) {
+                            try {
+                                await db.collection('users').doc(user.uid).set({ omrVault: currentVault }, { merge: true });
+                            } catch(e) { console.error("Cloud sync failed", e); }
+                        }
+                    }
+                });
+            }
             if (printType === 'teacher' || printType === 'both') fH += generatePageHTML(aP + hs.withAns, getBackgroundCSS(), true);
+            
             pA.innerHTML = fH;
+            if (typeof renderOMRBarcodes === 'function') setTimeout(renderOMRBarcodes, 100);
         }
     }
     if (window.MathJax) await MathJax.typesetPromise([pA]);
-    document.getElementById('printBorderOverlay').style.display = document.getElementById('enableBorder').value === 'yes' ? 'block' : 'none';
+    let borderEl = document.getElementById('enableBorder');
+    document.getElementById('printBorderOverlay').style.display = (borderEl && borderEl.value === 'yes') ? 'block' : 'none';
     document.getElementById('wordPrintModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
-
 async function generateMultiEmptyBubbles() {
     applyUserSettings();
     const pA = document.getElementById('wordPrintPreviewArea');
@@ -2303,6 +2358,7 @@ async function generateMultiEmptyBubbles() {
     }
 
     pA.innerHTML = fH;
+    setTimeout(renderOMRBarcodes, 100);
     if (window.MathJax) await MathJax.typesetPromise([pA]);
     document.getElementById('printBorderOverlay').style.display = document.getElementById('enableBorder').value === 'yes' ? 'block' : 'none';
     document.getElementById('wordPrintModal').style.display = 'flex';
@@ -2396,8 +2452,12 @@ async function generateMultiModels() {
 
         fH += generatePageHTML(qP + hs.noAns, bgCSS, false, modelBadgeHtml, false);
         fH += generatePageHTML(aP + hs.withAns, bgCSS, true, modelBadgeHtml, false);
-        // نمرر اسم النموذج داخل الدالة ليطبع أسفل الترويسة المستقلة، ونضع '' في الدالة الأم
-        fH += generatePageHTML(getBubbleSheetContent(sDb, 0, modelBadgeHtml, i), bgCSS, true, '', true);
+        
+        // 💡 التعديل الجديد: قراءة اختيار المستخدم (هل نطبع بابل شيت أم لا؟)
+        const answerMode = document.getElementById('multiAnswerMode') ? document.getElementById('multiAnswerMode').value : 'with_bubble';
+        if (answerMode === 'with_bubble') {
+            fH += generatePageHTML(getBubbleSheetContent(sDb, 0, modelBadgeHtml, i), bgCSS, true, '', true);
+        }
     }
 
     // 💡 الحفظ المزدوج: في المتصفح + السحابة (ليعمل على أي جهاز)
@@ -2419,6 +2479,7 @@ async function generateMultiModels() {
     });
 
     pA.innerHTML = fH;
+    setTimeout(renderOMRBarcodes, 100);
     if (window.MathJax) await MathJax.typesetPromise([pA]);
     document.getElementById('printBorderOverlay').style.display = document.getElementById('enableBorder').value === 'yes' ? 'block' : 'none';
     document.getElementById('wordPrintModal').style.display = 'flex';
@@ -3818,7 +3879,6 @@ async function captureAndGradeEnterprise() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
-    // 💡 رسالة ذكية تنبه المدرس باحتمالية تأخر السيرفر بسبب النوم
     resultDiv.innerHTML = `
         <div style="width: 100%; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(16, 185, 129, 0.05);">
             <i class="bx bx-loader-alt bx-spin" style="font-size: 45px; color: #10b981;"></i>
@@ -3827,11 +3887,10 @@ async function captureAndGradeEnterprise() {
         </div>`;
 
     try {
-        // 💡 إضافة نظام Abort Controller لقطع الاتصال إذا تأخر السيرفر جداً (45 ثانية)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 45000); 
 
-       const manualModel = document.getElementById('manualModelSelect').value; // جلب اختيار المدرس
+       const manualModel = document.getElementById('manualModelSelect').value; 
 
         const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
             method: 'POST',
@@ -3839,11 +3898,11 @@ async function captureAndGradeEnterprise() {
             body: JSON.stringify({
                 image: imageData,
                 modelsKeys: targetExam.modelsKeys,
-                manualModel: manualModel // إرسال الاختيار للسيرفر
+                manualModel: manualModel 
             }),
             signal: controller.signal
         });
-        clearTimeout(timeoutId); // إلغاء المؤقت إذا رد السيرفر بنجاح
+        clearTimeout(timeoutId); 
         const result = await response.json();
 
         if (!result.success) throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
@@ -3860,8 +3919,8 @@ async function captureAndGradeEnterprise() {
                         <strong style="color: #fff; font-size: 16px; font-family: monospace;">#${result.studentId}</strong>
                     </div>
                     <div style="text-align: center;">
-                        <span style="color: #94a3b8; font-size: 11px;">النموذج (رؤية حاسوبية)</span><br>
-                        <strong style="color: #c084fc; font-size: 15px;"><i class='bx bx-barcode-reader'></i> نموذج ${result.detectedModel}</strong>
+                        <span style="color: #94a3b8; font-size: 11px;">النموذج</span><br>
+                        <strong style="color: #c084fc; font-size: 15px;"><i class='bx bx-barcode-reader'></i> ${result.detectedModel}</strong>
                     </div>
                     <div style="text-align: left; background: ${gradeColor}20; padding: 5px 15px; border-radius: 20px; border: 1px solid ${gradeColor}50;">
                         <span style="color: ${gradeColor}; font-weight: 900; font-size: 15px;">التقييم: ${gradeText}</span>
@@ -3884,10 +3943,32 @@ async function captureAndGradeEnterprise() {
                 </div>
             </div>
         `;
-        showToast('تم التصحيح بدقة 100%!', 'success');
+
+        // 💡 عرض تفاصيل إجابة كل سؤال
+        let detailsHtml = '<div style="margin-top: 15px; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px;">';
+        if(result.details) {
+            result.details.forEach(d => {
+                let color = d.ok ? '#10b981' : '#ef4444';
+                let icon = d.ok ? '✅' : '❌';
+                detailsHtml += `
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid ${color}50; padding: 8px; border-radius: 8px; text-align: center;">
+                        <div style="color: #94a3b8; font-size: 11px;">سؤال ${d.q}</div>
+                        <div style="color: #fff; font-size: 13px; font-weight: bold; margin: 4px 0;">
+                            الطالب: <span style="color: ${color};">${d.stu}</span>
+                        </div>
+                        <div style="color: #64748b; font-size: 11px;">
+                            الإجابة: ${d.cor} ${icon}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        detailsHtml += '</div>';
+        resultDiv.innerHTML += detailsHtml;
+
+        showToast('تم التصحيح!', 'success');
 
     } catch (err) {
-        // 💡 التقاط خطأ الـ Timeout تحديداً
         if (err.name === 'AbortError') {
             resultDiv.innerHTML = `
             <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(245, 158, 11, 0.1);">
@@ -3905,9 +3986,7 @@ async function captureAndGradeEnterprise() {
         }
     }
 }
-// ========================================================
-// 📁 منظومة التصحيح عبر رفع الصور من الاستوديو (مع ضغط ذكي)
-// ========================================================
+
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -3934,9 +4013,8 @@ async function handleImageUpload(event) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = async function() {
-            // 💡 السحر هنا: ضغط الصورة لتسريع الإرسال وتقليل الحمل على السيرفر
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200; // عرض مثالي للتصحيح السريع
+            const MAX_WIDTH = 1200; 
             const scaleSize = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
             canvas.height = img.height * scaleSize;
@@ -3944,11 +4022,9 @@ async function handleImageUpload(event) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
-            // تحويل الصورة لـ Base64 بحجم صغير جداً
             const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
             try {
-                // زيادة وقت السماح للسيرفر لـ 60 ثانية تحسباً لبطء الإنترنت
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 60000); 
 
@@ -4007,6 +4083,29 @@ async function handleImageUpload(event) {
                         </div>
                     </div>
                 `;
+
+                // 💡 عرض تفاصيل إجابة كل سؤال
+                let detailsHtml = '<div style="margin-top: 15px; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px;">';
+                if(result.details) {
+                    result.details.forEach(d => {
+                        let color = d.ok ? '#10b981' : '#ef4444';
+                        let icon = d.ok ? '✅' : '❌';
+                        detailsHtml += `
+                            <div style="background: rgba(255,255,255,0.05); border: 1px solid ${color}50; padding: 8px; border-radius: 8px; text-align: center;">
+                                <div style="color: #94a3b8; font-size: 11px;">سؤال ${d.q}</div>
+                                <div style="color: #fff; font-size: 13px; font-weight: bold; margin: 4px 0;">
+                                    الطالب: <span style="color: ${color};">${d.stu}</span>
+                                </div>
+                                <div style="color: #64748b; font-size: 11px;">
+                                    الإجابة: ${d.cor} ${icon}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                detailsHtml += '</div>';
+                resultDiv.innerHTML += detailsHtml;
+
                 showToast('تم التصحيح بنجاح!', 'success');
 
             } catch (err) {
@@ -4022,4 +4121,18 @@ async function handleImageUpload(event) {
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+function renderOMRBarcodes() {
+    if (typeof QRCode === 'undefined') return;
+    document.querySelectorAll('.omr-qr').forEach(el => {
+        if (el.innerHTML !== '') return; // لتجنب التكرار
+        new QRCode(el, {
+            text: "MH_PRO_ID_" + el.getAttribute('data-qr'),
+            width: 30,
+            height: 30,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.L
+        });
+    });
 }

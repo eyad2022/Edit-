@@ -52,7 +52,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   </head>
 
   <body>
@@ -1327,6 +1327,14 @@
       </div>
       <div class="panel-body">
         <div class="settings-grid">
+          <!-- 💡 التعديل الجديد: خيار البابل شيت -->
+          <div class="form-group">
+            <label>نظام الإجابة والطباعة</label>
+            <select id="multiAnswerMode" class="ui-select">
+              <option value="with_bubble" selected>مع ورقة بابل شيت (للتصحيح الآلي)</option>
+              <option value="on_paper">بدون بابل شيت (الأسئلة فقط)</option>
+            </select>
+          </div>
           <div class="form-group">
             <label>تنسيق الترقيم للنموذج</label
             ><select id="modelNumberType">
