@@ -3043,13 +3043,19 @@ function insertCustomTable() {
 /* ========================================================
    نظام الجولة التفاعلية الحقيقية (Ultimate FIFA-Style Tour) 🎮🚀
    ======================================================== */
-function runSmartOnboardingTour(forceStart = false) {
-    if (!forceStart && localStorage.getItem('elalfey_tour_completed') === 'true') {
-        return;
+window.runSmartOnboardingTour = function(isForced) {
+    // 1. حماية صارمة: التأكد أن التشغيل الإجباري مقصود فعلاً (ليس بسبب Event عشوائي)
+    const forced = (isForced === true);
+
+    // 2. فحص الذاكرة بمفتاح جديد تماماً لتجنب أي أخطاء قديمة
+    if (!forced && localStorage.getItem('mh_pro_tour_done_v1') === 'yes') {
+        return; // إنهاء فوري وصامت
     }
 
-    localStorage.setItem('elalfey_tour_completed', 'true');
+    // 3. تسجيل الانتهاء فوراً في أول مللي ثانية لمنع أي تداخل أو تكرار
+    localStorage.setItem('mh_pro_tour_done_v1', 'yes');
 
+    // بناء وتجهيز ستايل الجولة (بدون تكرار)
     if (!document.getElementById('tourDynamicStyles')) {
         const style = document.createElement('style');
         style.id = 'tourDynamicStyles';
@@ -3096,6 +3102,9 @@ function runSmartOnboardingTour(forceStart = false) {
     const pulseRing = document.createElement('div'); pulseRing.className = 'tour-pulse-ring';
     const tooltip = document.createElement('div'); tooltip.className = 'tour-tooltip';
 
+    tooltip.addEventListener('click', (e) => e.stopPropagation());
+    tooltip.addEventListener('mousedown', (e) => e.stopPropagation());
+
     const tourElements = [oTop, oBottom, oLeft, oRight, pulseRing, tooltip];
     tourElements.forEach(el => document.body.appendChild(el));
 
@@ -3103,47 +3112,66 @@ function runSmartOnboardingTour(forceStart = false) {
     window.addEventListener('wheel', preventScroll, { passive: false });
     window.addEventListener('touchmove', preventScroll, { passive: false });
 
+    // خريطة شاملة تشرح كل عنصر وكل زرار في الموقع بلا استثناء
     const steps = [
-        { selector: '.nav-center h2', title: 'مرحباً في M&H Pro 🚀', text: 'سنأخذك في جولة شاملة وتفاعلية لتعلم كل تفصيلة في المنصة. (اضغط متابعة)', action: 'next' },
-        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'جرب بنفسك! <b>اضغط على الأيقونة</b> لتحويل الموقع للوضع الداكن لإراحة عينيك.', action: 'click' },
-        { selector: '#guestNavButtons', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة ومزامنة مسوداتك. (اضغط متابعة)', action: 'next' },
-        { selector: '.f-profile-wrapper', title: 'حسابك الشخصي 👤', text: 'من هنا تدير حسابك، الأجهزة النشطة، وتسترجع مسوداتك المحفوظة. (اضغط متابعة)', action: 'next' },
-        { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يولد أسئلة من الـ PDF والصور، ويحلل امتحاناتك. (اضغط متابعة)', action: 'next' },
-        { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود التفعيل لفتح كل الميزات الاحترافية اللامحدودة.', action: 'next' },
+        // الشريط العلوي
+        { selector: '.nav-center h2', title: 'مرحباً في M&H Pro 🚀', text: 'سنأخذك في جولة تفصيلية لتعلم كل تفصيلة في المنصة خطوة بخطوة. (اضغط متابعة)', action: 'next' },
+        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'جرب بنفسك! <b>اضغط فعلياً على الأيقونة</b> لتحويل الموقع للوضع الداكن لإراحة عينيك.', action: 'click' },
+        { selector: '#guestNavButtons', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة ومزامنة مسوداتك.', action: 'next' },
+        { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يولد أسئلة من الـ PDF والصور، ويحلل امتحاناتك.', action: 'next' },
+        { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود التفعيل وفتح كافة الخصائص الاحترافية اللامحدودة.', action: 'next' },
+        
+        // الأقسام والأنظمة
         { selector: '.tabs', title: 'أقسام الموقع 📁', text: 'الموقع مقسم لـ "بنك أسئلة متقدم" لعمل الامتحانات، و "محرر مستندات حر" لعمل الملازم.', action: 'next' },
         { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا مسحت شيئاً بالخطأ، هذه الأزرار تعيده فوراً.', action: 'next' },
-        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: 'لنجرب! <b>اضغط على الزر</b> لفتح قائمة أنظمة لغات الكتابة.', action: 'click' },
-        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'القائمة فتحت! <b>اضغط هنا</b> لتفعيل النظام العربي (أ، ب، ج، د).', action: 'click' },
-        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية التي توفر عليك ساعات.', action: 'click' },
-        { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي السحري ✨', text: '<b>اضغط هنا!</b> هذا الزر ينظف أسئلتك ويستخرج الإجابات آلياً.', action: 'click' },
-        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة إدراج القوالب.', action: 'click' },
-        { selector: '#insertMenu button:nth-child(1)', title: 'إدراج سؤال اختياري 🔘', text: '<b>اضغط هنا</b> ليرمي لك قالب سؤال جاهز في المحرر.', action: 'click' },
+        
+        // القوائم المنسدلة (كل زرار بالتفصيل)
+        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط على الزر</b> لفتح قائمة أنظمة لغات الكتابة المتاحة.', action: 'click', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(2)', title: 'نظام اللغات 🇬🇧', text: 'يقلب المحرر لليسار (LTR) للمواد الأجنبية.', action: 'next', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(3)', title: 'النظام العلمي ⚛️', text: 'يفتح أدوات لكتابة المعادلات والرموز الرياضية المعقدة.', action: 'next', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'الآن <b>اضغط هنا</b> لتفعيل النظام العربي (أ، ب، ج، د).', action: 'click', forceOpen: 'systemMenu' },
+        
+        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية.', action: 'click', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(1)', title: 'تحليل البنك 📊', text: 'يعرض لك إحصائية دقيقة لأنواع وعدد الأسئلة التي كتبتها.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(2)', title: 'خلط شامل 🔀', text: 'يخلط ترتيب الأسئلة والخيارات لمنع الغش بضغطة زر.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(4)', title: 'الأرشيف السحابي ☁️', text: 'لحفظ واسترجاع مسوداتك في السحابة بأمان.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي ✨', text: 'الآن <b>اضغط هنا!</b> لينظف أسئلتك ويستخرج الإجابات آلياً.', action: 'click', forceOpen: 'smartToolsMenu' },
+        
+        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة إدراج القوالب.', action: 'click', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(2)', title: 'سؤال صح/خطأ ✅', text: 'يرمي لك قالب جاهز لسؤال الصواب والخطأ.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(3)', title: 'سؤال مقالي 📝', text: 'يرمي لك قالب للأسئلة المقالية في المحرر.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(4)', title: 'استخراج نص (OCR) 📄', text: 'لرفع صورة وسيقوم النظام بتحويلها لنص مكتوب فوراً.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(6)', title: 'إدراج صورة 🖼️', text: 'لإرفاق صورة داخل السؤال بسهولة.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(1)', title: 'سؤال اختياري 🔘', text: 'الآن <b>اضغط هنا</b> لإدراج قالب سؤال اختياري وجرب بنفسك.', action: 'click', forceOpen: 'insertMenu' },
+        
+        // المحررات
         { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على الإملاء الصوتي، الخطوط، الألوان والمحاذاة.', action: 'next' },
         { selector: '#questionsInput', title: 'مساحة العمل الأساسية 📝', text: 'هنا تكتب أسئلتك، تضع الخيارات تحت بعضها، وتضع [✓] بجوار الصحيح.', action: 'next' },
         { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط مفتاح الإجابات 🛠️', text: 'لتنسيق صفحة نموذج الإجابة بشكل مستقل تماماً.', action: 'next' },
-        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتولد تلقائياً بعد ضغط التنسيق الذكي، أو تكتبه يدوياً.', action: 'next' },
-        { selector: '.settings-dock', title: 'غرفة العمليات الهندسية 🎛️', text: 'هذا الشريط يتحكم في شكل الورقة. لنجرب! <b>اضغط على الأيقونة الأولى 🎨</b>.', action: 'click' },
-        { selector: '#generalSettingsPanel .settings-grid', title: 'التنسيق العام', text: 'من هنا تتحكم في البرواز، الألوان، الخطوط، والعلامة المائية.', action: 'next' },
-        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: '<b>اضغط على (X)</b> لإغلاق هذه اللوحة.', action: 'click' },
-        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: '<b>اضغط هنا</b> لفتح إعدادات ديباجة الامتحان (الوزارة والمادة).', action: 'click' },
-        { selector: '#examSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
-        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: '<b>اضغط هنا</b> للتحكم في مقاسات وألوان الأسئلة وطريقة عرضها.', action: 'click' },
-        { selector: '#questionSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
-        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: '<b>اضغط هنا</b> لدمج البابل شيت داخل ورقة الأسئلة لتوفير الطباعة.', action: 'click' },
-        { selector: '#compactBubblePanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
-        { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: '<b>اضغط هنا</b> لإعداد أشكال ترقيم النماذج (A, B, C).', action: 'click' },
-        { selector: '#multiModelSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
-        { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: '<b>اضغط هنا</b> لتحديد شكل وحجم الدوائر والأعمدة.', action: 'click' },
-        { selector: '#bubbleSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
-        { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: '<b>اضغط هنا</b> لتخصيص بيانات الطالب والباركود للورقة المنفصلة.', action: 'click' },
-        { selector: '#bubbleHeaderSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
-        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لمسح كل شيء والبدء في مشروع جديد.', action: 'click' },
-        { selector: '#confirmModal button:last-child', title: 'احترس! (إلغاء) ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> أرجوك <b>اضغط على "إلغاء"</b> الآن لكي لا تفقد أسئلتك وتقف الجولة بالغلط!', action: 'click' },
-        { selector: '#questionActionButtons', title: 'منصة التصدير والطباعة 🖨️', text: 'الخطوة الأخيرة! من هنا تطبع عملك.', action: 'next' },
+        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتولد تلقائياً بعد التنسيق الذكي، أو تكتبه يدوياً.', action: 'next' },
+
+        // اللوحات الهندسية الجانبية
+        { selector: '.dock-item[onclick*="generalSettingsPanel"]', title: 'التنسيق العام 🎨', text: 'هذا الشريط الجانبي يهندس الورقة. <b>اضغط هنا</b> لفتح التنسيق العام.', action: 'click', forceOpenPanel: 'generalSettingsPanel' },
+        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: 'من هنا تغير الألوان والعلامة المائية. <b>اضغط X</b> للإغلاق.', action: 'click' },
+        
+        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: 'ديباجة الامتحان (الوزارة، المدرسة، المادة).', action: 'next' },
+        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في مقاسات وألوان الأسئلة وطريقة عرضها.', action: 'next' },
+        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: 'لدمج بابل شيت متطور أعلى ورقة الأسئلة.', action: 'next' },
+        { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: 'لإعداد أشكال ترقيم النماذج (A, B, C) وأماكنها.', action: 'next' },
+        { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: 'لتحديد شكل وحجم الدوائر والأعمدة للورقة المستقلة.', action: 'next' },
+        { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص بيانات الطالب والباركود للورقة المستقلة.', action: 'next' },
+        
+        // التحذير الهام
+        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لفتح نافذة مسح المشروع والبدء من جديد.', action: 'click', forceOpenModal: 'confirmModal' },
+        { selector: '#confirmModal .modal-content', title: 'احترس! ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> الرجاء الضغط فعلياً على زر <b>"إلغاء" المضيء</b> بالأسفل لكي لا تفقد عملك وتقف الجولة!', action: 'next', forceOpenModal: 'confirmModal' },
+        { selector: '#confirmModal button:last-child', title: 'إلغاء الإجراء', text: '<b>اضغط على "إلغاء" هنا</b> للمتابعة بأمان.', action: 'click', forceOpenModal: 'confirmModal' },
+
+        // التصدير والطباعة
+        { selector: '#questionActionButtons', title: 'منصة التصدير والطباعة 🖨️', text: 'الخطوة الأخيرة! من هنا تطبع عملك بمختلف الصيغ.', action: 'next' },
         { selector: '.btn-pdf-student', title: 'نسخة الطالب 🧑‍🎓', text: 'لطباعة الامتحان نظيفاً بدون إجابات.', action: 'next' },
         { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة 👨‍🏫', text: 'لطباعة الامتحان بالإجابات النموذجية مظللة.', action: 'next' },
         { selector: '.btn-pdf-both', title: 'تصدير شامل 📑', text: 'يطبع (الأسئلة + الإجابات + البابل شيت) في ملف واحد.', action: 'next' },
-        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'يولد نماذج مختلفة للأسئلة مع بابل شيت آلياً.', action: 'next' },
+        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'يولد نماذج مختلفة مع بابل شيت آلياً.', action: 'next' },
         { selector: '.btn-json-export', title: 'حفظ JSON 💾', text: 'لحفظ الامتحان كملف بيانات على جهازك.', action: 'next' },
         { selector: '.btn-json-import', title: 'استيراد JSON 📥', text: 'لرفع ملف قمت بحفظه سابقاً وتعديله.', action: 'next' }
     ];
@@ -3153,12 +3181,19 @@ function runSmartOnboardingTour(forceStart = false) {
     let clickListener = null;
     let animationFrameId = null;
 
-    function endTour() {
+    // دالة الإغلاق النظيفة (بدون أي ريفريش للصفحة)
+    window.forceCloseTour = function() {
         cancelAnimationFrame(animationFrameId);
         tourElements.forEach(el => el.remove());
+        if (document.getElementById('tourDynamicStyles')) document.getElementById('tourDynamicStyles').remove();
         window.removeEventListener('wheel', preventScroll);
         window.removeEventListener('touchmove', preventScroll);
-        if (typeof showToast === 'function') showToast('انتهت الجولة! أنت الآن محترف 🚀', 'success');
+        if (clickListener) document.body.removeEventListener('click', clickListener, true);
+    };
+
+    function endTour() {
+        window.forceCloseTour();
+        if (typeof showToast === 'function') showToast('انتهت الجولة بنجاح! أنت الآن محترف 🚀', 'success');
     }
 
     function trackTarget() {
@@ -3185,6 +3220,11 @@ function runSmartOnboardingTour(forceStart = false) {
         let tooltipTop = rect.bottom + padding + 15;
         let tooltipLeft = rect.left + (rect.width / 2) - 160;
 
+        // التجاوب الذكي مع القائمة الجانبية 
+        if (rect.right > window.innerWidth - 120) {
+            tooltipLeft = rect.left - 340; 
+        }
+
         if (tooltipTop + 200 > window.innerHeight) {
             tooltipTop = rect.top - padding - 220; 
             if(tooltipTop < 0) tooltipTop = window.innerHeight / 2 - 100;
@@ -3205,12 +3245,25 @@ function runSmartOnboardingTour(forceStart = false) {
         }
 
         const step = steps[currentStepIndex];
+        
+        if (step.forceOpen) {
+            let menuEl = document.getElementById(step.forceOpen);
+            if (menuEl) menuEl.style.display = 'flex';
+        }
+        if (step.forceOpenPanel) {
+            let panelEl = document.getElementById(step.forceOpenPanel);
+            if (panelEl) panelEl.style.display = 'block';
+        }
+        if (step.forceOpenModal) {
+            let modalEl = document.getElementById(step.forceOpenModal);
+            if (modalEl) modalEl.style.display = 'flex';
+        }
+
         let retryCount = 0;
         
         function findTarget() {
             currentTarget = document.querySelector(step.selector);
             
-            // تخطي العناصر المخفية (مثل زر تسجيل الدخول إذا كان المستخدم مسجلاً بالفعل)
             if (currentTarget && window.getComputedStyle(currentTarget).display === 'none') {
                 currentTarget = null;
             }
@@ -3228,7 +3281,6 @@ function runSmartOnboardingTour(forceStart = false) {
             }
 
             currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
             cancelAnimationFrame(animationFrameId);
             trackTarget();
 
@@ -3243,7 +3295,7 @@ function runSmartOnboardingTour(forceStart = false) {
             }
 
             tooltip.innerHTML = `
-                <button onclick="document.getElementById('tourDynamicStyles').remove(); document.querySelectorAll('.tour-overlay-block, .tour-pulse-ring, .tour-tooltip').forEach(e=>e.remove()); window.location.reload();" style="position:absolute; top:10px; left:10px; background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" title="تخطي الجولة">✖</button>
+                <button onclick="window.forceCloseTour()" style="position:absolute; top:10px; left:10px; background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" title="إغلاق الجولة">✖</button>
                 <h3 style="margin:0 0 10px 0; color:#10b981; font-size:18px; font-weight:900;">${step.title}</h3>
                 <p style="margin:0; color:#334155; font-size:14px; line-height:1.6; font-weight:bold;">${step.text}</p>
                 ${actionHtml}
@@ -3261,7 +3313,8 @@ function runSmartOnboardingTour(forceStart = false) {
                 };
                 document.body.addEventListener('click', clickListener, true);
             } else {
-                document.getElementById('tourNextBtn').onclick = () => {
+                document.getElementById('tourNextBtn').onclick = (e) => {
+                    e.stopPropagation(); 
                     currentStepIndex++;
                     processStep();
                 };
@@ -3273,12 +3326,20 @@ function runSmartOnboardingTour(forceStart = false) {
     setTimeout(processStep, 500);
 }
 
-// 💡 التعديل السحري: تأخير بدء الجولة لضمان تحميل الـ DOM واستقرار الفايربيز
-window.addEventListener('load', () => {
+// 💡 المراقبة الذكية لضمان عمل الجولة مرة واحدة فقط للمستخدم الجديد
+function initTourSetup() {
     setTimeout(() => {
-        runSmartOnboardingTour(false);
-    }, 1500); // تأخير 1.5 ثانية
-});
+        if (typeof window.runSmartOnboardingTour === 'function') {
+            window.runSmartOnboardingTour(false);
+        }
+    }, 1500);
+}
+
+if (document.readyState === 'complete') {
+    initTourSetup();
+} else {
+    window.addEventListener('load', initTourSetup);
+}
 // جعل الدالة متاحة عالمياً إذا أردت استدعاءها من زر في واجهة المستخدم مستقبلاً
 window.runSmartOnboardingTour = runSmartOnboardingTour;
 
