@@ -3879,24 +3879,31 @@ async function captureAndGradeEnterprise() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
-    // إصلاح CSS الشاشة ليسمح بظهور القائمة الطويلة
+    // 💡 إصلاح CSS الحاوية الرئيسية: جعلها مرنة، تسمح بالتمدد، وتجبر العناصر الداخلية على استخدام كامل العرض
     resultDiv.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: stretch; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px; box-sizing: border-box;';
     
+    // شاشة التحميل (Loading)
     resultDiv.innerHTML = `
-        <div style="padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+        <div style="padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(16, 185, 129, 0.05); border-radius: 12px;">
             <i class="bx bx-loader-alt bx-spin" style="font-size: 45px; color: #10b981;"></i>
-            <span style="font-weight: 900; color: #10b981; font-size: 16px;">جاري المعالجة...</span>
+            <span style="font-weight: 900; color: #10b981; font-size: 16px;">جاري إرسال الورقة للمعالجة...⏳</span>
+            <span style="font-size: 12px; color: #f59e0b; text-align: center;">💡 تنويه: إذا كانت هذه أول ورقة، قد يستغرق السيرفر 30 ثانية للاستيقاظ. يرجى الانتظار!</span>
         </div>`;
 
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 45000); 
-        const manualModel = document.getElementById('manualModelSelect').value; 
+
+       const manualModel = document.getElementById('manualModelSelect').value; 
 
         const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: imageData, modelsKeys: targetExam.modelsKeys, manualModel: manualModel }),
+            body: JSON.stringify({
+                image: imageData,
+                modelsKeys: targetExam.modelsKeys,
+                manualModel: manualModel 
+            }),
             signal: controller.signal
         });
         clearTimeout(timeoutId); 
@@ -3906,49 +3913,69 @@ async function captureAndGradeEnterprise() {
 
         const percentage = result.percentage;
         let gradeColor = percentage >= 85 ? '#10b981' : percentage >= 65 ? '#3b82f6' : percentage >= 50 ? '#f59e0b' : '#ef4444';
-        let gradeText = percentage >= 85 ? 'ممتاز' : percentage >= 65 ? 'جيد' : percentage >= 50 ? 'مقبول' : 'راسب';
+        let gradeText = percentage >= 85 ? 'ممتاز' : percentage >= 65 ? 'جيد جداً' : percentage >= 50 ? 'مقبول' : 'راسب';
 
-        let html = `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 12px 12px 0 0;">
+        // ترويسة النتيجة الرئيسية
+        let mainResultHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 12px 12px 0 0;">
                 <div style="text-align: right;">
-                    <span style="color: #94a3b8; font-size: 11px;">الحالة</span><br>
+                    <span style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">الحالة</span><br>
                     <strong style="color: #fff; font-size: 14px;">${result.studentId}</strong>
                 </div>
                 <div style="text-align: center;">
-                    <span style="color: #94a3b8; font-size: 11px;">النموذج</span><br>
-                    <strong style="color: #c084fc; font-size: 14px;">${result.detectedModel}</strong>
+                    <span style="color: #94a3b8; font-size: 11px;">النموذج (رؤية حاسوبية)</span><br>
+                    <strong style="color: #c084fc; font-size: 14px;"><i class='bx bx-barcode-reader'></i> ${result.detectedModel}Strong>
                 </div>
-                <div style="text-align: left; background: ${gradeColor}20; padding: 5px 10px; border-radius: 12px; border: 1px solid ${gradeColor}50;">
-                    <span style="color: ${gradeColor}; font-weight: bold; font-size: 13px;">${gradeText}</span>
+                <div style="text-align: left; background: ${gradeColor}20; padding: 5px 15px; border-radius: 20px; border: 1px solid ${gradeColor}50;">
+                    <span style="color: ${gradeColor}; font-weight: 900; font-size: 14px;">التقييم: ${gradeText}</span>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: rgba(255,255,255,0.05); border-radius: 0 0 12px 12px; overflow: hidden;">
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.05); border-radius: 0 0 12px 12px; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <div style="padding: 10px; background: #0f172a; text-align: center;"><span style="color: #64748b; font-size: 10px;">الأسئلة</span><br><strong style="color: #fff; font-size: 16px;">${result.totalQuestions}</strong></div>
                 <div style="padding: 10px; background: #0f172a; text-align: center;"><span style="color: #64748b; font-size: 10px;">صحيحة</span><br><strong style="color: #10b981; font-size: 16px;">${result.correctAnswers}</strong></div>
                 <div style="padding: 10px; background: #0f172a; text-align: center;"><span style="color: #64748b; font-size: 10px;">خاطئة</span><br><strong style="color: #ef4444; font-size: 16px;">${result.wrongAnswers}</strong></div>
                 <div style="padding: 10px; background: #0f172a; text-align: center;"><span style="color: #64748b; font-size: 10px;">النسبة</span><br><strong style="color: ${gradeColor}; font-size: 16px;">${result.percentage}%</strong></div>
             </div>`;
 
-        let detailsHtml = '<div style="margin-top: 15px; max-height: 250px; overflow-y: auto; background: #0f172a; border-radius: 12px; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px;">';
+        // 💡 إصلاح شبكة الأسئلة (CSS Grid): جعل الحاوية قابلة للتمرير بارتفاع أكبر، خلفية داكنة، وتهيئة مرنة للأعمدة (110px).
+        let detailsHtml = '<div style="margin-top: 15px; max-height: 400px; overflow-y: auto; background: #0f172a; border-radius: 12px; padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; box-sizing: border-box;">';
+        
         if(result.details) {
             result.details.forEach(d => {
                 let color = d.ok ? '#10b981' : '#ef4444';
                 let icon = d.ok ? '✅' : '❌';
                 detailsHtml += `
-                    <div style="background: rgba(255,255,255,0.05); border: 1px solid ${color}50; padding: 6px; border-radius: 8px; text-align: center;">
-                        <div style="color: #94a3b8; font-size: 10px; font-weight: bold; border-bottom: 1px solid #334155; padding-bottom: 3px; margin-bottom: 3px;">سؤال ${d.q}</div>
-                        <div style="color: #fff; font-size: 11px;">الطالب: <span style="color: ${color}; font-weight: bold;">${d.stu}</span></div>
-                        <div style="color: #64748b; font-size: 10px; margin-top: 2px;">الصحيح: ${d.cor} ${icon}</div>
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid ${color}50; padding: 8px; border-radius: 8px; text-align: center;">
+                        <div style="color: #94a3b8; font-size: 11px;">سؤال ${d.q}</div>
+                        <div style="color: #fff; font-size: 13px; font-weight: bold; margin: 4px 0;">الطالب: <span style="color: ${color};">${d.stu}</span></div>
+                        <div style="color: #64748b; font-size: 11px;">الإجابة: ${d.cor} ${icon}</div>
                     </div>`;
             });
         }
         detailsHtml += '</div>';
-        
-        resultDiv.innerHTML = html + detailsHtml;
-        showToast('تم التصحيح!', 'success');
+
+        // دمج النتائج
+        resultDiv.innerHTML = mainResultHtml + detailsHtml;
+        showToast('تم التصحيح بنجاح!', 'success');
 
     } catch (err) {
-        resultDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #ef4444;">خطأ: ${err.message}</div>`;
+        // إدارة الأخطاء (تظل كما هي لضمان عدم تعطل النظام)
+        if (err.name === 'AbortError') {
+            resultDiv.innerHTML = `
+            <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(245, 158, 11, 0.1); border-radius: 12px;">
+                <i class='bx bx-time-five' style="font-size: 40px; color: #f59e0b; margin-bottom: 10px;"></i><br>
+                <strong style="color: #f59e0b; font-size: 15px;">انتهى وقت الاتصال بالسيرفر!</strong><br>
+                <span style="color: #fcd34d; font-size: 13px;">لقد استيقظ السيرفر الآن بالفعل. من فضلك اضغط على (مسح وتصحيح) مرة أخرى وستعمل فوراً.</span>
+            </div>`;
+        } else {
+            resultDiv.innerHTML = `
+            <div style="width: 100%; padding: 30px 20px; text-align: center; background: rgba(239, 68, 68, 0.1); border-radius: 12px;">
+                <i class='bx bx-error-circle' style="font-size: 40px; color: #ef4444; margin-bottom: 10px;"></i><br>
+                <strong style="color: #ef4444; font-size: 15px;">خطأ في التصحيح</strong><br>
+                <span style="color: #fca5a5; font-size: 13px;">يرجى التأكد من جودة الصورة وتجربة الرفع مرة أخرى. التفاصيل: ${err.message}</span>
+            </div>`;
+        }
     }
 }
 
