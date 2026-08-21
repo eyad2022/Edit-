@@ -3041,203 +3041,244 @@ function insertCustomTable() {
 }
 
 /* ========================================================
-   نظام الجولة التعريفية التفاعلية الشاملة (The Ultimate Tour) 🚀
+   نظام الجولة التفاعلية الحقيقية (Ultimate FIFA-Style Tour) 🎮🚀
    ======================================================== */
 function runSmartOnboardingTour(forceStart = false) {
-    if (typeof forceStart !== 'boolean') {
-        forceStart = false;
-    }
-
     if (!forceStart && localStorage.getItem('elalfey_tour_completed') === 'true') {
         return;
     }
 
     localStorage.setItem('elalfey_tour_completed', 'true');
 
-    // مصفوفة الخطوات الشاملة (تشرح كل عنصر في الموقع)
-    const steps = [
-        // --- 1. الشريط العلوي (الناف بار) ---
-        { selector: '.top-navbar', title: 'مرحباً بك في M&H Editor Pro 🚀', text: 'أهلاً بك في بيئة العمل المتكاملة الأقوى لإنشاء الامتحانات. هذه الجولة ستشرح لك كل زر وأداة في المنصة لتصبح محترفاً. لنبدأ بالشريط العلوي!' },
-        { selector: '#guestNavButtons', title: 'التسجيل والدخول 🔐', text: 'من هنا يمكنك تسجيل الدخول لحسابك أو إنشاء حساب مجاني. الحساب يتيح لك حفظ مسوداتك في السحابة واستعادة أعمالك من أي جهاز.' },
-        { selector: '#loggedInNav', title: 'قائمة حسابك الشخصي 👤', text: 'تظهر هنا بعد تسجيل الدخول. تحتوي على بياناتك، عدد الأجهزة النشطة (حد أقصى 3)، زر تغيير الباسورد، وسجل مستنداتك السحابي السريع.' },
-        { selector: '.theme-toggle', title: 'الوضع الليلي / الفاتح 🌙', text: 'زر تبديل مظهر الموقع ليتناسب مع إضاءة غرفتك ولإراحة عينيك أثناء فترات العمل الطويلة.' },
-        { selector: '.btn-ai', title: 'المساعد الذكي (AI) 🤖', text: 'اضغط هنا لفتح مساعد الذكاء الاصطناعي! يمكنه قراءة ملفات PDF والصور، توليد أسئلة منها، وتصنيف صعوبة امتحانك وتوزيع الدرجات.' },
-        { selector: '.btn-vip', title: 'عضوية VIP 👑', text: 'لإدخال كود التفعيل والترقية للنسخة الاحترافية لفتح كافة الخصائص المتقدمة كالتصدير اللامحدود والذكاء الاصطناعي.' },
-
-        // --- 2. أقسام العمل الرئيسية ---
-        { selector: '.tabs', title: 'أقسام العمل الرئيسية 📁', text: 'المنصة مقسمة إلى قسمين رئيسيين، يمكنك التنقل بينهما من هنا.' },
-        { selector: '#btnTabQuestions', title: 'بنك الأسئلة المتقدم 📝', text: 'هنا يتم بناء الامتحانات الاحترافية وتنسيق أوراق البابل شيت وتوليد النماذج المتعددة.' },
-        { selector: '#btnTabText', title: 'محرر المستندات 📄', text: 'محرر وورد متكامل (مجاني بالكامل) لكتابة المذكرات والملازم الحرة مع دعم الجداول والصور.' },
-
-        // --- 3. أدوات بنك الأسئلة العلوية ---
-        { selector: 'button[onclick="execUndo()"]', title: 'تراجع (Undo) ↩️', text: 'هل مسحت شيئاً بالخطأ؟ استخدم هذا الزر للتراجع عن آخر خطوة قمت بها.' },
-        { selector: 'button[onclick="execRedo()"]', title: 'إعادة (Redo) ↪️', text: 'للتقدم خطوة للأمام إذا تراجعت عن أمر وتريد إعادته.' },
-
-        { selector: '.system-switcher-container', title: 'أنظمة الكتابة الذكية ⚙️', text: 'تضبط هذه الأزرار اتجاه المحرر وترقيم الخيارات حسب لغة ونوع المادة التي تدرسها.' },
-        { selector: '#sysBtnArabic', title: 'النظام العربي 🇸🇦', text: 'للمواد العربية. يجعل الكتابة من اليمين لليسار ويرقم الخيارات بـ (أ، ب، ج، د).' },
-        { selector: '#sysBtnForeign', title: 'نظام اللغات 🇬🇧', text: 'لمواد اللغات. يقلب المحرر من اليسار لليمين (LTR) ويرقم الخيارات بـ (A, B, C, D).' },
-        { selector: '#sysBtnScience', title: 'النظام العلمي ⚛️', text: 'لرياضيات والعلوم. يفتح شريطاً إضافياً لإدراج الجذور والكسور والمعادلات المعقدة.' },
-
-        // --- 4. أدوات الإدراج والتحكم ---
-        { selector: '.btn-icon-insert', title: 'قائمة الإدراج السريع ➕', text: 'أهم قائمة! تتيح لك إدراج قوالب أسئلة جاهزة، إدراج صور، أو استخدام (OCR) لاستخراج النص من أي صورة ووضعه بالمحرر فوراً.' },
-        { selector: '#archiveBtnTrigger', title: 'الأرشيف السحابي ☁️', text: 'احفظ مسودة كاملة من عملك الحالي في السحابة لتتمكن من استرجاعها واستكمالها لاحقاً.' },
-        { selector: 'button[onclick="showAnalytics()"]', title: 'التحليل الإحصائي 📊', text: 'يقرأ أسئلتك ويعرض لك رسماً بيانياً يوضح عدد أسئلة (الاختياري، المقالي، صح/خطأ).' },
-        { selector: 'button[onclick="shuffleQuestions()"]', title: 'الخلط الشامل 🔀', text: 'بضغطة واحدة، يقوم بخلط ترتيب الأسئلة، وخلط الخيارات (أ، ب، ج، د) داخل كل سؤال لمنع الغش.' },
-        { selector: 'button[onclick="smartFormatAndClean()"]', title: 'التنسيق الذكي ✨', text: 'الزر السحري! يقوم بتنظيف الأسئلة، ترتيبها، واصطياد الإجابات الصحيحة ونقلها تلقائياً لمربع مفتاح الإجابات.' },
-
-        // --- 5. مساحات العمل والمحررات ---
-        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط تنسيق الأسئلة 🛠️', text: 'أدوات التحكم بالنص: جعله عريضاً (B)، مائلاً، محاذاته، وتغيير لونه وحجمه.' },
-        { selector: '.btn-voice', title: 'الإملاء الصوتي 🎙️', text: 'هل تعبت من الكتابة؟ اضغط هنا، وتحدث ليقوم النظام بتحويل كلامك إلى نص مكتوب داخل المحرر فوراً.' },
-        { selector: '#questionsInput', title: 'مساحة بناء الأسئلة 📝', text: 'هنا تكتب أسئلتك. ضع الخيارات تحت بعضها، ولا تنسَ وضع علامة [✓] بجوار الخيار الصحيح ليتعرف عليه النظام.' },
-
-        { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط تنسيق الإجابات 🛠️', text: 'شريط أدوات منفصل للتحكم في شكل ولون وحجم خطوط مفتاح الإجابات.' },
-        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتم توليد الإجابات هنا آلياً عند الضغط على (التنسيق الذكي)، أو يمكنك كتابتها يدوياً إذا رغبت في ذلك.' },
-
-        // --- 6. اللوحات الجانبية (هندسة الورقة) ---
-        { selector: '.settings-dock', title: 'اللوحات الهندسية للورقة 🎛️', text: 'من هنا تتحكم في كل تفصيلة صغيرة في تصميم وشكل ورقة الامتحان المطبوعة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'generalSettingsPanel\')"]', title: 'التنسيق العام 🎨', text: 'لضبط البرواز الخارجي، لون الورقة، نوع الخط (Font)، وإضافة علامة مائية شفافة باسمك.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'examSettingsPanel\')"]', title: 'الترويسة العلوية 🏛️', text: 'لتصميم ديباجة الامتحان (الوزارة، المدرسة، المادة، الزمن) ومربع اسم الطالب ورقم الجلوس.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'questionSettingsPanel\')"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في عرض السؤال (كروت أو نص حر)، ولون الخيارات، وتوزيعها (أفقياً، عمودياً، شبكة).' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'compactBubblePanel\')"]', title: 'البابل شيت المضغوط 📄', text: 'لتوليد نماذج امتحانات تدمج ورقة البابل شيت في أعلى ورقة الأسئلة مباشرة لتوفير الطباعة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'multiModelSettingsPanel\')"]', title: 'النماذج المتعددة 🔀', text: 'لضبط إعدادات النماذج المتعددة، مثل اختيار ترقيم النماذج (A,B,C) وأماكن ظهورها في الورقة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'bubbleSettingsPanel\')"]', title: 'تنسيق دوائر البابل شيت ⭕', text: 'لاختيار شكل الفقاعات (دائرة، مربع)، حجمها، نوع الحروف داخلها، وعدد الأعمدة.' },
-        { selector: 'button[onclick="toggleFloatingPanel(\'bubbleHeaderSettingsPanel\')"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص الخانات العلوية وشبكة تظليل رقم الجلوس لورقة البابل شيت المنفصلة.' },
-        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: 'يمسح محتوى المحرر بالكامل لتنظيف الشاشة والبدء في مشروع جديد بصفحة بيضاء.' },
-
-        // --- 7. منصة الطباعة والتصدير ---
-        { selector: '#questionActionButtons', title: 'منصة التصدير والطباعة 🖨️', text: 'بعد الانتهاء من كتابة وتنسيق أسئلتك، من هنا تقوم باستخراج عملك بالصيغة التي تريدها.' },
-        { selector: '.btn-pdf-student', title: 'نسخة الطالب 🧑‍🎓', text: 'تُصدر ورقة الامتحان نظيفة تماماً للطلاب بدون أي إجابات أو تظليل.' },
-        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة 👨‍🏫', text: 'تُصدر الامتحان وبداخله الإجابات الصحيحة مظللة بشكل جميل ليستخدمها المعلم في التصحيح.' },
-        { selector: '.btn-pdf-both', title: 'تصدير شامل 📑', text: 'يجمع لك (نسخة الطالب + نسخة المعلم + ورقة البابل شيت) في ملف واحد جاهز للطباعة المتتالية.' },
-        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'يولد 4 نماذج مختلفة (A,B,C,D) للأسئلة مع خلطها، ويولد بابل شيت مخصص لكل نموذج.' },
-        { selector: '.btn-json-export', title: 'تصدير كملف (JSON) 💾', text: 'يحفظ الامتحان على جهازك كملف بيانات (Data)، لتستطيع استكماله في أي وقت.' },
-        { selector: '.btn-json-import', title: 'استيراد (JSON) 📥', text: 'لاستعادة ملف الامتحان الذي قمت بتصديره مسبقاً ورفعه للمحرر لاستكمال التعديل عليه.' }
-    ];
-
-    let currentStep = 0;
-
-    if (document.getElementById('tourClickBlocker')) {
-        document.getElementById('tourClickBlocker').remove();
-        document.getElementById('tourHighlightBox').remove();
-        document.getElementById('tourTooltip').remove();
+    if (!document.getElementById('tourDynamicStyles')) {
+        const style = document.createElement('style');
+        style.id = 'tourDynamicStyles';
+        style.innerHTML = `
+            .tour-pulse-ring {
+                position: fixed;
+                border: 3px solid #10b981;
+                border-radius: 12px;
+                pointer-events: none;
+                z-index: 9999995;
+                animation: tourPulse 1.5s infinite;
+            }
+            @keyframes tourPulse {
+                0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+                70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            }
+            .tour-tooltip {
+                position: fixed;
+                background: #ffffff;
+                padding: 20px;
+                border-radius: 16px;
+                box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+                z-index: 9999996;
+                direction: rtl;
+                border-top: 6px solid #10b981;
+                width: 320px;
+                max-width: 90vw;
+            }
+            .tour-overlay-block {
+                position: fixed;
+                background: rgba(15, 23, 42, 0.85);
+                z-index: 9999990;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
-    const clickBlocker = document.createElement('div');
-    clickBlocker.id = 'tourClickBlocker';
-    clickBlocker.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999990; background:rgba(15, 23, 42, 0.5); cursor:not-allowed; transition: all 0.3s;';
+    const oTop = document.createElement('div'); oTop.className = 'tour-overlay-block';
+    const oBottom = document.createElement('div'); oBottom.className = 'tour-overlay-block';
+    const oLeft = document.createElement('div'); oLeft.className = 'tour-overlay-block';
+    const oRight = document.createElement('div'); oRight.className = 'tour-overlay-block';
+    
+    const pulseRing = document.createElement('div'); pulseRing.className = 'tour-pulse-ring';
+    const tooltip = document.createElement('div'); tooltip.className = 'tour-tooltip';
 
-    const highlightBox = document.createElement('div');
-    highlightBox.id = 'tourHighlightBox';
-    highlightBox.style.cssText = 'position:absolute; border:4px dashed #10b981; border-radius:12px; transition:all 0.4s ease; pointer-events:none; z-index:9999991; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.7); background: transparent;';
-
-    const tooltip = document.createElement('div');
-    tooltip.id = 'tourTooltip';
-    tooltip.style.cssText = 'position:absolute; background:#ffffff; padding:20px; border-radius:16px; width:340px; box-shadow:0 15px 40px rgba(0,0,0,0.4); z-index:9999992; direction:rtl; transition:all 0.4s ease; border-top: 6px solid #10b981;';
-
-    document.body.appendChild(clickBlocker);
-    document.body.appendChild(highlightBox);
-    document.body.appendChild(tooltip);
+    const tourElements = [oTop, oBottom, oLeft, oRight, pulseRing, tooltip];
+    tourElements.forEach(el => document.body.appendChild(el));
 
     function preventScroll(e) { e.preventDefault(); }
-    function preventKeyScroll(e) {
-        if (["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.code)) {
-            e.preventDefault();
-        }
-    }
     window.addEventListener('wheel', preventScroll, { passive: false });
     window.addEventListener('touchmove', preventScroll, { passive: false });
-    window.addEventListener('keydown', preventKeyScroll, { passive: false });
+
+    const steps = [
+        { selector: '.nav-center h2', title: 'مرحباً في M&H Pro 🚀', text: 'سنأخذك في جولة شاملة وتفاعلية لتعلم كل تفصيلة في المنصة. (اضغط متابعة)', action: 'next' },
+        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'جرب بنفسك! <b>اضغط على الأيقونة</b> لتحويل الموقع للوضع الداكن لإراحة عينيك.', action: 'click' },
+        { selector: '#guestNavButtons', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة ومزامنة مسوداتك. (اضغط متابعة)', action: 'next' },
+        { selector: '.f-profile-wrapper', title: 'حسابك الشخصي 👤', text: 'من هنا تدير حسابك، الأجهزة النشطة، وتسترجع مسوداتك المحفوظة. (اضغط متابعة)', action: 'next' },
+        { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يولد أسئلة من الـ PDF والصور، ويحلل امتحاناتك. (اضغط متابعة)', action: 'next' },
+        { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود التفعيل لفتح كل الميزات الاحترافية اللامحدودة.', action: 'next' },
+        { selector: '.tabs', title: 'أقسام الموقع 📁', text: 'الموقع مقسم لـ "بنك أسئلة متقدم" لعمل الامتحانات، و "محرر مستندات حر" لعمل الملازم.', action: 'next' },
+        { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا مسحت شيئاً بالخطأ، هذه الأزرار تعيده فوراً.', action: 'next' },
+        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: 'لنجرب! <b>اضغط على الزر</b> لفتح قائمة أنظمة لغات الكتابة.', action: 'click' },
+        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'القائمة فتحت! <b>اضغط هنا</b> لتفعيل النظام العربي (أ، ب، ج، د).', action: 'click' },
+        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية التي توفر عليك ساعات.', action: 'click' },
+        { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي السحري ✨', text: '<b>اضغط هنا!</b> هذا الزر ينظف أسئلتك ويستخرج الإجابات آلياً.', action: 'click' },
+        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة إدراج القوالب.', action: 'click' },
+        { selector: '#insertMenu button:nth-child(1)', title: 'إدراج سؤال اختياري 🔘', text: '<b>اضغط هنا</b> ليرمي لك قالب سؤال جاهز في المحرر.', action: 'click' },
+        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على الإملاء الصوتي، الخطوط، الألوان والمحاذاة.', action: 'next' },
+        { selector: '#questionsInput', title: 'مساحة العمل الأساسية 📝', text: 'هنا تكتب أسئلتك، تضع الخيارات تحت بعضها، وتضع [✓] بجوار الصحيح.', action: 'next' },
+        { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط مفتاح الإجابات 🛠️', text: 'لتنسيق صفحة نموذج الإجابة بشكل مستقل تماماً.', action: 'next' },
+        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتولد تلقائياً بعد ضغط التنسيق الذكي، أو تكتبه يدوياً.', action: 'next' },
+        { selector: '.settings-dock', title: 'غرفة العمليات الهندسية 🎛️', text: 'هذا الشريط يتحكم في شكل الورقة. لنجرب! <b>اضغط على الأيقونة الأولى 🎨</b>.', action: 'click' },
+        { selector: '#generalSettingsPanel .settings-grid', title: 'التنسيق العام', text: 'من هنا تتحكم في البرواز، الألوان، الخطوط، والعلامة المائية.', action: 'next' },
+        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: '<b>اضغط على (X)</b> لإغلاق هذه اللوحة.', action: 'click' },
+        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: '<b>اضغط هنا</b> لفتح إعدادات ديباجة الامتحان (الوزارة والمادة).', action: 'click' },
+        { selector: '#examSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
+        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: '<b>اضغط هنا</b> للتحكم في مقاسات وألوان الأسئلة وطريقة عرضها.', action: 'click' },
+        { selector: '#questionSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
+        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: '<b>اضغط هنا</b> لدمج البابل شيت داخل ورقة الأسئلة لتوفير الطباعة.', action: 'click' },
+        { selector: '#compactBubblePanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
+        { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: '<b>اضغط هنا</b> لإعداد أشكال ترقيم النماذج (A, B, C).', action: 'click' },
+        { selector: '#multiModelSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
+        { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: '<b>اضغط هنا</b> لتحديد شكل وحجم الدوائر والأعمدة.', action: 'click' },
+        { selector: '#bubbleSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
+        { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: '<b>اضغط هنا</b> لتخصيص بيانات الطالب والباركود للورقة المنفصلة.', action: 'click' },
+        { selector: '#bubbleHeaderSettingsPanel .close-panel-btn', title: 'إغلاق', text: '<b>اضغط هنا</b> للإغلاق.', action: 'click' },
+        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لمسح كل شيء والبدء في مشروع جديد.', action: 'click' },
+        { selector: '#confirmModal button:last-child', title: 'احترس! (إلغاء) ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> أرجوك <b>اضغط على "إلغاء"</b> الآن لكي لا تفقد أسئلتك وتقف الجولة بالغلط!', action: 'click' },
+        { selector: '#questionActionButtons', title: 'منصة التصدير والطباعة 🖨️', text: 'الخطوة الأخيرة! من هنا تطبع عملك.', action: 'next' },
+        { selector: '.btn-pdf-student', title: 'نسخة الطالب 🧑‍🎓', text: 'لطباعة الامتحان نظيفاً بدون إجابات.', action: 'next' },
+        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة 👨‍🏫', text: 'لطباعة الامتحان بالإجابات النموذجية مظللة.', action: 'next' },
+        { selector: '.btn-pdf-both', title: 'تصدير شامل 📑', text: 'يطبع (الأسئلة + الإجابات + البابل شيت) في ملف واحد.', action: 'next' },
+        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'يولد نماذج مختلفة للأسئلة مع بابل شيت آلياً.', action: 'next' },
+        { selector: '.btn-json-export', title: 'حفظ JSON 💾', text: 'لحفظ الامتحان كملف بيانات على جهازك.', action: 'next' },
+        { selector: '.btn-json-import', title: 'استيراد JSON 📥', text: 'لرفع ملف قمت بحفظه سابقاً وتعديله.', action: 'next' }
+    ];
+
+    let currentStepIndex = 0;
+    let currentTarget = null;
+    let clickListener = null;
+    let animationFrameId = null;
 
     function endTour() {
-        if (clickBlocker) clickBlocker.remove();
-        if (highlightBox) highlightBox.remove();
-        if (tooltip) tooltip.remove();
+        cancelAnimationFrame(animationFrameId);
+        tourElements.forEach(el => el.remove());
         window.removeEventListener('wheel', preventScroll);
         window.removeEventListener('touchmove', preventScroll);
-        window.removeEventListener('keydown', preventKeyScroll);
-        localStorage.setItem('elalfey_tour_completed', 'true');
-        showToast('انتهت الجولة التعريفية! نتمنى لك تجربة ممتعة 🚀', 'success');
+        if (typeof showToast === 'function') showToast('انتهت الجولة! أنت الآن محترف 🚀', 'success');
     }
 
-    function getNextVisibleStep(startIndex, direction = 1) {
-        let i = startIndex;
-        while (i >= 0 && i < steps.length) {
-            let target = null;
-            try { target = document.querySelector(steps[i].selector); } catch (e) { }
-            if (target && target.offsetParent !== null && window.getComputedStyle(target).display !== 'none') {
-                return i;
-            }
-            i += direction;
+    function trackTarget() {
+        if (!currentTarget) return;
+
+        const rect = currentTarget.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+            animationFrameId = requestAnimationFrame(trackTarget);
+            return;
         }
-        return direction > 0 ? steps.length : -1;
+
+        const padding = 6; 
+
+        oTop.style.top = '0'; oTop.style.left = '0'; oTop.style.width = '100vw'; oTop.style.height = Math.max(0, rect.top - padding) + 'px';
+        oBottom.style.top = (rect.bottom + padding) + 'px'; oBottom.style.left = '0'; oBottom.style.width = '100vw'; oBottom.style.height = Math.max(0, window.innerHeight - (rect.bottom + padding)) + 'px';
+        oLeft.style.top = Math.max(0, rect.top - padding) + 'px'; oLeft.style.left = '0'; oLeft.style.width = Math.max(0, rect.left - padding) + 'px'; oLeft.style.height = (rect.height + padding*2) + 'px';
+        oRight.style.top = Math.max(0, rect.top - padding) + 'px'; oRight.style.left = (rect.right + padding) + 'px'; oRight.style.width = Math.max(0, window.innerWidth - (rect.right + padding)) + 'px'; oRight.style.height = (rect.height + padding*2) + 'px';
+
+        pulseRing.style.top = (rect.top - padding) + 'px';
+        pulseRing.style.left = (rect.left - padding) + 'px';
+        pulseRing.style.width = (rect.width + padding*2) + 'px';
+        pulseRing.style.height = (rect.height + padding*2) + 'px';
+
+        let tooltipTop = rect.bottom + padding + 15;
+        let tooltipLeft = rect.left + (rect.width / 2) - 160;
+
+        if (tooltipTop + 200 > window.innerHeight) {
+            tooltipTop = rect.top - padding - 220; 
+            if(tooltipTop < 0) tooltipTop = window.innerHeight / 2 - 100;
+        }
+        if (tooltipLeft < 10) tooltipLeft = 10;
+        if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 330;
+
+        tooltip.style.top = tooltipTop + 'px';
+        tooltip.style.left = tooltipLeft + 'px';
+
+        animationFrameId = requestAnimationFrame(trackTarget);
     }
 
-    function showStep(index, direction = 1) {
-        let targetIndex = getNextVisibleStep(index, direction);
+    function processStep() {
+        if (currentStepIndex >= steps.length) {
+            endTour();
+            return;
+        }
 
-        if (targetIndex >= steps.length) { endTour(); return; }
-        if (targetIndex < 0) targetIndex = getNextVisibleStep(0, 1);
-
-        currentStep = targetIndex;
-        let target = document.querySelector(steps[currentStep].selector);
-
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        setTimeout(() => {
-            const rect = target.getBoundingClientRect();
-
-            highlightBox.style.top = (rect.top + window.scrollY - 8) + 'px';
-            highlightBox.style.left = (rect.left + window.scrollX - 8) + 'px';
-            highlightBox.style.width = (rect.width + 16) + 'px';
-            highlightBox.style.height = (rect.height + 16) + 'px';
-
-            let tooltipLeft = rect.left + window.scrollX + (rect.width / 2) - 170;
-            let tooltipTop = rect.bottom + window.scrollY + 20;
-
-            if (tooltipLeft < 10) tooltipLeft = 10;
-            if (tooltipLeft + 360 > window.innerWidth) tooltipLeft = window.innerWidth - 360;
-
-            let viewportBottom = window.scrollY + window.innerHeight;
-            let viewportTop = window.scrollY;
-
-            if (tooltipTop + 220 > viewportBottom) {
-                tooltipTop = rect.top + window.scrollY - 200;
-                if (tooltipTop < viewportTop + 10) {
-                    tooltipTop = window.scrollY + (window.innerHeight / 2) - 100;
-                }
+        const step = steps[currentStepIndex];
+        let retryCount = 0;
+        
+        function findTarget() {
+            currentTarget = document.querySelector(step.selector);
+            
+            // تخطي العناصر المخفية (مثل زر تسجيل الدخول إذا كان المستخدم مسجلاً بالفعل)
+            if (currentTarget && window.getComputedStyle(currentTarget).display === 'none') {
+                currentTarget = null;
             }
 
-            tooltip.style.top = tooltipTop + 'px';
-            tooltip.style.left = tooltipLeft + 'px';
+            if ((!currentTarget || currentTarget.offsetParent === null) && retryCount < 15) {
+                retryCount++;
+                setTimeout(findTarget, 100); 
+                return;
+            }
+            
+            if (!currentTarget) {
+                currentStepIndex++; 
+                processStep();
+                return;
+            }
+
+            currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            cancelAnimationFrame(animationFrameId);
+            trackTarget();
+
+            let actionHtml = '';
+            if (step.action === 'click') {
+                actionHtml = `<div style="background:#fef3c7; color:#b45309; padding:8px; border-radius:8px; text-align:center; font-size:13px; font-weight:bold; margin-top:15px; border:1px dashed #f59e0b; animation: pulseBrightGold 1.5s infinite;">👉 انقر فعلياً على العنصر المضيء للمتابعة</div>`;
+            } else {
+                actionHtml = `
+                <div style="display:flex; justify-content:flex-end; margin-top:15px;">
+                    <button id="tourNextBtn" style="background:#10b981; color:#fff; border:none; padding:8px 20px; border-radius:8px; cursor:pointer; font-weight:900; font-family:inherit;">متابعة ⬅️</button>
+                </div>`;
+            }
 
             tooltip.innerHTML = `
-                <button id="tourSkipBtn" style="position:absolute; top: 10px; left: 10px; background:transparent; border:none; color:#94a3b8; font-size: 18px; cursor:pointer;" title="إنهاء وتخطي الجولة">✖</button>
-                <h3 style="margin:0 0 12px 0; color:#10b981; font-size:18px; font-weight: 900;">${steps[currentStep].title}</h3>
-                <p style="margin:0 0 20px 0; color:#334155; font-size:14px; line-height:1.7; font-weight:bold;">${steps[currentStep].text}</p>
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                    <span style="font-size:13px; color:#64748b; font-weight:900;">${currentStep + 1} / ${steps.length}</span>
-                    <div style="display: flex; gap: 8px;">
-                        ${currentStep > 0 ? `<button id="tourPrevBtn" style="background:#e2e8f0; color:#1e293b; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:bold; font-family:inherit;">السابق</button>` : ''}
-                        <button id="tourNextBtn" style="background:#10b981; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:900; font-family:inherit;">${currentStep === steps.length - 1 ? 'إنهاء الجولة 🚀' : 'التالي ⬅️'}</button>
-                    </div>
-                </div>
+                <button onclick="document.getElementById('tourDynamicStyles').remove(); document.querySelectorAll('.tour-overlay-block, .tour-pulse-ring, .tour-tooltip').forEach(e=>e.remove()); window.location.reload();" style="position:absolute; top:10px; left:10px; background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" title="تخطي الجولة">✖</button>
+                <h3 style="margin:0 0 10px 0; color:#10b981; font-size:18px; font-weight:900;">${step.title}</h3>
+                <p style="margin:0; color:#334155; font-size:14px; line-height:1.6; font-weight:bold;">${step.text}</p>
+                ${actionHtml}
             `;
 
-            const nextBtn = document.getElementById('tourNextBtn');
-            if (nextBtn) nextBtn.onclick = () => showStep(currentStep + 1, 1);
+            if (clickListener) document.body.removeEventListener('click', clickListener, true);
 
-            const prevBtn = document.getElementById('tourPrevBtn');
-            if (prevBtn) prevBtn.onclick = () => showStep(currentStep - 1, -1);
-
-            const skipBtn = document.getElementById('tourSkipBtn');
-            if (skipBtn) skipBtn.onclick = endTour;
-
-        }, 400);
+            if (step.action === 'click') {
+                clickListener = function(e) {
+                    if (currentTarget.contains(e.target) || currentTarget === e.target) {
+                        document.body.removeEventListener('click', clickListener, true);
+                        currentStepIndex++;
+                        setTimeout(processStep, 600); 
+                    }
+                };
+                document.body.addEventListener('click', clickListener, true);
+            } else {
+                document.getElementById('tourNextBtn').onclick = () => {
+                    currentStepIndex++;
+                    processStep();
+                };
+            }
+        }
+        findTarget();
     }
 
-    setTimeout(() => showStep(0, 1), 1000);
+    setTimeout(processStep, 500);
 }
+
+// 💡 التعديل السحري: تأخير بدء الجولة لضمان تحميل الـ DOM واستقرار الفايربيز
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        runSmartOnboardingTour(false);
+    }, 1500); // تأخير 1.5 ثانية
+});
 // جعل الدالة متاحة عالمياً إذا أردت استدعاءها من زر في واجهة المستخدم مستقبلاً
 window.runSmartOnboardingTour = runSmartOnboardingTour;
 
