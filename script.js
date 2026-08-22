@@ -4238,11 +4238,12 @@ function renderOMRBarcodes() {
 
 // 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
 // 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
+// 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
 async function generateFromLessonPrompt() {
     const lessonName = prompt("أدخل اسم الدرس أو الموضوع (مثال: الحملة الفرنسية، أو قوانين نيوتن):");
     if (!lessonName) return;
 
-    // 💡 النقل الآلي: تحويل المستخدم فوراً إلى تبويب "بنك الأسئلة" ليرى النتيجة
+    // النقل الآلي: تحويل المستخدم فوراً إلى تبويب "بنك الأسئلة" ليرى النتيجة
     const btnTabQ = document.getElementById('btnTabQuestions');
     if(btnTabQ) switchTab('questions', btnTabQ);
 
@@ -4256,8 +4257,8 @@ async function generateFromLessonPrompt() {
 ]`;
 
     try {
-        // الاتصال بمحرك Gemini الخاص بك
-        const response = await fetch('https://eyad26.pythonanywhere.com/api/generate', { 
+        // 💡 الإصلاح هنا: استخدام المسار الصحيح للـ API الخاص بالذكاء الاصطناعي على منصتك
+        const response = await fetch('/api/generate', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ parts: [{ text: systemInstruction }] })
@@ -4266,6 +4267,8 @@ async function generateFromLessonPrompt() {
         if (!response.ok) throw new Error("فشل الاتصال بمولد الذكاء الاصطناعي");
         
         const data = await response.json();
+        if (!data.candidates || data.candidates.length === 0) throw new Error("لا توجد استجابة.");
+        
         let aiResponse = data.candidates[0].content.parts[0].text.trim();
         
         const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
@@ -4301,7 +4304,6 @@ async function generateFromLessonPrompt() {
         showToast('❌ حدث خطأ أثناء التوليد: ' + error.message, 'error');
     }
 }
-
 // ========================================================
 // 2. إدارة الفصول والطلاب (Cloud Firestore)
 // ========================================================
