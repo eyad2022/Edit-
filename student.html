@@ -162,8 +162,7 @@
 
     <div class="toast" id="toastMsg"></div>
 
-    <script>
-        // إعدادات Firebase الخاصة بك
+    // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyDAbNo9AHi73rTNogXHpKk9MDp8HpY16Mw",
             authDomain: "elalfey-app.firebaseapp.com",
@@ -177,35 +176,45 @@
 
         let currentExamData = null;
         let studentIdentifier = "";
+        let timerInterval = null;
 
         function showToast(msg) {
             const t = document.getElementById('toastMsg');
             t.innerText = msg;
             t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
+            setTimeout(() => t.style.display = 'none', 4000);
         }
 
         async function startExam() {
             const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
-            studentIdentifier = document.getElementById('studentIdentifierInput').value.trim();
+            const rawId = document.getElementById('studentIdentifierInput').value.trim();
+            
+            // منع الرموز اللي ممكن تبوظ قاعدة البيانات
+            studentIdentifier = rawId.replace(/[\/\\]/g, '_'); 
 
             if (!code || !studentIdentifier) return showToast('يرجى إدخال الكود وبياناتك بالكامل');
 
             try {
-                // جلب الامتحان من السحابة
+                // 1. التأكد من أن الامتحان موجود
                 const docSnap = await db.collection('online_exams').doc(code).get();
-                
-                if (!docSnap.exists) {
-                    return showToast('❌ كود الامتحان غير صحيح أو الامتحان غير متاح!');
-                }
+                if (!docSnap.exists) return showToast('❌ كود الامتحان غير صحيح أو الامتحان غير متاح!');
 
                 currentExamData = docSnap.data();
                 
-                if (!currentExamData.active) {
-                    return showToast('⚠️ هذا الامتحان مغلق حالياً من قبل المعلم.');
+                // 2. التحقق من أن وقت الامتحان لم ينتهِ بعد
+                if (currentExamData.endTime && Date.now() > currentExamData.endTime) {
+                    return showToast('⏳ لقد انتهى الموعد المحدد لهذا الامتحان وتم إغلاقه!');
                 }
 
-                // إخفاء تسجيل الدخول وإظهار الامتحان
+                if (!currentExamData.active) return showToast('⚠️ هذا الامتحان مغلق حالياً من قبل المعلم.');
+
+                // 3. 🚨 حماية صارمة: التحقق مما إذا كان الطالب قد أدى الامتحان مسبقاً
+                const resultSnap = await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).get();
+                if (resultSnap.exists) {
+                    return showToast('✋ لقد قمت بأداء وتسليم هذا الامتحان مسبقاً، لا يمكنك الدخول مرة أخرى!');
+                }
+
+                // كل شيء سليم، إظهار الامتحان
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('examSection').style.display = 'block';
                 document.getElementById('displayExamTitle').innerText = currentExamData.title;
@@ -213,16 +222,46 @@
 
                 renderQuestions();
 
+                // ⏰ تشغيل العداد التنازلي
+                if (currentExamData.endTime) {
+                    startTimer(currentExamData.endTime);
+                }
+
             } catch (error) {
-                showToast('حدث خطأ في الاتصال بالسيرفر');
+                showToast('حدث خطأ في الاتصال بالسيرفر: ' + error.message);
             }
+        }
+
+        // ⏰ دالة العداد التنازلي وسحب الورقة آلياً
+        function startTimer(endTimeMillis) {
+            // إضافة عنصر عرض الوقت أعلى الامتحان لو مش موجود
+            let timerDisplay = document.getElementById('timerDisplay');
+            if (!timerDisplay) {
+                timerDisplay = document.createElement('div');
+                timerDisplay.id = 'timerDisplay';
+                timerDisplay.style.cssText = 'background: #fee2e2; color: #ef4444; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 20px; text-align: center; margin-bottom: 20px; border: 2px solid #fca5a5;';
+                document.getElementById('questionsContainer').before(timerDisplay);
+            }
+
+            timerInterval = setInterval(() => {
+                const diff = endTimeMillis - Date.now();
+
+                if (diff <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.innerHTML = "انتهى الوقت! ⏳";
+                    alert("انتهى وقت الامتحان! سيتم تسليم إجاباتك الحالية آلياً.");
+                    submitExam(true); // الـ true معناه إنه تسليم إجباري بدون سؤال
+                } else {
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    timerDisplay.innerHTML = `⏳ الوقت المتبقي للإغلاق: ${minutes} دقيقة و ${seconds} ثانية`;
+                }
+            }, 1000);
         }
 
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
             let html = '';
-            
-            // فلترة الأسئلة الحقيقية فقط (تجاهل العناوين)
             const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
 
             realQuestions.forEach((q, index) => {
@@ -231,55 +270,43 @@
                 
                 if (q.type === 'mcq' && q.options) {
                     q.options.forEach(opt => {
-                        html += `
-                        <label class="option-label">
-                            <input type="radio" name="q_${index}" value="${opt.l}">
-                            (${opt.l}) ${opt.t}
-                        </label>`;
+                        html += `<label class="option-label"><input type="radio" name="q_${index}" value="${opt.l}"> (${opt.l}) ${opt.t}</label>`;
                     });
                 } else if (q.type === 'tf_inline') {
-                    html += `
-                        <label class="option-label"><input type="radio" name="q_${index}" value="ص"> صح</label>
-                        <label class="option-label"><input type="radio" name="q_${index}" value="خ"> خطأ</label>
-                    `;
+                    html += `<label class="option-label"><input type="radio" name="q_${index}" value="ص"> صح</label>
+                             <label class="option-label"><input type="radio" name="q_${index}" value="خ"> خطأ</label>`;
                 } else if (q.type === 'essay') {
                     html += `<textarea name="q_${index}" class="ui-input" rows="3" placeholder="اكتب إجابتك هنا..."></textarea>`;
                 }
-                
                 html += `</div>`;
             });
-
             container.innerHTML = html;
         }
 
-        async function submitExam() {
-            if (!confirm('هل أنت متأكد من تسليم الإجابات؟ لن تتمكن من التعديل بعد التسليم.')) return;
+        // تم إضافة مُعامل isAuto عشان نتخطى رسالة التأكيد لو الوقت خلص
+        async function submitExam(isAuto = false) {
+            if (!isAuto && !confirm('هل أنت متأكد من تسليم الإجابات؟ لن تتمكن من التعديل بعد التسليم.')) return;
+
+            if (timerInterval) clearInterval(timerInterval); // إيقاف العداد
 
             const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
             let correctCount = 0;
             let totalAutoGraded = 0;
             let studentAnswers = {};
 
-            // حساب الدرجات لأسئلة الاختياري والصح والخطأ فقط
             realQuestions.forEach((q, index) => {
                 if (q.type === 'mcq' || q.type === 'tf_inline') {
                     totalAutoGraded++;
                     const selectedOption = document.querySelector(`input[name="q_${index}"]:checked`);
                     let userAnswer = selectedOption ? selectedOption.value : "بدون إجابة";
                     studentAnswers[`q_${index}`] = userAnswer;
-                    
-                    // المقارنة مع الإجابة الصحيحة المسجلة في السحابة
-                    if (userAnswer === q.ans) {
-                        correctCount++;
-                    }
+                    if (userAnswer === q.ans) correctCount++;
                 } else {
-                    // الأسئلة المقالية
                     const textArea = document.querySelector(`textarea[name="q_${index}"]`);
                     studentAnswers[`q_${index}`] = textArea ? textArea.value : "";
                 }
             });
 
-            // إخفاء الامتحان وإظهار النتيجة
             document.getElementById('examSection').style.display = 'none';
             document.getElementById('resultSection').style.display = 'block';
 
@@ -296,28 +323,25 @@
                 document.getElementById('hiddenResultMsg').style.display = 'block';
             }
 
-            // 🚀 الإرسال الفوري لدرجة الطالب إلى قاعدة البيانات
             await saveResultToCloud(correctCount, totalAutoGraded, studentAnswers);
         }
 
-        // دالة حفظ النتيجة في السحابة
         async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
             const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
             try {
-                // حفظ النتيجة داخل مجلد "results" التابع للامتحان نفسه
-                await db.collection('online_exams').doc(code).collection('results').add({
+                // 💡 السر هنا: بنحفظ النتيجة باسم الطالب نفسه كمفتاح المستند
+                // عشان لو حاول يدخل تاني، نلاقي المستند ده ونمنعه
+                await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).set({
                     studentIdentifier: studentIdentifier,
                     score: correctCount,
                     total: totalAutoGraded,
                     answers: studentAnswers,
                     submittedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                console.log("تم إرسال الدرجة للمدرس بنجاح!");
-            } catch (error) {
-                console.error("خطأ في إرسال النتيجة: ", error);
-                showToast("حدث خطأ أثناء إرسال الدرجة، يرجى المحاولة مرة أخرى.");
+                console.log("تم الإرسال بنجاح!");
+            } catch (error) { 
+                showToast("حدث خطأ أثناء إرسال الدرجة"); 
             }
         }
-    </script>
 </body>
 </html>

@@ -4858,6 +4858,7 @@ async function openPublishOnlineModal() {
 }
 
 // دالة رفع الامتحان للسحابة (مُعدلة ومحمية ضد أخطاء Firebase)
+// دالة رفع الامتحان للسحابة (مع تحديد وقت الإغلاق)
 async function publishExamToCloud() {
     const user = auth.currentUser;
     if (!user) return;
@@ -4866,10 +4867,13 @@ async function publishExamToCloud() {
     const classId = document.getElementById('onlineExamClassSelect').value;
     const showResults = document.getElementById('onlineExamShowResults').value === 'yes';
     
-    // توليد كود فريد وقصير للامتحان يتكون من 5 أحرف/أرقام
+    // ⏰ قراءة وقت انتهاء الامتحان
+    const endTimeRaw = document.getElementById('onlineExamEndTime').value;
+    if (!endTimeRaw) return showToast('يرجى تحديد موعد إغلاق الامتحان ⏰', 'error');
+    const endTimestamp = new Date(endTimeRaw).getTime(); // تحويل الوقت لرقم عشان نعرف نحسبه
+
     const examCode = Math.random().toString(36).substring(2, 7).toUpperCase();
 
-    // 💡 الإصلاح الجذري: تنظيف البيانات ومنع أي قيمة undefined تماماً
     let cleanQuestions = questionsDatabase.map(q => {
         if (q.type === 'heading') return { type: 'heading', text: q.text || "" };
         return {
@@ -4877,7 +4881,7 @@ async function publishExamToCloud() {
             type: q.type || "mcq",
             text: q.text || "",
             options: q.options ? q.options.map(o => ({ l: o.l || "", t: o.t || "" })) : [],
-            ans: q.ans || "" // هنا كان بيحصل الخطأ لو الإجابة مش موجودة
+            ans: q.ans || "" 
         };
     });
 
@@ -4886,7 +4890,6 @@ async function publishExamToCloud() {
         btnConfirm.innerText = 'جاري النشر وتجهيز الرابط... ⏳';
         btnConfirm.disabled = true;
 
-        // حفظ الامتحان في كوليكشن مركزي (online_exams)
         await db.collection('online_exams').doc(examCode).set({
             examCode: examCode,
             teacherId: user.uid,
@@ -4894,21 +4897,17 @@ async function publishExamToCloud() {
             title: title,
             questions: cleanQuestions,
             showResults: showResults,
+            endTime: endTimestamp, // ⏰ حفظ وقت النهاية في السحابة
             active: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // إخفاء زر النشر وإظهار صندوق النجاح والكود
         btnConfirm.style.display = 'none';
         document.getElementById('publishSuccessBox').style.display = 'block';
         document.getElementById('generatedExamCode').innerText = examCode;
-
         showToast('✅ تم رفع الامتحان بنجاح!', 'success');
     } catch (e) {
-        console.error("Firebase Publish Error: ", e);
-        // 💡 إظهار رسالة الخطأ الحقيقية للمستخدم بدلاً من رسالة عامة
         showToast('❌ حدث خطأ: ' + e.message, 'error');
-        
         const btnConfirm = document.getElementById('btnConfirmPublish');
         btnConfirm.innerText = '🚀 تأكيد ونشر الامتحان';
         btnConfirm.disabled = false;
