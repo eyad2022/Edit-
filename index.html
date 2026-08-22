@@ -1138,15 +1138,21 @@
 <div id="classroomsTab" class="input-section">
 <div class="futuristic-control-bar" style="justify-content: space-between; margin-bottom: 20px;">
         <h3 style="margin:0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
-            <i class='bx bx-chalkboard' style="font-size: 24px;"></i> إدارة الفصول والطلاب
+            <i class='bx bx-chalkboard' style="font-size: 24px;"></i> لوحة تحكم المعلم (LMS)
         </h3>
-        
-        <!-- الأزرار مجمعة هنا -->
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <button class="btn-tool" onclick="generateFromLessonPrompt()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none; font-size: 15px; padding: 10px 20px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <!-- زر التوليد بالذكاء الاصطناعي -->
+            <button class="btn-tool" onclick="generateFromLessonPrompt()" style="background: #fef3c7; color: #b45309; border: 1px solid #f59e0b; font-size: 14px; padding: 8px 15px; font-weight: bold; border-radius: 10px;">
                 <i class='bx bx-brain'></i> توليد أسئلة من درس
             </button>
-            <button class="btn-tool" onclick="createNewClassroom()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-size: 15px; padding: 10px 20px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+            
+            <!-- زر نشر الامتحان أونلاين -->
+            <button class="btn-tool" onclick="openPublishOnlineModal()" style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white; border: none; font-size: 14px; padding: 8px 15px; font-weight: bold; border-radius: 10px; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+                <i class='bx bx-globe'></i> نشر امتحان أونلاين
+            </button>
+            
+            <!-- زر إنشاء الفصل -->
+            <button class="btn-tool" onclick="createNewClassroom()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-size: 14px; padding: 8px 15px; font-weight: bold; border-radius: 10px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
                 <i class='bx bx-plus-circle'></i> إنشاء فصل جديد
             </button>
         </div>
@@ -1200,6 +1206,51 @@
                     <!-- يملأ برمجياً -->
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+<!-- نافذة إعدادات النشر الإلكتروني للامتحان -->
+<div id="publishOnlineModal" class="custom-modal">
+    <div class="modal-content" style="max-width: 600px; text-align: right;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: var(--primary-color);">🌐 نشر الامتحان إلكترونياً</h2>
+            <button onclick="document.getElementById('publishOnlineModal').style.display='none'" style="background: #fee2e2; color: #ef4444; border: none; width: 35px; height: 35px; border-radius: 8px; font-size: 20px; cursor: pointer;">✖</button>
+        </div>
+        
+        <div class="settings-grid" style="grid-template-columns: 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>عنوان الامتحان</label>
+                <input type="text" id="onlineExamTitle" class="ui-input" placeholder="مثال: امتحان الشهر الأول">
+            </div>
+            
+            <div class="form-group">
+                <label>اختر الفصل المراد اختباره</label>
+                <select id="onlineExamClassSelect" class="ui-select" style="padding: 12px; border-radius: 10px; border: 1px solid var(--ui-border); font-family: inherit;">
+                    <option value="all">جميع الفصول (عام / مفتوح للكل)</option>
+                    <!-- سيتم حقن فصول المدرس هنا برمجياً -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>إظهار النتيجة للطالب فور التسليم؟</label>
+                <select id="onlineExamShowResults" class="ui-select" style="padding: 12px; border-radius: 10px; border: 1px solid var(--ui-border); font-family: inherit;">
+                    <option value="yes">نعم، إظهار الدرجة والإجابات الخاطئة</option>
+                    <option value="no">لا، إخفاء النتيجة (المعلم فقط يراها)</option>
+                </select>
+            </div>
+            
+            <!-- صندوق يظهر بعد نجاح النشر ليعرض الكود -->
+            <div id="publishSuccessBox" style="display: none; margin-top: 15px; background: #d1fae5; border: 1px solid #10b981; padding: 20px; border-radius: 12px; text-align: center;">
+                <h4 style="color: #047857; margin: 0 0 10px 0; font-size: 18px;">✅ تم نشر الامتحان على السحابة بنجاح!</h4>
+                <p style="margin: 0 0 15px 0; color: #065f46; font-size: 14px;">أرسل هذا الكود للطلاب ليدخلوا به إلى الامتحان:</p>
+                <div style="font-size: 32px; font-weight: 900; letter-spacing: 4px; color: #10b981; background: #fff; padding: 10px 20px; border-radius: 8px; display: inline-block; margin-bottom: 15px; border: 2px dashed #10b981;" id="generatedExamCode">EXM-XXXX</div>
+                <br>
+                <button onclick="copyExamCode()" class="btn-tool" style="background: #10b981; color: #fff; border: none; padding: 10px 25px; margin: 0 auto;">📋 نسخ الكود</button>
+            </div>
+
+            <button id="btnConfirmPublish" onclick="publishExamToCloud()" class="btn-tool" style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white; border: none; padding: 15px; font-size: 16px; font-weight: 900; border-radius: 10px; justify-content: center; margin-top: 10px; width: 100%;">
+                🚀 تأكيد ونشر الامتحان
+            </button>
         </div>
     </div>
 </div>

@@ -4537,10 +4537,9 @@ async function createNewClassroom() {
     }
 }
 
-// عرض نافذة الفصل وإضافة طالب
+// عرض نافذة الفصل وإضافة طالب (محدثة بزر الحذف والمزامنة الآلية)
 let currentViewedClassId = null;
 
-// عرض نافذة الفصل وإضافة طالب (محدثة بزر حذف الطالب)
 async function viewClassDetails(classId) {
     const user = auth.currentUser;
     if (!user) return;
@@ -4558,35 +4557,119 @@ async function viewClassDetails(classId) {
 
         document.getElementById('modalClassName').innerText = targetClass.name;
         
-        let tbody = document.getElementById('modalStudentsList');
-        tbody.innerHTML = '';
-
-        if (!targetClass.students || targetClass.students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #64748b;">لا يوجد طلاب في هذا الفصل بعد.</td></tr>';
-        } else {
-            targetClass.students.forEach((std, idx) => {
-                tbody.innerHTML += `
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 12px; color: #64748b;">${idx + 1}</td>
-                    <td style="padding: 12px; font-weight: bold;">${std.name}</td>
-                    <td style="padding: 12px; font-family: monospace; color: var(--primary-color);">${std.id}</td>
-                    <td style="padding: 12px;">
-                        <span style="font-weight: bold; color: #10b981; margin-left: 10px;">${std.lastScore || '--'}</span>
-                        <button onclick="addManualScore('${std.id}')" title="تعديل الدرجة" style="background: transparent; border: none; color: #3b82f6; cursor: pointer; font-size: 16px;"><i class='bx bx-edit'></i></button>
-                    </td>
-                    <td style="padding: 12px;">
-                        <!-- زر حذف الطالب -->
-                        <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 16px;"><i class='bx bx-trash'></i></button>
-                    </td>
-                </tr>`;
-            });
-        }
+        // 💡 استدعاء دالة رسم الجدول المحدثة
+        renderStudentsTable(targetClass.students, classId);
 
         document.getElementById('btnAddStudentModal').onclick = () => addStudentToClass(classId);
-
         document.getElementById('classDetailsModal').style.display = 'flex';
 
+        // 🚀 السحر هنا: استدعاء محرك المزامنة الخلفي لجلب الدرجات من السحابة وتحديثها آلياً
+        syncOnlineScores(classId, classrooms, targetClass);
+
     } catch(e) {}
+}
+
+// دالة مساعدة لرسم جدول الطلاب في الشاشة (مُحدثة لعرض سجل الامتحانات بالكامل)
+function renderStudentsTable(students, classId) {
+    let tbody = document.getElementById('modalStudentsList');
+    tbody.innerHTML = '';
+
+    if (!students || students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #64748b;">لا يوجد طلاب في هذا الفصل بعد.</td></tr>';
+        return;
+    } 
+
+    students.forEach((std, idx) => {
+        // 💡 تجهيز "سجل الامتحانات" للطالب وعرضه بشكل شيك
+        let scoresHtml = '';
+        if (std.examRecords && Object.keys(std.examRecords).length > 0) {
+            Object.values(std.examRecords).forEach(record => {
+                let parts = record.split('|'); // فصل اسم الامتحان عن الدرجة
+                let examTitle = parts[0];
+                let examScore = parts[1];
+                
+                scoresHtml += `
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="color: var(--primary-color); font-weight: bold; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${examTitle}">${examTitle}</span> 
+                    <span style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${examScore}</span>
+                </div>`;
+            });
+        } else if (std.lastScore) { 
+            // عشان لو عنده درجة قديمة متضيعش
+            scoresHtml = `<div style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 4px 10px; border-radius: 6px;">${std.lastScore}</div>`;
+        } else {
+            scoresHtml = `<div style="color: #94a3b8; font-size: 12px; padding: 10px 0;">لم يمتحن بعد 📭</div>`;
+        }
+
+        tbody.innerHTML += `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 15px; color: #64748b;">${idx + 1}</td>
+            <td style="padding: 15px; font-weight: bold; color: #1e293b;">${std.name}</td>
+            <td style="padding: 15px; font-family: monospace; color: #64748b; font-size: 13px;">${std.id}</td>
+            <td style="padding: 15px; min-width: 200px; vertical-align: top;">
+                <!-- هنا هيترص سجل امتحانات الطالب كله -->
+                ${scoresHtml}
+            </td>
+            <td style="padding: 15px; vertical-align: top;">
+                <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; font-size: 18px; transition: 0.2s;"><i class='bx bx-trash'></i></button>
+            </td>
+        </tr>`;
+    });
+}
+
+// 🚀 محرك المزامنة الآلي للدرجات (مُحدث لدعم الامتحانات المتعددة)
+async function syncOnlineScores(classId, classrooms, targetClass) {
+    const user = auth.currentUser;
+    if(!user) return;
+    
+    try {
+        const examsSnap = await db.collection('online_exams')
+            .where('teacherId', '==', user.uid)
+            .where('classId', 'in', [classId, 'all']) 
+            .get();
+            
+        let updated = false;
+        let targetIndex = classrooms.findIndex(c => c.id === classId);
+        
+        for (let examDoc of examsSnap.docs) {
+            const examTitle = examDoc.data().title || "امتحان بدون عنوان";
+            const resultsSnap = await examDoc.ref.collection('results').get();
+            
+            resultsSnap.forEach(resDoc => {
+                let resData = resDoc.data();
+                let identifier = String(resData.studentIdentifier || resData.studentName || "").trim().toLowerCase(); 
+                
+                let studentIndex = classrooms[targetIndex].students.findIndex(s => 
+                    String(s.id).trim().toLowerCase() === identifier || 
+                    String(s.name).trim().toLowerCase() === identifier
+                );
+                
+                if(studentIndex > -1) {
+                    let student = classrooms[targetIndex].students[studentIndex];
+                    let formattedScore = resData.score + ' / ' + resData.total;
+                    
+                    // دمج اسم الامتحان مع الدرجة كـ (سجل)
+                    let newRecord = `${examTitle}|${formattedScore}`;
+                    
+                    // إنشاء قاموس لسجل الامتحانات لو مش موجود
+                    if (!student.examRecords) student.examRecords = {};
+                    
+                    // إضافة أو تحديث الامتحان الحالي في السجل
+                    if(student.examRecords[examDoc.id] !== newRecord) {
+                        student.examRecords[examDoc.id] = newRecord;
+                        updated = true;
+                    }
+                }
+            });
+        }
+        
+        if(updated) {
+            await db.collection('users').doc(user.uid).update({ classrooms: classrooms });
+            renderStudentsTable(classrooms[targetIndex].students, classId);
+        }
+    } catch(e) {
+        console.error("خطأ في مزامنة الدرجات:", e);
+    }
 }
 
 // إضافة طالب (بمراقبة الباقة)
@@ -4726,4 +4809,116 @@ async function removeStudentFromClass(classId, studentId) {
     } catch (e) {
         showToast('❌ حدث خطأ أثناء حذف الطالب', 'error');
     }
+}
+/* ========================================================
+   🌐 نظام الامتحانات الإلكترونية (CBT - Publisher Engine)
+   ======================================================== */
+
+// فتح نافذة النشر وتجهيز البيانات
+async function openPublishOnlineModal() {
+    const user = auth.currentUser;
+    if (!user) return showToast('يرجى تسجيل الدخول أولاً لنشر الامتحانات', 'error');
+    
+    // التأكد من وجود أسئلة في المحرر
+    syncTextToDatabase();
+    const realQs = questionsDatabase.filter(q => q.type !== 'heading');
+    if (realQs.length === 0) return showToast('لا توجد أسئلة لنشرها! يرجى كتابة وتنسيق الامتحان أولاً.', 'error');
+
+    // تهيئة النافذة
+    document.getElementById('publishOnlineModal').style.display = 'flex';
+    document.getElementById('publishSuccessBox').style.display = 'none';
+    
+    const btnConfirm = document.getElementById('btnConfirmPublish');
+    btnConfirm.style.display = 'flex';
+    btnConfirm.innerText = '🚀 تأكيد ونشر الامتحان';
+    btnConfirm.disabled = false;
+    
+    // التقاط اسم الامتحان من الترويسة (إن وجد)
+    let defaultTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان إلكتروني جديد';
+    document.getElementById('onlineExamTitle').value = defaultTitle;
+
+    // جلب الفصول من السحابة لوضعها في القائمة المنسدلة
+    const selectEl = document.getElementById('onlineExamClassSelect');
+    selectEl.innerHTML = '<option value="all">جميع الفصول (عام / مفتوح للكل)</option>';
+    
+    try {
+        const docSnap = await db.collection('users').doc(user.uid).get();
+        if (docSnap.exists && docSnap.data().classrooms) {
+            let classrooms = docSnap.data().classrooms;
+            classrooms.forEach(cls => {
+                let opt = document.createElement('option');
+                opt.value = cls.id;
+                opt.innerText = cls.name;
+                selectEl.appendChild(opt);
+            });
+        }
+    } catch(e) {
+        console.error("خطأ في جلب الفصول", e);
+    }
+}
+
+// دالة رفع الامتحان للسحابة (مُعدلة ومحمية ضد أخطاء Firebase)
+async function publishExamToCloud() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const title = document.getElementById('onlineExamTitle').value.trim() || 'امتحان بدون عنوان';
+    const classId = document.getElementById('onlineExamClassSelect').value;
+    const showResults = document.getElementById('onlineExamShowResults').value === 'yes';
+    
+    // توليد كود فريد وقصير للامتحان يتكون من 5 أحرف/أرقام
+    const examCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+
+    // 💡 الإصلاح الجذري: تنظيف البيانات ومنع أي قيمة undefined تماماً
+    let cleanQuestions = questionsDatabase.map(q => {
+        if (q.type === 'heading') return { type: 'heading', text: q.text || "" };
+        return {
+            num: q.num || 0,
+            type: q.type || "mcq",
+            text: q.text || "",
+            options: q.options ? q.options.map(o => ({ l: o.l || "", t: o.t || "" })) : [],
+            ans: q.ans || "" // هنا كان بيحصل الخطأ لو الإجابة مش موجودة
+        };
+    });
+
+    try {
+        const btnConfirm = document.getElementById('btnConfirmPublish');
+        btnConfirm.innerText = 'جاري النشر وتجهيز الرابط... ⏳';
+        btnConfirm.disabled = true;
+
+        // حفظ الامتحان في كوليكشن مركزي (online_exams)
+        await db.collection('online_exams').doc(examCode).set({
+            examCode: examCode,
+            teacherId: user.uid,
+            classId: classId,
+            title: title,
+            questions: cleanQuestions,
+            showResults: showResults,
+            active: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // إخفاء زر النشر وإظهار صندوق النجاح والكود
+        btnConfirm.style.display = 'none';
+        document.getElementById('publishSuccessBox').style.display = 'block';
+        document.getElementById('generatedExamCode').innerText = examCode;
+
+        showToast('✅ تم رفع الامتحان بنجاح!', 'success');
+    } catch (e) {
+        console.error("Firebase Publish Error: ", e);
+        // 💡 إظهار رسالة الخطأ الحقيقية للمستخدم بدلاً من رسالة عامة
+        showToast('❌ حدث خطأ: ' + e.message, 'error');
+        
+        const btnConfirm = document.getElementById('btnConfirmPublish');
+        btnConfirm.innerText = '🚀 تأكيد ونشر الامتحان';
+        btnConfirm.disabled = false;
+    }
+}
+
+// دالة نسخ الكود للمدرس
+function copyExamCode() {
+    const code = document.getElementById('generatedExamCode').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        showToast('تم نسخ الكود بنجاح 📋', 'success');
+    });
 }

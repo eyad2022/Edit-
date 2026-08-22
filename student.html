@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة امتحانات الطلاب - M&H</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    
+    <!-- مكتبات Firebase الأساسية -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+        }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 700px;
+            border-top: 6px solid var(--primary-color);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #475569;
+        }
+        .ui-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+        .ui-input:focus { border-color: var(--primary-color); }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+        
+        /* تصميم الأسئلة */
+        .question-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .question-title { font-weight: 900; font-size: 18px; margin-bottom: 15px; color: #0f172a; }
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+        .option-label:hover { border-color: var(--primary-color); background: #e0e7ff; }
+        input[type="radio"] { margin-left: 10px; transform: scale(1.2); }
+        
+        .result-box {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; background: #ef4444; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; display: none; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="loginSection">
+        <div class="header">
+            <h1 style="color: var(--primary-color); margin-bottom: 5px;"><i class='bx bx-laptop'></i> بوابة الامتحانات</h1>
+            <p style="color: #64748b; margin-top: 0;">الرجاء إدخال بياناتك وكود الامتحان للبدء</p>
+        </div>
+        
+        <div class="input-group">
+            <label>كود الامتحان (يعطيه لك المعلم)</label>
+            <input type="text" id="examCodeInput" class="ui-input" placeholder="مثال: IN2A5" style="text-transform: uppercase; font-weight: bold; letter-spacing: 2px; text-align: center;">
+        </div>
+        
+        <div class="input-group">
+            <label>كود الطالب أو الاسم الثلاثي</label>
+            <input type="text" id="studentIdentifierInput" class="ui-input" placeholder="مثال: ST_2065 أو إياد مسعد فاروق">
+        </div>
+
+        <button class="btn" onclick="startExam()">بدء الامتحان 🚀</button>
+    </div>
+
+    <div class="container" id="examSection" style="display: none;">
+        <div class="header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 id="displayExamTitle" style="color: var(--primary-color); margin: 0;">جاري التحميل...</h2>
+            <p id="displayStudentName" style="color: #64748b; margin-top: 5px; font-weight: bold;"></p>
+        </div>
+
+        <div id="questionsContainer">
+            <!-- سيتم حقن الأسئلة هنا برمجياً -->
+        </div>
+
+        <button class="btn" onclick="submitExam()" style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 20px;">تسليم الإجابات ✅</button>
+    </div>
+
+    <div class="container result-box" id="resultSection">
+        <i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i>
+        <h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>
+        <div id="scoreDisplay" style="display: none; margin-top: 20px;">
+            <p style="font-size: 18px; font-weight: bold; color: #475569;">نتيجتك هي:</p>
+            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;" id="finalScoreText">0 / 0</div>
+            <p id="feedbackText" style="font-weight: bold; margin-top: 10px;"></p>
+        </div>
+        <div id="hiddenResultMsg" style="display: none; margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
+            النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
+        </div>
+    </div>
+
+    <div class="toast" id="toastMsg"></div>
+
+    <script>
+        // إعدادات Firebase الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAbNo9AHi73rTNogXHpKk9MDp8HpY16Mw",
+            authDomain: "elalfey-app.firebaseapp.com",
+            projectId: "elalfey-app",
+            storageBucket: "elalfey-app.firebasestorage.app",
+            messagingSenderId: "676659616653",
+            appId: "1:676659616653:web:6a6e3ef338cc9a0e8bfbc4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let currentExamData = null;
+        let studentIdentifier = "";
+
+        function showToast(msg) {
+            const t = document.getElementById('toastMsg');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        async function startExam() {
+            const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
+            studentIdentifier = document.getElementById('studentIdentifierInput').value.trim();
+
+            if (!code || !studentIdentifier) return showToast('يرجى إدخال الكود وبياناتك بالكامل');
+
+            try {
+                // جلب الامتحان من السحابة
+                const docSnap = await db.collection('online_exams').doc(code).get();
+                
+                if (!docSnap.exists) {
+                    return showToast('❌ كود الامتحان غير صحيح أو الامتحان غير متاح!');
+                }
+
+                currentExamData = docSnap.data();
+                
+                if (!currentExamData.active) {
+                    return showToast('⚠️ هذا الامتحان مغلق حالياً من قبل المعلم.');
+                }
+
+                // إخفاء تسجيل الدخول وإظهار الامتحان
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('examSection').style.display = 'block';
+                document.getElementById('displayExamTitle').innerText = currentExamData.title;
+                document.getElementById('displayStudentName').innerText = "الطالب: " + studentIdentifier;
+
+                renderQuestions();
+
+            } catch (error) {
+                showToast('حدث خطأ في الاتصال بالسيرفر');
+            }
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            let html = '';
+            
+            // فلترة الأسئلة الحقيقية فقط (تجاهل العناوين)
+            const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
+
+            realQuestions.forEach((q, index) => {
+                html += `<div class="question-card">`;
+                html += `<div class="question-title">${index + 1}. ${q.text.replace(/\\n/g, '<br>')}</div>`;
+                
+                if (q.type === 'mcq' && q.options) {
+                    q.options.forEach(opt => {
+                        html += `
+                        <label class="option-label">
+                            <input type="radio" name="q_${index}" value="${opt.l}">
+                            (${opt.l}) ${opt.t}
+                        </label>`;
+                    });
+                } else if (q.type === 'tf_inline') {
+                    html += `
+                        <label class="option-label"><input type="radio" name="q_${index}" value="ص"> صح</label>
+                        <label class="option-label"><input type="radio" name="q_${index}" value="خ"> خطأ</label>
+                    `;
+                } else if (q.type === 'essay') {
+                    html += `<textarea name="q_${index}" class="ui-input" rows="3" placeholder="اكتب إجابتك هنا..."></textarea>`;
+                }
+                
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function submitExam() {
+            if (!confirm('هل أنت متأكد من تسليم الإجابات؟ لن تتمكن من التعديل بعد التسليم.')) return;
+
+            const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
+            let correctCount = 0;
+            let totalAutoGraded = 0;
+            let studentAnswers = {};
+
+            // حساب الدرجات لأسئلة الاختياري والصح والخطأ فقط
+            realQuestions.forEach((q, index) => {
+                if (q.type === 'mcq' || q.type === 'tf_inline') {
+                    totalAutoGraded++;
+                    const selectedOption = document.querySelector(`input[name="q_${index}"]:checked`);
+                    let userAnswer = selectedOption ? selectedOption.value : "بدون إجابة";
+                    studentAnswers[`q_${index}`] = userAnswer;
+                    
+                    // المقارنة مع الإجابة الصحيحة المسجلة في السحابة
+                    if (userAnswer === q.ans) {
+                        correctCount++;
+                    }
+                } else {
+                    // الأسئلة المقالية
+                    const textArea = document.querySelector(`textarea[name="q_${index}"]`);
+                    studentAnswers[`q_${index}`] = textArea ? textArea.value : "";
+                }
+            });
+
+            // إخفاء الامتحان وإظهار النتيجة
+            document.getElementById('examSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+
+            if (currentExamData.showResults) {
+                document.getElementById('scoreDisplay').style.display = 'block';
+                document.getElementById('finalScoreText').innerText = `${correctCount} / ${totalAutoGraded}`;
+                
+                let percentage = (correctCount / totalAutoGraded) * 100;
+                let feedback = document.getElementById('feedbackText');
+                if (percentage >= 85) { feedback.innerText = "أداء ممتاز! 🌟"; feedback.style.color = "#10b981"; }
+                else if (percentage >= 50) { feedback.innerText = "لقد اجتزت الاختبار 👍"; feedback.style.color = "#3b82f6"; }
+                else { feedback.innerText = "تحتاج إلى مزيد من المذاكرة 📚"; feedback.style.color = "#ef4444"; }
+            } else {
+                document.getElementById('hiddenResultMsg').style.display = 'block';
+            }
+
+            // 🚀 الإرسال الفوري لدرجة الطالب إلى قاعدة البيانات
+            await saveResultToCloud(correctCount, totalAutoGraded, studentAnswers);
+        }
+
+        // دالة حفظ النتيجة في السحابة
+        async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
+            const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
+            try {
+                // حفظ النتيجة داخل مجلد "results" التابع للامتحان نفسه
+                await db.collection('online_exams').doc(code).collection('results').add({
+                    studentIdentifier: studentIdentifier,
+                    score: correctCount,
+                    total: totalAutoGraded,
+                    answers: studentAnswers,
+                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log("تم إرسال الدرجة للمدرس بنجاح!");
+            } catch (error) {
+                console.error("خطأ في إرسال النتيجة: ", error);
+                showToast("حدث خطأ أثناء إرسال الدرجة، يرجى المحاولة مرة أخرى.");
+            }
+        }
+    </script>
+</body>
+</html>
