@@ -936,6 +936,7 @@ function proceedWithAction(actionType, param) {
     else if (actionType === 'multi') generateMultiModels();
     else if (actionType === 'multi_bubble_dummy') generateMultiEmptyBubbles();
     else if (actionType === 'ai') openAiModal();
+    else if (actionType === 'lesson_ai') generateFromLessonPrompt(); // 💡 تم إضافة هذا السطر
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -4237,9 +4238,29 @@ function renderOMRBarcodes() {
    ======================================================== */
 
 // ========================================================
-// 1. نافذة توليد الأسئلة الذكي من اسم الدرس (Gemini API)
+// 1. نافذة توليد الأسئلة الذكي من اسم الدرس (مربوطة بالتسجيل والباقة)
 // ========================================================
 function generateFromLessonPrompt() {
+    // 💡 حماية 1: التحقق من تسجيل الدخول
+    const user = auth.currentUser;
+    if (!user) {
+        showToast('⚠️ يرجى إنشاء حساب مجاني أو تسجيل الدخول أولاً!', 'error');
+        if (typeof openLoginModal === 'function') openLoginModal();
+        return;
+    }
+
+    // 💡 حماية 2: فحص الباقة (يجب أن يكون في الـ 7 أيام التجريبية أو VIP)
+    let expiry = localStorage.getItem('elalfey_vip_expiry');
+    let isVIP = (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now()));
+
+    if (!isVIP) {
+        // تسجيل الإجراء عشان يكمل التوليد تلقائياً أول ما يدخل الكود
+        window.pendingAction = 'lesson_ai';
+        document.getElementById('vipModalText').innerText = "لقد انتهت الفترة التجريبية لحسابك. يرجى تفعيل الـ VIP لمواصلة استخدام الذكاء الاصطناعي.";
+        document.getElementById('vipModal').style.display = 'flex';
+        return;
+    }
+
     // إنشاء النافذة المنبثقة برمجياً إذا لم تكن موجودة
     if (!document.getElementById('aiGenerateModal')) {
         const modalHtml = `
@@ -4275,11 +4296,9 @@ function generateFromLessonPrompt() {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
     
-    // تصفير اسم الدرس عند فتح النافذة
     document.getElementById('aiLessonName').value = '';
     document.getElementById('aiGenerateModal').style.display = 'flex';
 }
-
 // الدالة التي تنفذ التوليد الفعلي بعد تحديد العدد
 async function executeAIGeneration() {
     const lessonName = document.getElementById('aiLessonName').value.trim();
