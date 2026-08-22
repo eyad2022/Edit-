@@ -4617,22 +4617,30 @@ function renderStudentsTable(students, classId) {
     });
 }
 
-// 🚀 محرك المزامنة الآلي للدرجات (مُحدث لدعم الامتحانات المتعددة)
+// 🚀 محرك المزامنة الآلي للدرجات (نسخة الصاروخ - Parallel Fetching)
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
     if(!user) return;
     
     try {
+        // 1. جلب كل امتحانات المدرس مرة واحدة
         const examsSnap = await db.collection('online_exams')
             .where('teacherId', '==', user.uid)
-            .where('classId', 'in', [classId, 'all']) 
             .get();
             
         let updated = false;
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         
-        for (let examDoc of examsSnap.docs) {
-            const examTitle = examDoc.data().title || "امتحان بدون عنوان";
+        // 2. استخدام Promise.all لسحب كل الدرجات من كل الامتحانات في نفس اللحظة (Parallel)
+        const fetchPromises = examsSnap.docs.map(async (examDoc) => {
+            let examData = examDoc.data();
+            
+            // تجاهل الامتحانات اللي مش تبع الفصل ده
+            if (examData.classId !== classId && examData.classId !== 'all') return;
+
+            const examTitle = examData.title || "امتحان بدون عنوان";
+            
+            // سحب النتائج
             const resultsSnap = await examDoc.ref.collection('results').get();
             
             resultsSnap.forEach(resDoc => {
@@ -4647,22 +4655,22 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
                 if(studentIndex > -1) {
                     let student = classrooms[targetIndex].students[studentIndex];
                     let formattedScore = resData.score + ' / ' + resData.total;
-                    
-                    // دمج اسم الامتحان مع الدرجة كـ (سجل)
                     let newRecord = `${examTitle}|${formattedScore}`;
                     
-                    // إنشاء قاموس لسجل الامتحانات لو مش موجود
                     if (!student.examRecords) student.examRecords = {};
                     
-                    // إضافة أو تحديث الامتحان الحالي في السجل
                     if(student.examRecords[examDoc.id] !== newRecord) {
                         student.examRecords[examDoc.id] = newRecord;
                         updated = true;
                     }
                 }
             });
-        }
+        });
+
+        // 3. انتظار جميع الطلبات حتى تنتهي (بتتم في أجزاء من الثانية لأنها متوازية)
+        await Promise.all(fetchPromises);
         
+        // 4. تحديث الشاشة فوراً لو في درجات جديدة
         if(updated) {
             await db.collection('users').doc(user.uid).update({ classrooms: classrooms });
             renderStudentsTable(classrooms[targetIndex].students, classId);
@@ -4671,7 +4679,6 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         console.error("خطأ في مزامنة الدرجات:", e);
     }
 }
-
 // إضافة طالب (بمراقبة الباقة)
 async function addStudentToClass(classId) {
     const user = auth.currentUser;
