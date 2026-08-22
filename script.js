@@ -4323,6 +4323,22 @@ async function executeAIGeneration() {
 
     showToast('جاري توليد الأسئلة من الدرس عبر الذكاء الاصطناعي... ⏳', 'info');
 
+    // 💡 --- إضافة شاشة التحميل المتحركة داخل المحرر --- 💡
+    let qInput = document.getElementById('questionsInput');
+    let originalHTML = qInput.innerHTML; 
+    let isPlaceholder = (originalHTML.includes('اكتب العنوان الرئيسي هنا') || originalHTML.trim() === '' || originalHTML === '<br>');
+    let totalQuestions = mcqCount + tfCount;
+
+    // عرض شاشة التحميل مؤقتاً
+    qInput.innerHTML = (isPlaceholder ? '' : originalHTML) + `
+        <div id="aiLoadingUI" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:50px 20px; background:rgba(139, 92, 246, 0.05); border: 2px dashed #8b5cf6; border-radius: 12px; margin-bottom: 20px; margin-top: 20px;">
+            <i class='bx bx-loader-alt bx-spin' style="font-size: 60px; color: #8b5cf6; margin-bottom: 15px;"></i>
+            <h3 style="color: #8b5cf6; margin: 0 0 10px 0;">الذكاء الاصطناعي يعمل الآن... 🧠✨</h3>
+            <p style="color: #64748b; font-weight: bold; margin: 0; text-align: center;">جاري صياغة ${totalQuestions} سؤال احترافي عن درس "${lessonName}". يرجى الانتظار بضع ثوانٍ...</p>
+        </div>
+    `;
+    // ----------------------------------------------------
+
     // دمج المتغيرات الجديدة في أمر الذكاء الاصطناعي
     const systemInstruction = `أنت خبير وضع امتحانات. قم بإنشاء ${mcqCount} أسئلة اختيار من متعدد (MCQ) و ${tfCount} أسئلة صواب وخطأ (T/F) عن درس: "${lessonName}".
 المخرج يجب أن يكون مصفوفة JSON فقط بهذا التنسيق وبدون أي نصوص أخرى:
@@ -4349,8 +4365,9 @@ async function executeAIGeneration() {
         if (!jsonMatch) throw new Error("التنسيق المُرجع غير صالح، جرب تقليل العدد قليلاً");
         
         const generatedQuestions = JSON.parse(jsonMatch[0]);
-        let qInput = document.getElementById('questionsInput');
-        let generatedHTML = "<br>";
+        
+        // 💡 --- إزالة شاشة التحميل وإدراج الأسئلة الجديدة --- 💡
+        let generatedHTML = (isPlaceholder ? '' : originalHTML) + "<br>";
 
         generatedQuestions.forEach(q => {
             generatedHTML += `<div>1. ${q.text} #توليد_ذكي</div>`;
@@ -4365,7 +4382,9 @@ async function executeAIGeneration() {
             generatedHTML += "<br>";
         });
 
-        qInput.innerHTML += generatedHTML;
+        // وضع المحتوى النهائي في المحرر
+        qInput.innerHTML = generatedHTML;
+        // ----------------------------------------------------
         
         if (typeof smartFormatAndClean === 'function') {
             smartFormatAndClean(); 
@@ -4374,6 +4393,8 @@ async function executeAIGeneration() {
         showToast('✅ تم توليد الأسئلة وإدراجها وتنسيقها بنجاح!', 'success');
 
     } catch (error) {
+        // 💡 --- في حالة الخطأ: إزالة شاشة التحميل واسترجاع النص القديم ---
+        qInput.innerHTML = (isPlaceholder ? '' : originalHTML);
         showToast('❌ حدث خطأ أثناء التوليد: ' + error.message, 'error');
     }
 }
