@@ -4323,21 +4323,25 @@ async function executeAIGeneration() {
 
     showToast('جاري توليد الأسئلة من الدرس عبر الذكاء الاصطناعي... ⏳', 'info');
 
-    // 💡 --- إضافة شاشة التحميل المتحركة داخل المحرر --- 💡
+    // =========================================================
+    // 💡 بداية شاشة التحميل الأنيقة داخل المحرر
+    // =========================================================
     let qInput = document.getElementById('questionsInput');
     let originalHTML = qInput.innerHTML; 
-    let isPlaceholder = (originalHTML.includes('اكتب العنوان الرئيسي هنا') || originalHTML.trim() === '' || originalHTML === '<br>');
-    let totalQuestions = mcqCount + tfCount;
+    
+    // تفريغ المحرر إذا كان مجرد نص افتراضي
+    if (originalHTML.includes('اكتب العنوان الرئيسي هنا') || originalHTML.trim() === '' || originalHTML === '<br>') {
+        originalHTML = '';
+    }
 
-    // عرض شاشة التحميل مؤقتاً
-    qInput.innerHTML = (isPlaceholder ? '' : originalHTML) + `
-        <div id="aiLoadingUI" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:50px 20px; background:rgba(139, 92, 246, 0.05); border: 2px dashed #8b5cf6; border-radius: 12px; margin-bottom: 20px; margin-top: 20px;">
-            <i class='bx bx-loader-alt bx-spin' style="font-size: 60px; color: #8b5cf6; margin-bottom: 15px;"></i>
-            <h3 style="color: #8b5cf6; margin: 0 0 10px 0;">الذكاء الاصطناعي يعمل الآن... 🧠✨</h3>
-            <p style="color: #64748b; font-weight: bold; margin: 0; text-align: center;">جاري صياغة ${totalQuestions} سؤال احترافي عن درس "${lessonName}". يرجى الانتظار بضع ثوانٍ...</p>
+    // حقن شاشة التحميل في أعلى المحرر
+    qInput.innerHTML = `
+        <div id="aiLoadingUI" contenteditable="false" style="text-align: center; padding: 40px 20px; background: rgba(139, 92, 246, 0.05); border: 2px dashed #8b5cf6; border-radius: 12px; margin: 15px 0; user-select: none;">
+            <h2 style="color: #8b5cf6; margin: 0 0 10px 0;">⏳ الذكاء الاصطناعي يعمل الآن...</h2>
+            <p style="color: #64748b; font-weight: bold; margin: 0;">جاري صياغة الأسئلة عن درس "${lessonName}"، يرجى الانتظار بضع ثوانٍ...</p>
         </div>
-    `;
-    // ----------------------------------------------------
+    ` + originalHTML;
+    // =========================================================
 
     // دمج المتغيرات الجديدة في أمر الذكاء الاصطناعي
     const systemInstruction = `أنت خبير وضع امتحانات. قم بإنشاء ${mcqCount} أسئلة اختيار من متعدد (MCQ) و ${tfCount} أسئلة صواب وخطأ (T/F) عن درس: "${lessonName}".
@@ -4366,8 +4370,14 @@ async function executeAIGeneration() {
         
         const generatedQuestions = JSON.parse(jsonMatch[0]);
         
-        // 💡 --- إزالة شاشة التحميل وإدراج الأسئلة الجديدة --- 💡
-        let generatedHTML = (isPlaceholder ? '' : originalHTML) + "<br>";
+        // =========================================================
+        // 💡 إزالة شاشة التحميل بعد انتهاء الذكاء الاصطناعي بنجاح
+        // =========================================================
+        let loadingUI = document.getElementById('aiLoadingUI');
+        if (loadingUI) loadingUI.remove();
+        // =========================================================
+        
+        let generatedHTML = "<br>";
 
         generatedQuestions.forEach(q => {
             generatedHTML += `<div>1. ${q.text} #توليد_ذكي</div>`;
@@ -4382,9 +4392,7 @@ async function executeAIGeneration() {
             generatedHTML += "<br>";
         });
 
-        // وضع المحتوى النهائي في المحرر
-        qInput.innerHTML = generatedHTML;
-        // ----------------------------------------------------
+        qInput.innerHTML += generatedHTML;
         
         if (typeof smartFormatAndClean === 'function') {
             smartFormatAndClean(); 
@@ -4393,8 +4401,10 @@ async function executeAIGeneration() {
         showToast('✅ تم توليد الأسئلة وإدراجها وتنسيقها بنجاح!', 'success');
 
     } catch (error) {
-        // 💡 --- في حالة الخطأ: إزالة شاشة التحميل واسترجاع النص القديم ---
-        qInput.innerHTML = (isPlaceholder ? '' : originalHTML);
+        // =========================================================
+        // 💡 في حالة الخطأ: إزالة شاشة التحميل واسترجاع المحتوى الأصلي
+        // =========================================================
+        qInput.innerHTML = originalHTML;
         showToast('❌ حدث خطأ أثناء التوليد: ' + error.message, 'error');
     }
 }
