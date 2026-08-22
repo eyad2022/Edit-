@@ -4236,20 +4236,76 @@ function renderOMRBarcodes() {
    🏫 محرك منصة المعلم (LMS) وتوليد الأسئلة بالذكاء الاصطناعي
    ======================================================== */
 
-// 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
-// 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
-// 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
-async function generateFromLessonPrompt() {
-    const lessonName = prompt("أدخل اسم الدرس أو الموضوع (مثال: الحملة الفرنسية، أو قوانين نيوتن):");
-    if (!lessonName) return;
+// ========================================================
+// 1. نافذة توليد الأسئلة الذكي من اسم الدرس (Gemini API)
+// ========================================================
+function generateFromLessonPrompt() {
+    // إنشاء النافذة المنبثقة برمجياً إذا لم تكن موجودة
+    if (!document.getElementById('aiGenerateModal')) {
+        const modalHtml = `
+        <div id="aiGenerateModal" class="custom-modal" style="z-index: 999999;">
+            <div class="modal-content" style="max-width: 500px; text-align: right; background: var(--ui-container); border: 1px solid var(--ui-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8b5cf6; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #8b5cf6; display: flex; align-items: center; gap: 8px;"><i class='bx bx-brain'></i> توليد ذكي للأسئلة</h2>
+                    <button onclick="document.getElementById('aiGenerateModal').style.display='none'" style="background: #fee2e2; color: #ef4444; border: none; width: 35px; height: 35px; border-radius: 8px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✖</button>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; color: var(--ui-text); display: block; margin-bottom: 8px; font-size: 14px;">اسم الدرس أو الموضوع:</label>
+                    <input type="text" id="aiLessonName" placeholder="مثال: الحملة الفرنسية، قوانين نيوتن..." style="width: 100%; padding: 12px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-input-bg); color: var(--ui-text); font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;">
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label style="font-weight: bold; color: var(--ui-text); display: block; margin-bottom: 8px; font-size: 13px;">أسئلة اختياري (MCQ):</label>
+                        <input type="number" id="aiMcqCount" value="5" min="0" max="50" style="width: 100%; padding: 12px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-input-bg); color: var(--ui-text); font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label style="font-weight: bold; color: var(--ui-text); display: block; margin-bottom: 8px; font-size: 13px;">أسئلة صح/خطأ (T/F):</label>
+                        <input type="number" id="aiTfCount" value="2" min="0" max="50" style="width: 100%; padding: 12px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-input-bg); color: var(--ui-text); font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;">
+                    </div>
+                </div>
+                
+                <button onclick="executeAIGeneration()" style="width: 100%; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); transition: 0.3s; font-family: inherit;">
+                    ✨ ابدأ التوليد الآن
+                </button>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // تصفير اسم الدرس عند فتح النافذة
+    document.getElementById('aiLessonName').value = '';
+    document.getElementById('aiGenerateModal').style.display = 'flex';
+}
 
-    // النقل الآلي: تحويل المستخدم فوراً إلى تبويب "بنك الأسئلة" ليرى النتيجة
+// الدالة التي تنفذ التوليد الفعلي بعد تحديد العدد
+async function executeAIGeneration() {
+    const lessonName = document.getElementById('aiLessonName').value.trim();
+    const mcqCount = parseInt(document.getElementById('aiMcqCount').value) || 0;
+    const tfCount = parseInt(document.getElementById('aiTfCount').value) || 0;
+
+    if (!lessonName) {
+        showToast('يرجى إدخال اسم الدرس أولاً', 'error');
+        return;
+    }
+    if (mcqCount === 0 && tfCount === 0) {
+        showToast('يرجى تحديد عدد الأسئلة المطلوب', 'error');
+        return;
+    }
+
+    // إغلاق النافذة المنبثقة
+    document.getElementById('aiGenerateModal').style.display = 'none';
+
+    // النقل الآلي لتبويب بنك الأسئلة
     const btnTabQ = document.getElementById('btnTabQuestions');
     if(btnTabQ) switchTab('questions', btnTabQ);
 
     showToast('جاري توليد الأسئلة من الدرس عبر الذكاء الاصطناعي... ⏳', 'info');
 
-    const systemInstruction = `أنت خبير وضع امتحانات. قم بإنشاء 5 أسئلة اختيار من متعدد (MCQ) وسؤالين صواب وخطأ (T/F) عن درس: "${lessonName}".
+    // دمج المتغيرات الجديدة في أمر الذكاء الاصطناعي
+    const systemInstruction = `أنت خبير وضع امتحانات. قم بإنشاء ${mcqCount} أسئلة اختيار من متعدد (MCQ) و ${tfCount} أسئلة صواب وخطأ (T/F) عن درس: "${lessonName}".
 المخرج يجب أن يكون مصفوفة JSON فقط بهذا التنسيق وبدون أي نصوص أخرى:
 [
   { "type": "mcq", "text": "نص السؤال هنا؟", "options": [{"l":"أ", "t":"الخيار الأول"}, {"l":"ب", "t":"الخيار الثاني"}], "ans": "أ" },
@@ -4257,7 +4313,6 @@ async function generateFromLessonPrompt() {
 ]`;
 
     try {
-        // 💡 الإصلاح هنا: استخدام المسار الصحيح للـ API الخاص بالذكاء الاصطناعي على منصتك
         const response = await fetch('/api/generate', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4272,7 +4327,7 @@ async function generateFromLessonPrompt() {
         let aiResponse = data.candidates[0].content.parts[0].text.trim();
         
         const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) throw new Error("التنسيق المُرجع غير صالح، جرب مرة أخرى");
+        if (!jsonMatch) throw new Error("التنسيق المُرجع غير صالح، جرب تقليل العدد قليلاً");
         
         const generatedQuestions = JSON.parse(jsonMatch[0]);
         let qInput = document.getElementById('questionsInput');
@@ -4293,7 +4348,6 @@ async function generateFromLessonPrompt() {
 
         qInput.innerHTML += generatedHTML;
         
-        // استخدام دالة التنسيق الخاصة بك لترتيب ونقل الإجابات للمفتاح
         if (typeof smartFormatAndClean === 'function') {
             smartFormatAndClean(); 
         }
