@@ -420,6 +420,9 @@
         >
           📝 بنك الأسئلة الشامل
         </button>
+        <button id="btnTabClassrooms" class="tab-btn" onclick="switchTab('classrooms', this)">
+    👨‍🏫 فصولي وطلابي
+</button>
         <button
           id="btnTabText"
           class="tab-btn"
@@ -494,6 +497,7 @@
                 class="f-glass-menu"
                 style="display: none"
               >
+  
                 <button
                   onclick="
                     showAnalytics();
@@ -1128,7 +1132,77 @@
           </div>
         </div>
       </div>
+<!-- ========================================== -->
+<!-- 🏫 قسم إدارة الفصول والطلاب (LMS Dashboard) -->
+<!-- ========================================== -->
+<div id="classroomsTab" class="input-section">
+<div class="futuristic-control-bar" style="justify-content: space-between; margin-bottom: 20px;">
+        <h3 style="margin:0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+            <i class='bx bx-chalkboard' style="font-size: 24px;"></i> إدارة الفصول والطلاب
+        </h3>
+        
+        <!-- الأزرار مجمعة هنا -->
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <button class="btn-tool" onclick="generateFromLessonPrompt()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none; font-size: 15px; padding: 10px 20px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                <i class='bx bx-brain'></i> توليد أسئلة من درس
+            </button>
+            <button class="btn-tool" onclick="createNewClassroom()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; font-size: 15px; padding: 10px 20px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                <i class='bx bx-plus-circle'></i> إنشاء فصل جديد
+            </button>
+        </div>
+    </div>
 
+    <!-- لوحة إحصائيات المعلم -->
+    <div class="grid-layout" style="margin-bottom: 25px;">
+        <div class="stat-box" style="flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 25px;">
+            <i class='bx bxs-graduation' style="font-size: 38px; color: #3b82f6;"></i>
+            <span style="font-size: 14px; color: #64748b; font-weight: bold;">إجمالي الطلاب (كل الفصول)</span>
+            <strong id="lmsTotalStudents" style="font-size: 28px; color: #0f172a;">0 / 30</strong>
+            <span style="font-size: 12px; font-weight: bold; background: #fef3c7; color: #b45309; padding: 4px 12px; border-radius: 20px;" id="lmsPlanNotice">الباقة المجانية</span>
+        </div>
+        <div class="stat-box" style="flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 25px;">
+            <i class='bx bx-line-chart' style="font-size: 38px; color: #10b981;"></i>
+            <span style="font-size: 14px; color: #64748b; font-weight: bold;">إجمالي الفصول النشطة</span>
+            <strong id="lmsTotalClasses" style="font-size: 28px; color: #0f172a;">0</strong>
+        </div>
+    </div>
+
+    <!-- شبكة الفصول الافتراضية -->
+    <div id="classroomsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+        <!-- يتم ملء الفصول هنا برمجياً -->
+    </div>
+</div>
+
+<!-- نافذة عرض بيانات الفصل (Modal) -->
+<div id="classDetailsModal" class="custom-modal">
+    <div class="modal-content" style="max-width: 700px; text-align: right;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 id="modalClassName" style="margin: 0; color: var(--primary-color);">اسم الفصل</h2>
+            <button onclick="document.getElementById('classDetailsModal').style.display='none'" style="background: #fee2e2; color: #ef4444; border: none; width: 35px; height: 35px; border-radius: 8px; font-size: 20px; cursor: pointer;">✖</button>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+            <strong style="color: #475569;">قائمة الطلاب:</strong>
+            <button id="btnAddStudentModal" class="btn-tool" style="background: #3b82f6; color: white; border: none; padding: 6px 15px;">+ إضافة طالب</button>
+        </div>
+
+        <div style="background: var(--ui-input-bg); border: 1px solid var(--ui-border); border-radius: 12px; max-height: 350px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead style="background: #e2e8f0; color: #1e293b; position: sticky; top: 0;">
+                    <tr>
+                        <th style="padding: 12px;">م</th>
+                        <th style="padding: 12px;">اسم الطالب</th>
+                        <th style="padding: 12px;">كود النظام</th>
+                        <th style="padding: 12px;">الدرجات</th>
+                    </tr>
+                </thead>
+                <tbody id="modalStudentsList">
+                    <!-- يملأ برمجياً -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
       <div class="action-buttons" id="questionActionButtons">
         <button
           class="action-btn btn-pdf-student"

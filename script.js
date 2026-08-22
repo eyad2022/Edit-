@@ -1127,11 +1127,19 @@ function switchTab(mode, btnElement) {
     document.querySelectorAll('.input-section').forEach(sec => sec.classList.remove('active'));
 
     if (btnElement) btnElement.classList.add('active');
-    else document.querySelector(`button[onclick*="${mode}"]`).classList.add('active');
+    else {
+        let fallbackBtn = document.querySelector(`button[onclick*="switchTab('${mode}'"]`);
+        if(fallbackBtn) fallbackBtn.classList.add('active');
+    }
 
-    document.getElementById(mode + 'Tab').classList.add('active');
-    document.getElementById('questionActionButtons').style.display = (mode === 'questions') ? 'flex' : 'none';
-    document.getElementById('textActionButtons').style.display = (mode === 'text') ? 'flex' : 'none';
+    let tabEl = document.getElementById(mode + 'Tab');
+    if(tabEl) tabEl.classList.add('active');
+
+    let qBtns = document.getElementById('questionActionButtons');
+    if(qBtns) qBtns.style.display = (mode === 'questions') ? 'flex' : 'none';
+    
+    let tBtns = document.getElementById('textActionButtons');
+    if(tBtns) tBtns.style.display = (mode === 'text') ? 'flex' : 'none';
 
     // إغلاق جميع اللوحات العائمة عند التبديل لضمان نظافة الشاشة
     ['examSettingsPanel', 'questionSettingsPanel', 'bubbleSettingsPanel', 'bubbleHeaderSettingsPanel', 'multiModelSettingsPanel', 'generalSettingsPanel', 'compactBubblePanel'].forEach(id => {
@@ -1139,12 +1147,22 @@ function switchTab(mode, btnElement) {
         if (el) el.style.display = 'none';
     });
 
-    // التحكم الذكي في القائمة الجانبية (إخفاء كل شيء في محرر النصوص ما عدا التنسيق العام والمسودة الجديدة)
+    // 💡 التعديل السحري: إخفاء القائمة الجانبية بالقوة الجبرية للتغلب على الـ CSS
+    const settingsDock = document.querySelector('.settings-dock');
+    if (settingsDock) {
+        if (mode === 'classrooms') {
+            settingsDock.style.setProperty('display', 'none', 'important'); // إخفاء إجباري
+        } else {
+            settingsDock.style.removeProperty('display'); // إرجاعها للعمل الطبيعي
+        }
+    }
+
+    // التحكم الذكي في العناصر داخل القائمة الجانبية (لقسم محرر النصوص)
     const dockItems = document.querySelectorAll('.settings-dock > *');
     dockItems.forEach(item => {
         let onclickAttr = item.getAttribute('onclick') || '';
 
-        // استثناء زر "التنسيق العام" وزر "المسودة الجديدة" (confirmModal) ليبقيا ظاهران دائماً
+        // استثناء زر "التنسيق العام" وزر "المسودة الجديدة" ليبقيا ظاهران دائماً
         if (onclickAttr.includes('generalSettingsPanel') || onclickAttr.includes('confirmModal')) {
             return;
         }
@@ -3044,18 +3062,14 @@ function insertCustomTable() {
    نظام الجولة التفاعلية الحقيقية (Ultimate FIFA-Style Tour) 🎮🚀
    ======================================================== */
 window.runSmartOnboardingTour = function(isForced) {
-    // 1. حماية صارمة: التأكد أن التشغيل الإجباري مقصود فعلاً (ليس بسبب Event عشوائي)
     const forced = (isForced === true);
 
-    // 2. فحص الذاكرة بمفتاح جديد تماماً لتجنب أي أخطاء قديمة
     if (!forced && localStorage.getItem('mh_pro_tour_done_v1') === 'yes') {
-        return; // إنهاء فوري وصامت
+        return; 
     }
 
-    // 3. تسجيل الانتهاء فوراً في أول مللي ثانية لمنع أي تداخل أو تكرار
     localStorage.setItem('mh_pro_tour_done_v1', 'yes');
 
-    // بناء وتجهيز ستايل الجولة (بدون تكرار)
     if (!document.getElementById('tourDynamicStyles')) {
         const style = document.createElement('style');
         style.id = 'tourDynamicStyles';
@@ -3112,68 +3126,71 @@ window.runSmartOnboardingTour = function(isForced) {
     window.addEventListener('wheel', preventScroll, { passive: false });
     window.addEventListener('touchmove', preventScroll, { passive: false });
 
-    // خريطة شاملة تشرح كل عنصر وكل زرار في الموقع بلا استثناء
     const steps = [
-        // الشريط العلوي
+        // --- 1. الإعدادات العامة والشريط العلوي ---
         { selector: '.nav-center h2', title: 'مرحباً في M&H Pro 🚀', text: 'سنأخذك في جولة تفصيلية لتعلم كل تفصيلة في المنصة خطوة بخطوة. (اضغط متابعة)', action: 'next' },
-        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'جرب بنفسك! <b>اضغط فعلياً على الأيقونة</b> لتحويل الموقع للوضع الداكن لإراحة عينيك.', action: 'click' },
-        { selector: '#guestNavButtons', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة ومزامنة مسوداتك.', action: 'next' },
-        { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يولد أسئلة من الـ PDF والصور، ويحلل امتحاناتك.', action: 'next' },
+        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'جرب بنفسك! <b>اضغط فعلياً على الأيقونة</b> لتحويل الموقع للوضع الداكن.', action: 'click' },
+        { selector: '.nav-right', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة، ومزامنة مسوداتك وإدارة حسابك.', action: 'next' },
+        { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يحلل الـ PDF ويجاوب على أي استفسارات تخص المادة.', action: 'next' },
         { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود التفعيل وفتح كافة الخصائص الاحترافية اللامحدودة.', action: 'next' },
         
-        // الأقسام والأنظمة
-        { selector: '.tabs', title: 'أقسام الموقع 📁', text: 'الموقع مقسم لـ "بنك أسئلة متقدم" لعمل الامتحانات، و "محرر مستندات حر" لعمل الملازم.', action: 'next' },
-        { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا مسحت شيئاً بالخطأ، هذه الأزرار تعيده فوراً.', action: 'next' },
+        // --- 2. القسم الأول (بنك الأسئلة) ---
+        { selector: '#btnTabQuestions', title: 'القسم الأول: بنك الأسئلة 📝', text: 'أولاً سنشرح قسم الامتحانات. <b>اضغط على هذا التبويب</b> للبدء.', action: 'click' },
+        { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا مسحت شيئاً بالخطأ في المحرر، هذه الأزرار تعيده فوراً.', action: 'next' },
         
-        // القوائم المنسدلة (كل زرار بالتفصيل)
-        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط على الزر</b> لفتح قائمة أنظمة لغات الكتابة المتاحة.', action: 'click', forceOpen: 'systemMenu' },
+        // 💡 التعديل هنا: إزالة الإجبار على الفتح حتى يدوس المستخدم بنفسه
+        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط على الزر</b> لفتح قائمة لغات الكتابة المتاحة.', action: 'click' }, 
         { selector: '#systemMenu button:nth-child(2)', title: 'نظام اللغات 🇬🇧', text: 'يقلب المحرر لليسار (LTR) للمواد الأجنبية.', action: 'next', forceOpen: 'systemMenu' },
-        { selector: '#systemMenu button:nth-child(3)', title: 'النظام العلمي ⚛️', text: 'يفتح أدوات لكتابة المعادلات والرموز الرياضية المعقدة.', action: 'next', forceOpen: 'systemMenu' },
-        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'الآن <b>اضغط هنا</b> لتفعيل النظام العربي (أ، ب، ج، د).', action: 'click', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(3)', title: 'النظام العلمي ⚛️', text: 'يفتح أدوات لكتابة المعادلات والرموز الرياضية.', action: 'next', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'الآن <b>اضغط هنا</b> لتفعيل النظام العربي.', action: 'click', forceOpen: 'systemMenu' },
         
-        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية.', action: 'click', forceOpen: 'smartToolsMenu' },
-        { selector: '#smartToolsMenu button:nth-child(1)', title: 'تحليل البنك 📊', text: 'يعرض لك إحصائية دقيقة لأنواع وعدد الأسئلة التي كتبتها.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية.', action: 'click' },
+        { selector: '#smartToolsMenu button:nth-child(1)', title: 'تحليل البنك 📊', text: 'يعرض إحصائية لعدد أنواع الأسئلة التي كتبتها.', action: 'next', forceOpen: 'smartToolsMenu' },
         { selector: '#smartToolsMenu button:nth-child(2)', title: 'خلط شامل 🔀', text: 'يخلط ترتيب الأسئلة والخيارات لمنع الغش بضغطة زر.', action: 'next', forceOpen: 'smartToolsMenu' },
         { selector: '#smartToolsMenu button:nth-child(4)', title: 'الأرشيف السحابي ☁️', text: 'لحفظ واسترجاع مسوداتك في السحابة بأمان.', action: 'next', forceOpen: 'smartToolsMenu' },
         { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي ✨', text: 'الآن <b>اضغط هنا!</b> لينظف أسئلتك ويستخرج الإجابات آلياً.', action: 'click', forceOpen: 'smartToolsMenu' },
         
-        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة إدراج القوالب.', action: 'click', forceOpen: 'insertMenu' },
+        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة القوالب الجاهزة.', action: 'click' },
         { selector: '#insertMenu button:nth-child(2)', title: 'سؤال صح/خطأ ✅', text: 'يرمي لك قالب جاهز لسؤال الصواب والخطأ.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(3)', title: 'سؤال مقالي 📝', text: 'يرمي لك قالب للأسئلة المقالية في المحرر.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(4)', title: 'استخراج نص (OCR) 📄', text: 'لرفع صورة وسيقوم النظام بتحويلها لنص مكتوب فوراً.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(6)', title: 'إدراج صورة 🖼️', text: 'لإرفاق صورة داخل السؤال بسهولة.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(1)', title: 'سؤال اختياري 🔘', text: 'الآن <b>اضغط هنا</b> لإدراج قالب سؤال اختياري وجرب بنفسك.', action: 'click', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(3)', title: 'سؤال مقالي 📝', text: 'يرمي لك قالب للأسئلة المقالية.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(4)', title: 'استخراج نص (OCR) 📄', text: 'ارفع صورة وسيحولها النظام لنص مكتوب فوراً.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(6)', title: 'إدراج صورة 🖼️', text: 'لإرفاق صورة توضيحية داخل السؤال.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(1)', title: 'سؤال اختياري 🔘', text: 'الآن <b>اضغط هنا</b> لإدراج قالب سؤال اختياري وجرب.', action: 'click', forceOpen: 'insertMenu' },
         
-        // المحررات
-        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على الإملاء الصوتي، الخطوط، الألوان والمحاذاة.', action: 'next' },
-        { selector: '#questionsInput', title: 'مساحة العمل الأساسية 📝', text: 'هنا تكتب أسئلتك، تضع الخيارات تحت بعضها، وتضع [✓] بجوار الصحيح.', action: 'next' },
-        { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط مفتاح الإجابات 🛠️', text: 'لتنسيق صفحة نموذج الإجابة بشكل مستقل تماماً.', action: 'next' },
-        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتولد تلقائياً بعد التنسيق الذكي، أو تكتبه يدوياً.', action: 'next' },
+        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على الإملاء الصوتي، التنسيق، والألوان.', action: 'next' },
+        { selector: '#questionsInput', title: 'مساحة العمل الأساسية 📝', text: 'هنا تكتب أسئلتك. ضع الخيارات تحت بعضها، وتضع [✓] بجوار الخيار الصحيح.', action: 'next' },
+        { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط مفتاح الإجابات 🛠️', text: 'لتنسيق صفحة نموذج الإجابة بشكل مستقل.', action: 'next' },
+        { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتولد تلقائياً هنا بعد ضغط (التنسيق الذكي)، أو يُكتب يدوياً.', action: 'next' },
 
-        // اللوحات الهندسية الجانبية
-        { selector: '.dock-item[onclick*="generalSettingsPanel"]', title: 'التنسيق العام 🎨', text: 'هذا الشريط الجانبي يهندس الورقة. <b>اضغط هنا</b> لفتح التنسيق العام.', action: 'click', forceOpenPanel: 'generalSettingsPanel' },
-        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: 'من هنا تغير الألوان والعلامة المائية. <b>اضغط X</b> للإغلاق.', action: 'click' },
-        
-        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: 'ديباجة الامتحان (الوزارة، المدرسة، المادة).', action: 'next' },
-        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في مقاسات وألوان الأسئلة وطريقة عرضها.', action: 'next' },
-        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: 'لدمج بابل شيت متطور أعلى ورقة الأسئلة.', action: 'next' },
+        // 💡 التعديل هنا: إزالة الإجبار ليضطر المستخدم للضغط أولاً
+        { selector: '.dock-item[onclick*="generalSettingsPanel"]', title: 'التنسيق العام 🎨', text: 'هذا الشريط الجانبي يهندس الورقة. <b>اضغط هنا</b> لفتح التنسيق العام.', action: 'click' },
+        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: 'من هنا تغير الألوان والعلامة المائية. <b>اضغط X</b> للإغلاق.', action: 'click', forceOpenPanel: 'generalSettingsPanel' },
+        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: 'لضبط ديباجة الامتحان (الوزارة، المادة، الزمن).', action: 'next' },
+        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في مقاسات وألوان الأسئلة وطريقة عرضها (أفقي/عمودي).', action: 'next' },
+        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: 'لدمج بابل شيت متطور أعلى ورقة الأسئلة مباشرة.', action: 'next' },
         { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: 'لإعداد أشكال ترقيم النماذج (A, B, C) وأماكنها.', action: 'next' },
         { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: 'لتحديد شكل وحجم الدوائر والأعمدة للورقة المستقلة.', action: 'next' },
         { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص بيانات الطالب والباركود للورقة المستقلة.', action: 'next' },
         
-        // التحذير الهام
-        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لفتح نافذة مسح المشروع والبدء من جديد.', action: 'click', forceOpenModal: 'confirmModal' },
-        { selector: '#confirmModal .modal-content', title: 'احترس! ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> الرجاء الضغط فعلياً على زر <b>"إلغاء" المضيء</b> بالأسفل لكي لا تفقد عملك وتقف الجولة!', action: 'next', forceOpenModal: 'confirmModal' },
+        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لفتح نافذة مسح المشروع والبدء من جديد.', action: 'click' },
+        { selector: '#confirmModal .modal-content', title: 'احترس! ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> الرجاء الضغط فعلياً على زر <b>"إلغاء"</b> بالأسفل لكي لا تفقد عملك وتقف الجولة!', action: 'next', forceOpenModal: 'confirmModal' },
         { selector: '#confirmModal button:last-child', title: 'إلغاء الإجراء', text: '<b>اضغط على "إلغاء" هنا</b> للمتابعة بأمان.', action: 'click', forceOpenModal: 'confirmModal' },
 
-        // التصدير والطباعة
-        { selector: '#questionActionButtons', title: 'منصة التصدير والطباعة 🖨️', text: 'الخطوة الأخيرة! من هنا تطبع عملك بمختلف الصيغ.', action: 'next' },
-        { selector: '.btn-pdf-student', title: 'نسخة الطالب 🧑‍🎓', text: 'لطباعة الامتحان نظيفاً بدون إجابات.', action: 'next' },
-        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة 👨‍🏫', text: 'لطباعة الامتحان بالإجابات النموذجية مظللة.', action: 'next' },
-        { selector: '.btn-pdf-both', title: 'تصدير شامل 📑', text: 'يطبع (الأسئلة + الإجابات + البابل شيت) في ملف واحد.', action: 'next' },
-        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'يولد نماذج مختلفة مع بابل شيت آلياً.', action: 'next' },
-        { selector: '.btn-json-export', title: 'حفظ JSON 💾', text: 'لحفظ الامتحان كملف بيانات على جهازك.', action: 'next' },
-        { selector: '.btn-json-import', title: 'استيراد JSON 📥', text: 'لرفع ملف قمت بحفظه سابقاً وتعديله.', action: 'next' }
+        { selector: '#questionActionButtons', title: 'منصة التصدير 🖨️', text: 'من هنا تطبع عملك بالصيغ المتاحة (طالب، معلم، نماذج متعددة).', action: 'next' },
+
+        // --- 3. القسم الثاني (فصولي وطلابي) ---
+        { selector: '#btnTabClassrooms', title: 'القسم الثاني: فصولي الافتراضية 👨‍🏫', text: 'انتهينا من الأسئلة! <b>اضغط هنا</b> لفتح لوحة إدارة الطلاب.', action: 'click' },
+        { selector: 'button[onclick="generateFromLessonPrompt()"]', title: 'توليد ذكي للأسئلة 🧠', text: 'أداة سحرية! اكتب اسم الدرس، وسيقوم الـ AI بتوليد أسئلته ونقلك للمحرر فوراً.', action: 'next' },
+        { selector: 'button[onclick="createNewClassroom()"]', title: 'إنشاء فصل جديد ➕', text: 'لفتح مجموعات أو فصول دراسية للطلاب.', action: 'next' },
+        { selector: '#lmsTotalStudents', title: 'عداد الطلاب 🎓', text: 'يعرض إجمالي طلابك. الباقة المجانية تسمح بـ 30 طالباً כحد أقصى.', action: 'next' },
+        { selector: '#classroomsGrid', title: 'شبكة الفصول 🏫', text: 'هنا تظهر فصولك. يمكنك الدخول إليها لإضافة الطلاب وحذفهم أو إضافة درجاتهم يدوياً.', action: 'next' },
+
+        // --- 4. القسم الثالث (محرر النصوص) ---
+        { selector: '#btnTabText', title: 'القسم الثالث: محرر الملازم 📄', text: 'القسم الأخير! <b>اضغط هنا</b> لفتح محرر المستندات الحر.', action: 'click' },
+        { selector: '#textTab .btn-icon', title: 'تراجع وإعادة ↩️', text: 'أزرار مخصصة للتحكم في أخطاء الكتابة داخل المحرر الحر.', action: 'next' },
+        { selector: '#textTab .editor-toolbar', title: 'أدوات التنسيق الشاملة 🛠️', text: 'لإدراج الجداول، الصور، والمعادلات وتنسيق المذكرات بحرية تامة.', action: 'next' },
+        { selector: '#generalTextInput', title: 'ورقة العمل الحرة 📝', text: 'مساحتك الحرة لكتابة وتأليف أي ملازم أو أوراق عمل لا تعتمد على نظام البابل شيت.', action: 'next' },
+        { selector: '#textActionButtons', title: 'الطباعة 🖨️', text: 'لطباعة الملازم والمستندات الحرة فور الانتهاء منها.', action: 'next' }
     ];
 
     let currentStepIndex = 0;
@@ -3181,7 +3198,6 @@ window.runSmartOnboardingTour = function(isForced) {
     let clickListener = null;
     let animationFrameId = null;
 
-    // دالة الإغلاق النظيفة (بدون أي ريفريش للصفحة)
     window.forceCloseTour = function() {
         cancelAnimationFrame(animationFrameId);
         tourElements.forEach(el => el.remove());
@@ -3189,6 +3205,7 @@ window.runSmartOnboardingTour = function(isForced) {
         window.removeEventListener('wheel', preventScroll);
         window.removeEventListener('touchmove', preventScroll);
         if (clickListener) document.body.removeEventListener('click', clickListener, true);
+        localStorage.setItem('mh_pro_tour_done_v1', 'yes'); // تسجيل الإغلاق
     };
 
     function endTour() {
@@ -3220,7 +3237,7 @@ window.runSmartOnboardingTour = function(isForced) {
         let tooltipTop = rect.bottom + padding + 15;
         let tooltipLeft = rect.left + (rect.width / 2) - 160;
 
-        // التجاوب الذكي مع القائمة الجانبية 
+        // التجاوب الذكي مع الأطراف
         if (rect.right > window.innerWidth - 120) {
             tooltipLeft = rect.left - 340; 
         }
@@ -3264,6 +3281,7 @@ window.runSmartOnboardingTour = function(isForced) {
         function findTarget() {
             currentTarget = document.querySelector(step.selector);
             
+            // تجاوز ذكي للعناصر المخفية
             if (currentTarget && window.getComputedStyle(currentTarget).display === 'none') {
                 currentTarget = null;
             }
@@ -3274,6 +3292,7 @@ window.runSmartOnboardingTour = function(isForced) {
                 return;
             }
             
+            // لو ملقاش العنصر بعد كل المحاولات يتخطى للخطوة اللي بعدها
             if (!currentTarget) {
                 currentStepIndex++; 
                 processStep();
@@ -3314,7 +3333,7 @@ window.runSmartOnboardingTour = function(isForced) {
                 document.body.addEventListener('click', clickListener, true);
             } else {
                 document.getElementById('tourNextBtn').onclick = (e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation(); // منع الإغلاق العشوائي للقوائم
                     currentStepIndex++;
                     processStep();
                 };
@@ -3324,6 +3343,20 @@ window.runSmartOnboardingTour = function(isForced) {
     }
 
     setTimeout(processStep, 500);
+};
+
+function initTourSetup() {
+    setTimeout(() => {
+        if (typeof window.runSmartOnboardingTour === 'function') {
+            window.runSmartOnboardingTour(false);
+        }
+    }, 1500);
+}
+
+if (document.readyState === 'complete') {
+    initTourSetup();
+} else {
+    window.addEventListener('load', initTourSetup);
 }
 
 // 💡 المراقبة الذكية لضمان عمل الجولة مرة واحدة فقط للمستخدم الجديد
@@ -4198,4 +4231,393 @@ function renderOMRBarcodes() {
             correctLevel : QRCode.CorrectLevel.L
         });
     });
+}
+/* ========================================================
+   🏫 محرك منصة المعلم (LMS) وتوليد الأسئلة بالذكاء الاصطناعي
+   ======================================================== */
+
+// 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
+// 1. توليد الأسئلة الذكي من اسم الدرس (Gemini API)
+async function generateFromLessonPrompt() {
+    const lessonName = prompt("أدخل اسم الدرس أو الموضوع (مثال: الحملة الفرنسية، أو قوانين نيوتن):");
+    if (!lessonName) return;
+
+    // 💡 النقل الآلي: تحويل المستخدم فوراً إلى تبويب "بنك الأسئلة" ليرى النتيجة
+    const btnTabQ = document.getElementById('btnTabQuestions');
+    if(btnTabQ) switchTab('questions', btnTabQ);
+
+    showToast('جاري توليد الأسئلة من الدرس عبر الذكاء الاصطناعي... ⏳', 'info');
+
+    const systemInstruction = `أنت خبير وضع امتحانات. قم بإنشاء 5 أسئلة اختيار من متعدد (MCQ) وسؤالين صواب وخطأ (T/F) عن درس: "${lessonName}".
+المخرج يجب أن يكون مصفوفة JSON فقط بهذا التنسيق وبدون أي نصوص أخرى:
+[
+  { "type": "mcq", "text": "نص السؤال هنا؟", "options": [{"l":"أ", "t":"الخيار الأول"}, {"l":"ب", "t":"الخيار الثاني"}], "ans": "أ" },
+  { "type": "tf_inline", "text": "نص عبارة الصح والخطأ هنا", "ans": "صح" }
+]`;
+
+    try {
+        // الاتصال بمحرك Gemini الخاص بك
+        const response = await fetch('https://eyad26.pythonanywhere.com/api/generate', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parts: [{ text: systemInstruction }] })
+        });
+
+        if (!response.ok) throw new Error("فشل الاتصال بمولد الذكاء الاصطناعي");
+        
+        const data = await response.json();
+        let aiResponse = data.candidates[0].content.parts[0].text.trim();
+        
+        const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("التنسيق المُرجع غير صالح، جرب مرة أخرى");
+        
+        const generatedQuestions = JSON.parse(jsonMatch[0]);
+        let qInput = document.getElementById('questionsInput');
+        let generatedHTML = "<br>";
+
+        generatedQuestions.forEach(q => {
+            generatedHTML += `<div>1. ${q.text} #توليد_ذكي</div>`;
+            if (q.type === 'mcq' && q.options) {
+                q.options.forEach(o => {
+                    let check = (o.l == q.ans || o.t == q.ans) ? " [✓]" : "";
+                    generatedHTML += `<div>${o.l}) ${o.t}${check}</div>`;
+                });
+            } else if (q.type === 'tf_inline') {
+                generatedHTML += `<div>( ${q.ans} )</div>`;
+            }
+            generatedHTML += "<br>";
+        });
+
+        qInput.innerHTML += generatedHTML;
+        
+        // استخدام دالة التنسيق الخاصة بك لترتيب ونقل الإجابات للمفتاح
+        if (typeof smartFormatAndClean === 'function') {
+            smartFormatAndClean(); 
+        }
+        
+        showToast('✅ تم توليد الأسئلة وإدراجها وتنسيقها بنجاح!', 'success');
+
+    } catch (error) {
+        showToast('❌ حدث خطأ أثناء التوليد: ' + error.message, 'error');
+    }
+}
+
+// ========================================================
+// 2. إدارة الفصول والطلاب (Cloud Firestore)
+// ========================================================
+
+// جلب وعرض الفصول من السحابة
+// جلب وعرض الفصول من السحابة (محدثة بزر حذف الفصل)
+async function loadClassroomsFromCloud() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const grid = document.getElementById('classroomsGrid');
+    
+    try {
+        const docSnap = await db.collection('users').doc(user.uid).get();
+        let classrooms = [];
+        if (docSnap.exists && docSnap.data().classrooms) {
+            classrooms = docSnap.data().classrooms;
+        }
+
+        let totalStudents = 0;
+        let html = '';
+
+        if (classrooms.length === 0) {
+            html = `
+            <div style="padding: 40px; text-align: center; background: rgba(255,255,255,0.5); border: 2px dashed #cbd5e1; border-radius: 16px; grid-column: 1 / -1;">
+                <i class='bx bx-folder-plus' style="font-size: 48px; color: #94a3b8; margin-bottom: 15px;"></i>
+                <h4 style="color: #475569; margin: 0 0 10px 0;">لا توجد فصول حالياً</h4>
+                <p style="color: #64748b; font-size: 13px;">قم بإنشاء فصلك الأول لإضافة الطلاب ومتابعة تقاريرهم.</p>
+            </div>`;
+        } else {
+            classrooms.forEach(cls => {
+                let studentsCount = cls.students ? cls.students.length : 0;
+                totalStudents += studentsCount;
+                
+                html += `
+                <div style="background: var(--ui-container); border: 1px solid var(--ui-border); border-radius: 16px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed var(--ui-border); padding-bottom: 15px; margin-bottom: 15px;">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--primary-color); font-size: 18px;">${cls.name}</h4>
+                            <span style="font-size: 11px; color: #64748b;">تاريخ الإنشاء: ${cls.createdAt || 'غير محدد'}</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <div style="background: #eff6ff; color: #3b82f6; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">
+                                ${studentsCount}
+                            </div>
+                            <!-- زر حذف الفصل -->
+                            <button onclick="deleteClassroom('${cls.id}')" title="حذف الفصل" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: 0.2s;">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="viewClassDetails('${cls.id}')" style="width: 100%; background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.2s;">
+                        <i class='bx bx-list-ul'></i> عرض الطلاب والدرجات
+                    </button>
+                </div>`;
+            });
+        }
+
+        grid.innerHTML = html;
+
+        // تحديث الإحصائيات وفحص الباقة
+        document.getElementById('lmsTotalClasses').innerText = classrooms.length;
+        
+        let expiry = localStorage.getItem('elalfey_vip_expiry');
+        let isVIP = (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now()));
+        
+        const countDisplay = document.getElementById('lmsTotalStudents');
+        const noticeDisplay = document.getElementById('lmsPlanNotice');
+
+        if (isVIP) {
+            countDisplay.innerText = `${totalStudents} / ∞`;
+            countDisplay.style.color = "#10b981";
+            noticeDisplay.innerText = "باقة VIP (غير محدودة)";
+            noticeDisplay.style.background = "#d1fae5";
+            noticeDisplay.style.color = "#047857";
+        } else {
+            countDisplay.innerText = `${totalStudents} / 30`;
+            if (totalStudents >= 30) {
+                countDisplay.style.color = "#ef4444";
+                noticeDisplay.innerText = "وصلت للحد الأقصى للمجاني!";
+                noticeDisplay.style.background = "#fee2e2";
+                noticeDisplay.style.color = "#b91c1c";
+            } else {
+                countDisplay.style.color = "#0f172a";
+                noticeDisplay.innerText = "الباقة المجانية";
+                noticeDisplay.style.background = "#fef3c7";
+                noticeDisplay.style.color = "#b45309";
+            }
+        }
+
+    } catch(e) {}
+}
+
+// إنشاء فصل جديد
+async function createNewClassroom() {
+    const user = auth.currentUser;
+    if (!user) return showToast('يرجى تسجيل الدخول لإنشاء فصول', 'error');
+
+    let className = prompt("أدخل اسم الفصل (مثال: الصف الأول الثانوي - مجموعة أ):");
+    if (!className || className.trim() === "") return;
+
+    try {
+        showToast('جاري إنشاء الفصل...', 'info');
+        const docRef = db.collection('users').doc(user.uid);
+        const docSnap = await docRef.get();
+        
+        let classrooms = [];
+        if (docSnap.exists && docSnap.data().classrooms) {
+            classrooms = docSnap.data().classrooms;
+        }
+
+        const newClass = {
+            id: 'CLASS_' + Date.now(),
+            name: className.trim(),
+            students: [],
+            createdAt: new Date().toLocaleDateString('ar-EG')
+        };
+
+        classrooms.push(newClass);
+        await docRef.update({ classrooms: classrooms });
+        
+        showToast('✅ تم إنشاء الفصل بنجاح!', 'success');
+        loadClassroomsFromCloud();
+
+    } catch (e) {
+        showToast('❌ حدث خطأ أثناء إنشاء الفصل', 'error');
+    }
+}
+
+// عرض نافذة الفصل وإضافة طالب
+let currentViewedClassId = null;
+
+// عرض نافذة الفصل وإضافة طالب (محدثة بزر حذف الطالب)
+async function viewClassDetails(classId) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    currentViewedClassId = classId;
+    
+    try {
+        const docSnap = await db.collection('users').doc(user.uid).get();
+        if (!docSnap.exists) return;
+        
+        let classrooms = docSnap.data().classrooms || [];
+        let targetClass = classrooms.find(c => c.id === classId);
+        
+        if (!targetClass) return;
+
+        document.getElementById('modalClassName').innerText = targetClass.name;
+        
+        let tbody = document.getElementById('modalStudentsList');
+        tbody.innerHTML = '';
+
+        if (!targetClass.students || targetClass.students.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #64748b;">لا يوجد طلاب في هذا الفصل بعد.</td></tr>';
+        } else {
+            targetClass.students.forEach((std, idx) => {
+                tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px; color: #64748b;">${idx + 1}</td>
+                    <td style="padding: 12px; font-weight: bold;">${std.name}</td>
+                    <td style="padding: 12px; font-family: monospace; color: var(--primary-color);">${std.id}</td>
+                    <td style="padding: 12px;">
+                        <span style="font-weight: bold; color: #10b981; margin-left: 10px;">${std.lastScore || '--'}</span>
+                        <button onclick="addManualScore('${std.id}')" title="تعديل الدرجة" style="background: transparent; border: none; color: #3b82f6; cursor: pointer; font-size: 16px;"><i class='bx bx-edit'></i></button>
+                    </td>
+                    <td style="padding: 12px;">
+                        <!-- زر حذف الطالب -->
+                        <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 16px;"><i class='bx bx-trash'></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById('btnAddStudentModal').onclick = () => addStudentToClass(classId);
+
+        document.getElementById('classDetailsModal').style.display = 'flex';
+
+    } catch(e) {}
+}
+
+// إضافة طالب (بمراقبة الباقة)
+async function addStudentToClass(classId) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    let expiry = localStorage.getItem('elalfey_vip_expiry');
+    let isVIP = (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now()));
+
+    const docRef = db.collection('users').doc(user.uid);
+    const docSnap = await docRef.get();
+    let classrooms = docSnap.data().classrooms || [];
+    
+    let totalStudents = classrooms.reduce((sum, cls) => sum + (cls.students ? cls.students.length : 0), 0);
+
+    if (!isVIP && totalStudents >= 30) {
+        showToast('⚠️ وصلت للحد الأقصى للطلاب (30) في الباقة المجانية!', 'error');
+        // إذا كان لديك نافذة للـ VIP يمكن استدعاؤها هنا
+        if (typeof openVIPModalManual === 'function') openVIPModalManual();
+        return;
+    }
+
+    let studentName = prompt("أدخل اسم الطالب ثلاثياً:");
+    if (!studentName || studentName.trim() === "") return;
+
+    let studentId = "ST_" + Math.random().toString(10).substring(2, 6);
+
+    try {
+        let targetIndex = classrooms.findIndex(c => c.id === classId);
+        if (targetIndex > -1) {
+            if (!classrooms[targetIndex].students) classrooms[targetIndex].students = [];
+            
+            classrooms[targetIndex].students.push({
+                id: studentId,
+                name: studentName.trim(),
+                lastScore: null
+            });
+            
+            await docRef.update({ classrooms: classrooms });
+            showToast(`✅ تمت إضافة (${studentName}) بنجاح! كوده: ${studentId}`, 'success');
+            
+            loadClassroomsFromCloud(); // تحديث الواجهة الخلفية
+            viewClassDetails(classId); // تحديث النافذة المفتوحة
+        }
+    } catch(e) {
+        showToast('❌ خطأ أثناء الإضافة', 'error');
+    }
+}
+
+// إضافة درجة يدوية مؤقتة للطلاب
+async function addManualScore(studentId) {
+    const user = auth.currentUser;
+    if (!user || !currentViewedClassId) return;
+
+    let score = prompt("أدخل درجة الطالب (مثال: 18/20):");
+    if (!score) return;
+
+    try {
+        const docRef = db.collection('users').doc(user.uid);
+        const docSnap = await docRef.get();
+        let classrooms = docSnap.data().classrooms || [];
+        
+        let targetIndex = classrooms.findIndex(c => c.id === currentViewedClassId);
+        if (targetIndex > -1) {
+            let studentIndex = classrooms[targetIndex].students.findIndex(s => s.id === studentId);
+            if (studentIndex > -1) {
+                classrooms[targetIndex].students[studentIndex].lastScore = score;
+                await docRef.update({ classrooms: classrooms });
+                showToast('✅ تم تحديث درجة الطالب', 'success');
+                viewClassDetails(currentViewedClassId); // تحديث النافذة
+            }
+        }
+    } catch(e) {}
+}
+
+// مراقب لتشغيل جلب الفصول عند الدخول
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        setTimeout(loadClassroomsFromCloud, 1000);
+    }
+});
+// دالة حذف فصل بالكامل
+async function deleteClassroom(classId) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    if (!confirm("⚠️ تحذير: هل أنت متأكد من حذف هذا الفصل بجميع طلابه ودرجاتهم نهائياً؟\n(هذا الإجراء لا يمكن التراجع عنه!)")) {
+        return;
+    }
+
+    try {
+        const docRef = db.collection('users').doc(user.uid);
+        const docSnap = await docRef.get();
+        let classrooms = docSnap.data().classrooms || [];
+
+        // تصفية الفصول (نحتفظ بكل الفصول ما عدا اللي عايزين نحذفه)
+        classrooms = classrooms.filter(c => c.id !== classId);
+
+        await docRef.update({ classrooms: classrooms });
+        
+        showToast('🗑️ تم حذف الفصل بجميع بياناته بنجاح', 'success');
+        loadClassroomsFromCloud(); // تحديث واجهة الفصول
+
+    } catch (e) {
+        showToast('❌ حدث خطأ أثناء الحذف', 'error');
+    }
+}
+
+// دالة حذف طالب محدد من فصل
+async function removeStudentFromClass(classId, studentId) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    if (!confirm("⚠️ هل أنت متأكد من مسح بيانات هذا الطالب؟")) {
+        return;
+    }
+
+    try {
+        const docRef = db.collection('users').doc(user.uid);
+        const docSnap = await docRef.get();
+        let classrooms = docSnap.data().classrooms || [];
+        
+        let targetIndex = classrooms.findIndex(c => c.id === classId);
+        if (targetIndex > -1) {
+            // تصفية طلاب هذا الفصل (نحتفظ بكل الطلاب ما عدا اللي عايزين نحذفه)
+            classrooms[targetIndex].students = classrooms[targetIndex].students.filter(s => s.id !== studentId);
+            
+            await docRef.update({ classrooms: classrooms });
+            
+            showToast('🗑️ تم حذف الطالب بنجاح', 'success');
+            
+            // تحديث الواجهة والنافذة المفتوحة
+            loadClassroomsFromCloud(); 
+            viewClassDetails(classId); 
+        }
+    } catch (e) {
+        showToast('❌ حدث خطأ أثناء حذف الطالب', 'error');
+    }
 }
