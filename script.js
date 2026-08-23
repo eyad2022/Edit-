@@ -4569,33 +4569,26 @@ async function viewClassDetails(classId) {
     } catch(e) {}
 }
 
-// دالة مساعدة لرسم جدول الطلاب في الشاشة (مُحدثة لعرض سجل الامتحانات بالكامل)
+// دالة رسم الجدول (النسخة المستقرة والنظيفة)
 function renderStudentsTable(students, classId) {
     let tbody = document.getElementById('modalStudentsList');
     tbody.innerHTML = '';
 
     if (!students || students.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #64748b;">لا يوجد طلاب في هذا الفصل بعد.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #64748b; text-align: center;">لا يوجد طلاب في هذا الفصل بعد.</td></tr>';
         return;
-    } 
+    }
 
     students.forEach((std, idx) => {
-        // 💡 تجهيز "سجل الامتحانات" للطالب وعرضه بشكل شيك
         let scoresHtml = '';
+        
+        // رص الامتحانات المتعددة للطالب
         if (std.examRecords && Object.keys(std.examRecords).length > 0) {
             Object.values(std.examRecords).forEach(record => {
-                let parts = record.split('|'); // فصل اسم الامتحان عن الدرجة
-                let examTitle = parts[0];
-                let examScore = parts[1];
-                
-                scoresHtml += `
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                    <span style="color: var(--primary-color); font-weight: bold; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${examTitle}">${examTitle}</span> 
-                    <span style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${examScore}</span>
-                </div>`;
+                let parts = record.split('|'); 
+                scoresHtml += `<div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--primary-color); font-weight: bold; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${parts[0]}</span> <span style="color: #10b981; font-weight: 900; direction: ltr; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${parts[1]}</span></div>`;
             });
         } else if (std.lastScore) { 
-            // عشان لو عنده درجة قديمة متضيعش
             scoresHtml = `<div style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 4px 10px; border-radius: 6px;">${std.lastScore}</div>`;
         } else {
             scoresHtml = `<div style="color: #94a3b8; font-size: 12px; padding: 10px 0;">لم يمتحن بعد 📭</div>`;
@@ -4606,54 +4599,65 @@ function renderStudentsTable(students, classId) {
             <td style="padding: 15px; color: #64748b;">${idx + 1}</td>
             <td style="padding: 15px; font-weight: bold; color: #1e293b;">${std.name}</td>
             <td style="padding: 15px; font-family: monospace; color: #64748b; font-size: 13px;">${std.id}</td>
-            <td style="padding: 15px; min-width: 200px; vertical-align: top;">
-                <!-- هنا هيترص سجل امتحانات الطالب كله -->
-                ${scoresHtml}
-            </td>
+            <td style="padding: 15px; min-width: 200px; vertical-align: top;">${scoresHtml}</td>
             <td style="padding: 15px; vertical-align: top;">
-                <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; font-size: 18px; transition: 0.2s;"><i class='bx bx-trash'></i></button>
+                <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; font-size: 18px;"><i class='bx bx-trash'></i></button>
             </td>
         </tr>`;
     });
 }
 
-// 🚀 محرك المزامنة الآلي للدرجات (نسخة الصاروخ - Parallel Fetching)
+// دالة مساعدة لتوحيد الحروف العربية وتجاهل الهمزات والتاء المربوطة (لمنع أخطاء إدخال الطلاب)
+function normalizeArabicName(text) {
+    if (!text) return "";
+    return String(text)
+        .replace(/[أإآا]/g, 'ا') // توحيد الألف
+        .replace(/[يى]/g, 'ي')   // توحيد الياء
+        .replace(/[ةه]/g, 'ه')   // توحيد التاء المربوطة والهاء
+        .replace(/\s+/g, ' ')    // توحيد المسافات الزائدة
+        .trim()
+        .toLowerCase();
+}
+
+// 🚀 محرك المزامنة الآلي (المُسرَّع + المطابقة بالكود)
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
     if(!user) return;
     
     try {
-        // 1. جلب كل امتحانات المدرس مرة واحدة
         const examsSnap = await db.collection('online_exams')
             .where('teacherId', '==', user.uid)
             .get();
             
         let updated = false;
         let targetIndex = classrooms.findIndex(c => c.id === classId);
+        let currentStudents = classrooms[targetIndex].students;
         
-        // 2. استخدام Promise.all لسحب كل الدرجات من كل الامتحانات في نفس اللحظة (Parallel)
+        // جلب كل الدرجات بالتوازي لسرعة البرق
         const fetchPromises = examsSnap.docs.map(async (examDoc) => {
             let examData = examDoc.data();
             
-            // تجاهل الامتحانات اللي مش تبع الفصل ده
+            // التأكد إن الامتحان تبع الفصل ده أو امتحان عام للكل
             if (examData.classId !== classId && examData.classId !== 'all') return;
 
             const examTitle = examData.title || "امتحان بدون عنوان";
-            
-            // سحب النتائج
             const resultsSnap = await examDoc.ref.collection('results').get();
             
             resultsSnap.forEach(resDoc => {
                 let resData = resDoc.data();
-                let identifier = String(resData.studentIdentifier || resData.studentName || "").trim().toLowerCase(); 
                 
-                let studentIndex = classrooms[targetIndex].students.findIndex(s => 
-                    String(s.id).trim().toLowerCase() === identifier || 
-                    String(s.name).trim().toLowerCase() === identifier
+                // تنظيف الكود المدخل
+                let studentInput = String(resData.studentIdentifier || resData.studentName || "").trim().toLowerCase(); 
+                
+                // مطابقة الكود المدخل مع أكواد الطلاب في كشف المدرس
+                let studentIndex = currentStudents.findIndex(s => 
+                    String(s.id).trim().toLowerCase() === studentInput || 
+                    String(s.name).trim().toLowerCase() === studentInput
                 );
                 
+                // لو لقينا الطالب، نحدث سجل درجاته
                 if(studentIndex > -1) {
-                    let student = classrooms[targetIndex].students[studentIndex];
+                    let student = currentStudents[studentIndex];
                     let formattedScore = resData.score + ' / ' + resData.total;
                     let newRecord = `${examTitle}|${formattedScore}`;
                     
@@ -4667,16 +4671,19 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
             });
         });
 
-        // 3. انتظار جميع الطلبات حتى تنتهي (بتتم في أجزاء من الثانية لأنها متوازية)
+        // انتظار انتهاء السحب
         await Promise.all(fetchPromises);
         
-        // 4. تحديث الشاشة فوراً لو في درجات جديدة
+        // تحديث قاعدة البيانات والشاشة فقط إذا وجدنا درجات جديدة
         if(updated) {
             await db.collection('users').doc(user.uid).update({ classrooms: classrooms });
-            renderStudentsTable(classrooms[targetIndex].students, classId);
         }
+        
+        // رسم الجدول بالبيانات المحدثة أو الحالية
+        renderStudentsTable(currentStudents, classId);
+        
     } catch(e) {
-        console.error("خطأ في مزامنة الدرجات:", e);
+        console.error("خطأ في المزامنة:", e);
     }
 }
 // إضافة طالب (بمراقبة الباقة)
