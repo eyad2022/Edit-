@@ -219,7 +219,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let currentExamData = null;
+       let currentExamData = null;
         let studentIdentifier = "";
         let timerInterval = null;
 
@@ -230,36 +230,55 @@
             setTimeout(() => t.style.display = 'none', 4000);
         }
 
+        // 💡 إضافة المنظف اللغوي لصفحة الطالب
+        function normalizeArabicName(text) {
+            if (!text) return "";
+            return String(text)
+                .replace(/[أإآا]/g, 'ا')
+                .replace(/[يى]/g, 'ي')
+                .replace(/[ةه]/g, 'ه')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
         async function startExam() {
             const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
             const rawId = document.getElementById('studentIdentifierInput').value.trim();
             
-            // منع الرموز اللي ممكن تبوظ قاعدة البيانات
             studentIdentifier = rawId.replace(/[\/\\]/g, '_'); 
 
             if (!code || !studentIdentifier) return showToast('يرجى إدخال الكود وبياناتك بالكامل');
 
             try {
-                // 1. التأكد من أن الامتحان موجود
                 const docSnap = await db.collection('online_exams').doc(code).get();
                 if (!docSnap.exists) return showToast('❌ كود الامتحان غير صحيح أو الامتحان غير متاح!');
 
                 currentExamData = docSnap.data();
                 
-                // 2. التحقق من أن وقت الامتحان لم ينتهِ بعد
+                // 💡 التعديل الجديد (البواب الإلكتروني): لو الامتحان مش للكل، هنفتش في قائمة المدعوين
+                if (currentExamData.classId !== 'all') {
+                    let allowed = currentExamData.allowedStudents || [];
+                    let normalizedInput = normalizeArabicName(studentIdentifier);
+                    let rawLowerInput = String(studentIdentifier).trim().toLowerCase();
+
+                    // لو اسمه أو كوده مش في القائمة، نطرده فوراً
+                    if (!allowed.includes(normalizedInput) && !allowed.includes(rawLowerInput)) {
+                        return showToast('⛔ عذراً، أنت لست مسجلاً في هذا الفصل. راجع المعلم للتأكد من الكود أو الاسم!');
+                    }
+                }
+
                 if (currentExamData.endTime && Date.now() > currentExamData.endTime) {
                     return showToast('⏳ لقد انتهى الموعد المحدد لهذا الامتحان وتم إغلاقه!');
                 }
 
                 if (!currentExamData.active) return showToast('⚠️ هذا الامتحان مغلق حالياً من قبل المعلم.');
 
-                // 3. 🚨 حماية صارمة: التحقق مما إذا كان الطالب قد أدى الامتحان مسبقاً
                 const resultSnap = await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).get();
                 if (resultSnap.exists) {
                     return showToast('✋ لقد قمت بأداء وتسليم هذا الامتحان مسبقاً، لا يمكنك الدخول مرة أخرى!');
                 }
 
-                // كل شيء سليم، إظهار الامتحان
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('examSection').style.display = 'block';
                 document.getElementById('displayExamTitle').innerText = currentExamData.title;
@@ -267,7 +286,6 @@
 
                 renderQuestions();
 
-                // ⏰ تشغيل العداد التنازلي
                 if (currentExamData.endTime) {
                     startTimer(currentExamData.endTime);
                 }

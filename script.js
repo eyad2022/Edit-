@@ -4957,8 +4957,7 @@ async function openPublishOnlineModal() {
     }
 }
 
-// دالة رفع الامتحان للسحابة (مُعدلة ومحمية ضد أخطاء Firebase)
-// دالة رفع الامتحان للسحابة (مع تحديد وقت الإغلاق)
+// دالة رفع الامتحان للسحابة (محدثة بنظام قائمة المسموح لهم - Guest List)
 async function publishExamToCloud() {
     const user = auth.currentUser;
     if (!user) return;
@@ -4970,7 +4969,7 @@ async function publishExamToCloud() {
     // ⏰ قراءة وقت انتهاء الامتحان
     const endTimeRaw = document.getElementById('onlineExamEndTime').value;
     if (!endTimeRaw) return showToast('يرجى تحديد موعد إغلاق الامتحان ⏰', 'error');
-    const endTimestamp = new Date(endTimeRaw).getTime(); // تحويل الوقت لرقم عشان نعرف نحسبه
+    const endTimestamp = new Date(endTimeRaw).getTime(); 
 
     const examCode = Math.random().toString(36).substring(2, 7).toUpperCase();
 
@@ -4990,6 +4989,23 @@ async function publishExamToCloud() {
         btnConfirm.innerText = 'جاري النشر وتجهيز الرابط... ⏳';
         btnConfirm.disabled = true;
 
+        // 💡 السحر هنا: تجهيز "قائمة المدعوين" لو الامتحان مخصص لفصل معين
+        let allowedStudentsList = [];
+        if (classId !== 'all') {
+            const docSnap = await db.collection('users').doc(user.uid).get();
+            if (docSnap.exists) {
+                let classrooms = docSnap.data().classrooms || [];
+                let targetClass = classrooms.find(c => c.id === classId);
+                if (targetClass && targetClass.students) {
+                    targetClass.students.forEach(s => {
+                        // بنحط كود الطالب واسمه (متنظف لغوياً) في القائمة المسموح بيها
+                        allowedStudentsList.push(String(s.id).trim().toLowerCase()); 
+                        allowedStudentsList.push(normalizeArabicName(s.name)); 
+                    });
+                }
+            }
+        }
+
         await db.collection('online_exams').doc(examCode).set({
             examCode: examCode,
             teacherId: user.uid,
@@ -4997,15 +5013,16 @@ async function publishExamToCloud() {
             title: title,
             questions: cleanQuestions,
             showResults: showResults,
-            endTime: endTimestamp, // ⏰ حفظ وقت النهاية في السحابة
+            endTime: endTimestamp, 
             active: true,
+            allowedStudents: allowedStudentsList, // 💡 حفظ قائمة المسموح لهم في السحابة
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         btnConfirm.style.display = 'none';
         document.getElementById('publishSuccessBox').style.display = 'block';
         document.getElementById('generatedExamCode').innerText = examCode;
-        showToast('✅ تم رفع الامتحان بنجاح!', 'success');
+        showToast('✅ تم رفع الامتحان وتأمين الدخول بنجاح!', 'success');
     } catch (e) {
         showToast('❌ حدث خطأ: ' + e.message, 'error');
         const btnConfirm = document.getElementById('btnConfirmPublish');
