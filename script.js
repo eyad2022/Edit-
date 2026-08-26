@@ -4644,13 +4644,12 @@ function normalizeArabicName(text) {
         .toLowerCase();
 }
 
-// 🚀 محرك المزامنة الآلي (المُسرَّع + المطابقة بالكود + الرادار والزر)
+// 🚀 محرك المزامنة الآلي (بالمتوازيات + كاشف الأخطاء + فلتر الزمن السحري)
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
     if(!user) return;
     
     try {
-        // تغيير شكل الزرار للتحميل
         let refreshBtn = document.getElementById('btnRefreshScores');
         if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري السحب...";
 
@@ -4661,13 +4660,10 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         let updated = false;
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         let currentStudents = classrooms[targetIndex].students;
-        let unlinkedResults = []; // مصفوفة لحفظ الأخطاء
+        let unlinkedResults = []; 
         
-        // جلب كل الدرجات بالتوازي لسرعة البرق
         const fetchPromises = examsSnap.docs.map(async (examDoc) => {
             let examData = examDoc.data();
-            
-            // التأكد إن الامتحان تبع الفصل ده أو امتحان عام للكل
             if (examData.classId !== classId && examData.classId !== 'all') return;
 
             const examTitle = examData.title || "امتحان بدون عنوان";
@@ -4675,22 +4671,32 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
             
             resultsSnap.forEach(resDoc => {
                 let resData = resDoc.data();
+                let rawIdentifier = resData.studentIdentifier || resData.studentName || "غير معروف";
+                let identifier = normalizeArabicName(rawIdentifier); 
                 
-                // تنظيف الكود المدخل
-                let studentInput = String(resData.studentIdentifier || resData.studentName || "").trim().toLowerCase(); 
-                
-                // مطابقة الكود المدخل مع أكواد الطلاب في كشف المدرس
                 let studentIndex = currentStudents.findIndex(s => 
-                    String(s.id).trim().toLowerCase() === studentInput || 
-                    String(s.name).trim().toLowerCase() === studentInput
+                    normalizeArabicName(s.id) === identifier || 
+                    normalizeArabicName(s.name) === identifier
                 );
                 
                 let formattedScore = resData.score + ' / ' + resData.total;
                 let newRecord = `${examTitle}|${formattedScore}`;
 
-                // لو لقينا الطالب، نحدث سجل درجاته
                 if(studentIndex > -1) {
                     let student = currentStudents[studentIndex];
+
+                    // 💡 الحماية الذكية: لو الطالب امتحن قبل ما يتضاف للفصل ده، نتجاهل الدرجة!
+                    let submittedTime = 0;
+                    if (resData.submittedAt) {
+                        submittedTime = typeof resData.submittedAt.toMillis === 'function' 
+                                        ? resData.submittedAt.toMillis() 
+                                        : Date.parse(resData.submittedAt);
+                    }
+
+                    // لو عنده تاريخ إضافة، والامتحان ده اتسلم قبل تاريخ إضافته، متسجلوش!
+                    if (student.enrolledAt && submittedTime > 0 && submittedTime < student.enrolledAt) {
+                        return; // 🛑 تخطي هذه النتيجة القديمة تماماً لتبدأ ببيانات جديدة
+                    }
                     
                     if (!student.examRecords) student.examRecords = {};
                     
@@ -4699,25 +4705,20 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
                         updated = true;
                     }
                 } else {
-                    // لو ملقيناش الطالب، نضيفه في الرادار الأصفر
-                    unlinkedResults.push({ code: resData.studentIdentifier || resData.studentName, record: newRecord });
+                    unlinkedResults.push({ code: rawIdentifier, record: newRecord });
                 }
             });
         });
 
-        // انتظار انتهاء السحب
         await Promise.all(fetchPromises);
         
-        // تحديث قاعدة البيانات والشاشة فقط إذا وجدنا درجات جديدة
         if(updated) {
             await db.collection('users').doc(user.uid).update({ classrooms: classrooms });
-            window.tempClassroomsData = classrooms; // تحديث النسخة المؤقتة للزرار
+            window.tempClassroomsData = classrooms;
         }
         
-        // رسم الجدول بالبيانات المحدثة والرادار
         renderStudentsTable(currentStudents, classId, unlinkedResults);
         
-        // إرجاع شكل الزرار لطبيعته
         if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
         
     } catch(e) {
@@ -4726,7 +4727,7 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
     }
 }
-// إضافة طالب (بمراقبة الباقة)
+// إضافة طالب (بمراقبة الباقة + تسجيل لحظة الانضمام)
 async function addStudentToClass(classId) {
     const user = auth.currentUser;
     if (!user) return;
@@ -4742,7 +4743,6 @@ async function addStudentToClass(classId) {
 
     if (!isVIP && totalStudents >= 30) {
         showToast('⚠️ وصلت للحد الأقصى للطلاب (30) في الباقة المجانية!', 'error');
-        // إذا كان لديك نافذة للـ VIP يمكن استدعاؤها هنا
         if (typeof openVIPModalManual === 'function') openVIPModalManual();
         return;
     }
@@ -4760,14 +4760,15 @@ async function addStudentToClass(classId) {
             classrooms[targetIndex].students.push({
                 id: studentId,
                 name: studentName.trim(),
-                lastScore: null
+                lastScore: null,
+                enrolledAt: Date.now() // 💡 سر الحماية الجديد: تسجيل لحظة الانضمام بالمللي ثانية
             });
             
             await docRef.update({ classrooms: classrooms });
             showToast(`✅ تمت إضافة (${studentName}) بنجاح! كوده: ${studentId}`, 'success');
             
-            loadClassroomsFromCloud(); // تحديث الواجهة الخلفية
-            viewClassDetails(classId); // تحديث النافذة المفتوحة
+            loadClassroomsFromCloud(); 
+            viewClassDetails(classId); 
         }
     } catch(e) {
         showToast('❌ خطأ أثناء الإضافة', 'error');
