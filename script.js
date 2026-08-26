@@ -4537,7 +4537,7 @@ async function createNewClassroom() {
     }
 }
 
-// عرض نافذة الفصل وإضافة طالب (محدثة بزر الحذف والمزامنة الآلية)
+// عرض نافذة الفصل وإضافة طالب (محدثة بزر الحذف والمزامنة الآلية وزر التحديث السريع)
 let currentViewedClassId = null;
 
 async function viewClassDetails(classId) {
@@ -4555,7 +4555,12 @@ async function viewClassDetails(classId) {
         
         if (!targetClass) return;
 
-        document.getElementById('modalClassName').innerText = targetClass.name;
+        // 💡 إضافة زر التحديث السريع بجوار اسم الفصل (الإضافة الأولى)
+        document.getElementById('modalClassName').innerHTML = `${targetClass.name} <button id="btnRefreshScores" onclick="syncOnlineScores('${classId}', window.tempClassroomsData, window.tempTargetClass)" style="margin-right: 15px; background: #e0e7ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; font-family: inherit;"><i class='bx bx-refresh'></i> تحديث الدرجات</button>`;
+        
+        // حفظ المتغيرات مؤقتاً عشان زر التحديث يشتغل
+        window.tempClassroomsData = classrooms;
+        window.tempTargetClass = targetClass;
         
         // 💡 استدعاء دالة رسم الجدول المحدثة
         renderStudentsTable(targetClass.students, classId);
@@ -4569,42 +4574,62 @@ async function viewClassDetails(classId) {
     } catch(e) {}
 }
 
-// دالة رسم الجدول (النسخة المستقرة والنظيفة)
-function renderStudentsTable(students, classId) {
+// دالة رسم الجدول (النسخة المستقرة والنظيفة + رادار الأخطاء)
+function renderStudentsTable(students, classId, unlinkedResults = []) {
     let tbody = document.getElementById('modalStudentsList');
     tbody.innerHTML = '';
 
     if (!students || students.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #64748b; text-align: center;">لا يوجد طلاب في هذا الفصل بعد.</td></tr>';
-        return;
+    } else {
+        students.forEach((std, idx) => {
+            let scoresHtml = '';
+            
+            // رص الامتحانات المتعددة للطالب
+            if (std.examRecords && Object.keys(std.examRecords).length > 0) {
+                Object.values(std.examRecords).forEach(record => {
+                    let parts = record.split('|'); 
+                    scoresHtml += `<div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--primary-color); font-weight: bold; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${parts[0]}</span> <span style="color: #10b981; font-weight: 900; direction: ltr; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${parts[1]}</span></div>`;
+                });
+            } else if (std.lastScore) { 
+                scoresHtml = `<div style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 4px 10px; border-radius: 6px;">${std.lastScore}</div>`;
+            } else {
+                scoresHtml = `<div style="color: #94a3b8; font-size: 12px; padding: 10px 0;">لم يمتحن بعد 📭</div>`;
+            }
+
+            tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 15px; color: #64748b;">${idx + 1}</td>
+                <td style="padding: 15px; font-weight: bold; color: #1e293b;">${std.name}</td>
+                <td style="padding: 15px; font-family: monospace; color: #64748b; font-size: 13px;">${std.id}</td>
+                <td style="padding: 15px; min-width: 200px; vertical-align: top;">${scoresHtml}</td>
+                <td style="padding: 15px; vertical-align: top;">
+                    <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; font-size: 18px;"><i class='bx bx-trash'></i></button>
+                </td>
+            </tr>`;
+        });
     }
 
-    students.forEach((std, idx) => {
-        let scoresHtml = '';
-        
-        // رص الامتحانات المتعددة للطالب
-        if (std.examRecords && Object.keys(std.examRecords).length > 0) {
-            Object.values(std.examRecords).forEach(record => {
-                let parts = record.split('|'); 
-                scoresHtml += `<div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--primary-color); font-weight: bold; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${parts[0]}</span> <span style="color: #10b981; font-weight: 900; direction: ltr; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${parts[1]}</span></div>`;
-            });
-        } else if (std.lastScore) { 
-            scoresHtml = `<div style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 4px 10px; border-radius: 6px;">${std.lastScore}</div>`;
-        } else {
-            scoresHtml = `<div style="color: #94a3b8; font-size: 12px; padding: 10px 0;">لم يمتحن بعد 📭</div>`;
-        }
-
-        tbody.innerHTML += `
-        <tr style="border-bottom: 1px solid #e2e8f0;">
-            <td style="padding: 15px; color: #64748b;">${idx + 1}</td>
-            <td style="padding: 15px; font-weight: bold; color: #1e293b;">${std.name}</td>
-            <td style="padding: 15px; font-family: monospace; color: #64748b; font-size: 13px;">${std.id}</td>
-            <td style="padding: 15px; min-width: 200px; vertical-align: top;">${scoresHtml}</td>
-            <td style="padding: 15px; vertical-align: top;">
-                <button onclick="removeStudentFromClass('${classId}', '${std.id}')" title="حذف الطالب" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; font-size: 18px;"><i class='bx bx-trash'></i></button>
-            </td>
-        </tr>`;
-    });
+    // 💡 عرض الأكواد التي امتحنت ولم يتم التعرف عليها (الإضافة الثانية - الرادار)
+    if (unlinkedResults && unlinkedResults.length > 0) {
+        tbody.innerHTML += `<tr><td colspan="5" style="background: #fffbeb; padding: 12px; text-align: center; font-weight: bold; color: #d97706; border-top: 3px dashed #fcd34d;">⚠️ درجات بكود خاطئ (طلاب أدخلوا كوداً غير موجود بالكشف)</td></tr>`;
+        unlinkedResults.forEach(res => {
+            let parts = res.record.split('|'); 
+            tbody.innerHTML += `
+            <tr style="background: #fef3c7; border-bottom: 1px solid #fde68a;">
+                <td style="padding: 15px; color: #b45309;">❓</td>
+                <td style="padding: 15px; font-weight: bold; color: #b45309;">طالب مجهول</td>
+                <td style="padding: 15px; font-family: monospace; color: #ef4444; font-size: 13px; font-weight: bold;">${res.code}</td>
+                <td style="padding: 15px; min-width: 200px; vertical-align: top;">
+                    <div style="background: white; border: 1px solid #fcd34d; padding: 6px 10px; border-radius: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #d97706; font-weight: bold;">${parts[0]}</span> 
+                        <span style="color: #10b981; font-weight: 900; direction: ltr; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${parts[1]}</span>
+                    </div>
+                </td>
+                <td style="padding: 15px;"></td>
+            </tr>`;
+        });
+    }
 }
 
 // دالة مساعدة لتوحيد الحروف العربية وتجاهل الهمزات والتاء المربوطة (لمنع أخطاء إدخال الطلاب)
@@ -4619,12 +4644,16 @@ function normalizeArabicName(text) {
         .toLowerCase();
 }
 
-// 🚀 محرك المزامنة الآلي (المُسرَّع + المطابقة بالكود)
+// 🚀 محرك المزامنة الآلي (المُسرَّع + المطابقة بالكود + الرادار والزر)
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
     if(!user) return;
     
     try {
+        // تغيير شكل الزرار للتحميل
+        let refreshBtn = document.getElementById('btnRefreshScores');
+        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري السحب...";
+
         const examsSnap = await db.collection('online_exams')
             .where('teacherId', '==', user.uid)
             .get();
@@ -4632,6 +4661,7 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         let updated = false;
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         let currentStudents = classrooms[targetIndex].students;
+        let unlinkedResults = []; // مصفوفة لحفظ الأخطاء
         
         // جلب كل الدرجات بالتوازي لسرعة البرق
         const fetchPromises = examsSnap.docs.map(async (examDoc) => {
@@ -4655,11 +4685,12 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
                     String(s.name).trim().toLowerCase() === studentInput
                 );
                 
+                let formattedScore = resData.score + ' / ' + resData.total;
+                let newRecord = `${examTitle}|${formattedScore}`;
+
                 // لو لقينا الطالب، نحدث سجل درجاته
                 if(studentIndex > -1) {
                     let student = currentStudents[studentIndex];
-                    let formattedScore = resData.score + ' / ' + resData.total;
-                    let newRecord = `${examTitle}|${formattedScore}`;
                     
                     if (!student.examRecords) student.examRecords = {};
                     
@@ -4667,6 +4698,9 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
                         student.examRecords[examDoc.id] = newRecord;
                         updated = true;
                     }
+                } else {
+                    // لو ملقيناش الطالب، نضيفه في الرادار الأصفر
+                    unlinkedResults.push({ code: resData.studentIdentifier || resData.studentName, record: newRecord });
                 }
             });
         });
@@ -4677,13 +4711,19 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         // تحديث قاعدة البيانات والشاشة فقط إذا وجدنا درجات جديدة
         if(updated) {
             await db.collection('users').doc(user.uid).update({ classrooms: classrooms });
+            window.tempClassroomsData = classrooms; // تحديث النسخة المؤقتة للزرار
         }
         
-        // رسم الجدول بالبيانات المحدثة أو الحالية
-        renderStudentsTable(currentStudents, classId);
+        // رسم الجدول بالبيانات المحدثة والرادار
+        renderStudentsTable(currentStudents, classId, unlinkedResults);
+        
+        // إرجاع شكل الزرار لطبيعته
+        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
         
     } catch(e) {
         console.error("خطأ في المزامنة:", e);
+        let refreshBtn = document.getElementById('btnRefreshScores');
+        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
     }
 }
 // إضافة طالب (بمراقبة الباقة)

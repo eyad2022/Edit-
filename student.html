@@ -77,7 +77,7 @@
         }
         .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
         
-        /* ⏰ التعديل الجديد: تصميم الأسئلة والعداد الطاير */
+        /* تصميم الأسئلة */
         .question-card {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -323,7 +323,7 @@
             container.innerHTML = html;
         }
 
-        // تم إضافة مُعامل isAuto عشان نتخطى رسالة التأكيد لو الوقت خلص
+        // 💡 التعديل هنا: الدالة اتبرمجت عشان تظهر "جاري التحميل" ومتطلعش النتيجة الخضراء إلا لو السيرفر وافق!
         async function submitExam(isAuto = false) {
             if (!isAuto && !confirm('هل أنت متأكد من تسليم الإجابات؟ لن تتمكن من التعديل بعد التسليم.')) return;
 
@@ -350,41 +350,63 @@
                 }
             });
 
+            // إخفاء الامتحان وإظهار شاشة (جاري التحميل) للطالب
             document.getElementById('examSection').style.display = 'none';
-            document.getElementById('resultSection').style.display = 'block';
+            const resultSec = document.getElementById('resultSection');
+            resultSec.style.display = 'block';
+            resultSec.innerHTML = `<i class='bx bx-loader-alt bx-spin' style="font-size: 80px; color: var(--primary-color);"></i><h2 style="color: #0f172a;">جاري إرسال وتصحيح الإجابات... ⏳</h2>`;
 
-            if (currentExamData.showResults) {
-                document.getElementById('scoreDisplay').style.display = 'block';
-                document.getElementById('finalScoreText').innerText = `${correctCount} / ${totalAutoGraded}`;
-                
-                let percentage = (correctCount / totalAutoGraded) * 100;
-                let feedback = document.getElementById('feedbackText');
-                if (percentage >= 85) { feedback.innerText = "أداء ممتاز! 🌟"; feedback.style.color = "#10b981"; }
-                else if (percentage >= 50) { feedback.innerText = "لقد اجتزت الاختبار 👍"; feedback.style.color = "#3b82f6"; }
-                else { feedback.innerText = "تحتاج إلى مزيد من المذاكرة 📚"; feedback.style.color = "#ef4444"; }
-            } else {
-                document.getElementById('hiddenResultMsg').style.display = 'block';
+            try {
+                // ننتظر رد السيرفر وتأكيد الحفظ
+                await saveResultToCloud(correctCount, totalAutoGraded, studentAnswers);
+
+                // لو السيرفر وافق، نرسم الشاشة الخضراء والنتيجة
+                let scoreHtml = '';
+                if (currentExamData.showResults) {
+                    let percentage = (correctCount / totalAutoGraded) * 100;
+                    let feedbackColor = percentage >= 85 ? "#10b981" : percentage >= 50 ? "#3b82f6" : "#ef4444";
+                    let feedbackText = percentage >= 85 ? "أداء ممتاز! 🌟" : percentage >= 50 ? "لقد اجتزت الاختبار 👍" : "تحتاج إلى مزيد من المذاكرة 📚";
+
+                    scoreHtml = `
+                        <div style="margin-top: 20px;">
+                            <p style="font-size: 18px; font-weight: bold; color: #475569;">نتيجتك هي:</p>
+                            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;">${correctCount} / ${totalAutoGraded}</div>
+                            <p style="font-weight: bold; margin-top: 10px; color: ${feedbackColor};">${feedbackText}</p>
+                        </div>`;
+                } else {
+                    scoreHtml = `
+                        <div style="margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
+                            النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
+                        </div>`;
+                }
+
+                resultSec.innerHTML = `
+                    <i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i>
+                    <h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>
+                    ${scoreHtml}
+                `;
+            } catch (error) {
+                // لو السيرفر رفض الحفظ (لأي سبب، زي إن الطالب امتحن قبل كده)
+                resultSec.innerHTML = `
+                    <i class='bx bx-error-circle' style="font-size: 80px; color: #ef4444;"></i>
+                    <h2 style="color: #ef4444;">فشل إرسال النتيجة!</h2>
+                    <p style="font-weight: bold; color: #475569;">${error.message}</p>
+                    <button class="btn" onclick="submitExam(true)" style="background: #ef4444; margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>
+                `;
             }
-
-            await saveResultToCloud(correctCount, totalAutoGraded, studentAnswers);
         }
 
         async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
             const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
-            try {
-                // 💡 السر هنا: بنحفظ النتيجة باسم الطالب نفسه كمفتاح المستند
-                // عشان لو حاول يدخل تاني، نلاقي المستند ده ونمنعه
-                await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).set({
-                    studentIdentifier: studentIdentifier,
-                    score: correctCount,
-                    total: totalAutoGraded,
-                    answers: studentAnswers,
-                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                console.log("تم الإرسال بنجاح!");
-            } catch (error) { 
-                showToast("حدث خطأ أثناء إرسال الدرجة"); 
-            }
+            
+            // تم إزالة try/catch من هنا لكي ينتقل الخطأ (إن وجد) للدالة السابقة وتعرض رسالة الخطأ للطالب
+            await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).set({
+                studentIdentifier: studentIdentifier,
+                score: correctCount,
+                total: totalAutoGraded,
+                answers: studentAnswers,
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
         }
     </script>
 </body>
