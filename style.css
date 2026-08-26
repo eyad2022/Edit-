@@ -4237,3 +4237,29 @@ body.dark-mode .futuristic-control-bar {
     border: 1px solid rgba(139, 92, 246, 0.3) !important;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(139, 92, 246, 0.05) !important;
 }
+/* 📱 تعديل شكل التبويبات ولوحة التحكم في الموبايل ليكونوا زرارين بجوار بعض */
+@media (max-width: 768px) {
+    .tabs, .lms-buttons-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+        width: 100% !important; /* نقلنا العرض 100% هنا عشان يشتغل ع الموبايل بس */
+    }
+    
+    .tabs > button, .lms-buttons-container > button {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12px 5px !important;
+        font-size: 13px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        justify-content: center !important;
+    }
+    
+    /* جعل الزر الفردي الأخير يأخذ عرض الشاشة بالكامل ليحافظ على التناسق */
+    .tabs > button:last-child:nth-child(odd),
+    .lms-buttons-container > button:last-child:nth-child(odd) {
+        grid-column: 1 / -1 !important;
+    }
+}
