@@ -5038,3 +5038,159 @@ function copyExamCode() {
         showToast('تم نسخ الكود بنجاح 📋', 'success');
     });
 }
+/* ========================================================
+   🌐 مركز إدارة الامتحانات السحابية (التمديد والتنظيف)
+   ======================================================== */
+
+/* ========================================================
+   🌐 مركز إدارة الامتحانات السحابية (التمديد والتنظيف)
+   ======================================================== */
+
+// 1. بناء النافذة المنبثقة آلياً عند تحميل الصفحة (بدون الزرار)
+window.addEventListener('DOMContentLoaded', () => {
+    // نافذة التحكم (Modal)
+    const modalHtml = `
+    <div id="manageExamsModal" class="custom-modal" style="display:none; z-index: 999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div class="modal-content" style="max-width: 850px; width: 95%; max-height: 90vh; text-align: right; background: var(--ui-container); border: 1px solid var(--ui-border); padding: 25px; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 20px; flex-shrink: 0;">
+                <h2 style="margin: 0; color: #3b82f6; display: flex; align-items: center; gap: 8px;"><i class='bx bx-server'></i> إدارة الامتحانات المنشورة</h2>
+                <button onclick="document.getElementById('manageExamsModal').style.display='none'" style="background: #fee2e2; color: #ef4444; border: none; width: 35px; height: 35px; border-radius: 8px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✖</button>
+            </div>
+            <div id="manageExamsList" style="overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; gap: 12px;">
+                <!-- ستظهر الامتحانات هنا -->
+            </div>
+        </div>
+    </div>`;
+    
+    // التحقق من عدم تكرار المودال
+    if (!document.getElementById('manageExamsModal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+});
+
+// 2. دالة فتح المركز وجلب الامتحانات
+async function openManageExamsModal() {
+    const user = auth.currentUser;
+    if (!user) return showToast('يرجى تسجيل الدخول أولاً', 'error');
+
+    document.getElementById('manageExamsModal').style.display = 'flex';
+    const listDiv = document.getElementById('manageExamsList');
+    listDiv.innerHTML = '<div style="text-align: center; padding: 30px;"><i class="bx bx-loader-alt bx-spin" style="font-size: 40px; color: #3b82f6;"></i><br><strong style="color: #64748b;">جاري جلب الامتحانات من السحابة...</strong></div>';
+
+    try {
+        const examsSnap = await db.collection('online_exams').where('teacherId', '==', user.uid).get();
+
+        if (examsSnap.empty) {
+            listDiv.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 30px; font-weight: bold; font-size: 18px;"><i class="bx bx-folder-open" style="font-size: 50px;"></i><br>لا توجد امتحانات منشورة حالياً.</div>';
+            return;
+        }
+
+        // ترتيب الامتحانات من الأحدث للأقدم
+        let exams = [];
+        examsSnap.forEach(doc => exams.push({ id: doc.id, ...doc.data() }));
+        exams.sort((a, b) => {
+            let tA = a.createdAt ? (typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : 0) : 0;
+            let tB = b.createdAt ? (typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : 0) : 0;
+            return tB - tA;
+        });
+
+        let html = '';
+        exams.forEach(data => {
+            let isExpired = data.endTime && Date.now() > data.endTime;
+            let statusBadge = isExpired 
+                ? '<span style="background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-x-circle"></i> مغلق (منتهي)</span>' 
+                : '<span style="background: #d1fae5; color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-check-circle"></i> مفتوح (نشط)</span>';
+            
+            let endDateTime = data.endTime ? new Date(data.endTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) : 'غير محدد';
+
+            html += `
+            <div style="border: 1px solid #e2e8f0; background: #f8fafc; padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div style="flex: 1; min-width: 250px;">
+                    <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 17px;">${data.title} ${statusBadge}</h3>
+                    <div style="font-size: 13px; color: #64748b; font-weight: bold;">
+                        كود الدخول: <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #334155; font-family: monospace;">${data.id}</span> 
+                        | موعد الإغلاق: <span style="color: #ef4444;">${endDateTime}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="extendExamTime('${data.id}', '${data.classId}')" title="تمديد الوقت وتحديث قائمة الطلاب الجدد" style="background: #e0e7ff; color: #4f46e5; border: 1px solid #c7d2fe; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s;"><i class='bx bx-time-five'></i> تمديد الوقت</button>
+                    <button onclick="deleteCloudExam('${data.id}')" title="مسح الامتحان ونتائجه نهائياً من السحابة" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s;"><i class='bx bx-trash'></i> مسح نهائي</button>
+                </div>
+            </div>`;
+        });
+        listDiv.innerHTML = html;
+
+    } catch (e) {
+        listDiv.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">خطأ: ${e.message}</div>`;
+    }
+}
+
+// 3. دالة تمديد الوقت (وتحديث قائمة الطلاب السحرية)
+async function extendExamTime(examId, classId) {
+    let now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    let defaultTime = now.toISOString().slice(0, 16); // تنسيق الوقت المحلي
+    
+    let newTimeStr = prompt("أدخل تاريخ ووقت الإغلاق الجديد:\n(مثال: 2026-08-25T15:30)", defaultTime);
+    if (!newTimeStr) return;
+
+    let newEndTime = new Date(newTimeStr).getTime();
+    if (isNaN(newEndTime)) return showToast('تنسيق الوقت غير صحيح', 'error');
+
+    try {
+        showToast('جاري تمديد الوقت وتحديث قائمة الطلاب... ⏳', 'info');
+        let updateData = { endTime: newEndTime };
+
+        // 💡 السحر هنا: لو الامتحان مخصص لفصل، هنجيب الطلاب الجُداد ونضيفهم لتذكرة الدخول!
+        if (classId !== 'all') {
+            const user = auth.currentUser;
+            const docSnap = await db.collection('users').doc(user.uid).get();
+            if (docSnap.exists) {
+                let classrooms = docSnap.data().classrooms || [];
+                let targetClass = classrooms.find(c => c.id === classId);
+                if (targetClass && targetClass.students) {
+                    let allowedStudentsList = [];
+                    targetClass.students.forEach(s => {
+                        allowedStudentsList.push(String(s.id).trim().toLowerCase()); 
+                        allowedStudentsList.push(normalizeArabicName(s.name)); 
+                    });
+                    updateData.allowedStudents = allowedStudentsList;
+                }
+            }
+        }
+
+        await db.collection('online_exams').doc(examId).update(updateData);
+        showToast('✅ تم تمديد الوقت وتحديث قائمة المسموح لهم بنجاح!', 'success');
+        openManageExamsModal(); // تحديث الشاشة
+        
+    } catch (e) {
+        showToast('❌ خطأ في التحديث: ' + e.message, 'error');
+    }
+}
+
+// 4. دالة المسح النهائي (مسح الورقة مع الاحتفاظ بالدرجات في الكشف)
+async function deleteCloudExam(examId) {
+    // 💡 رسالة تنبيه دقيقة تطمئن المدرس
+    if (!confirm('هل أنت متأكد من مسح ورقة هذا الامتحان؟\n\n(ملاحظة هامة: سيتم مسح الأسئلة وتفاصيل إجابات الطلاب لتوفير مساحة السحابة، لكن "الدرجات النهائية" ستظل محفوظة بأمان داخل كشوفات فصولك!)')) return;
+
+    try {
+        showToast('جاري مسح ورقة الامتحان والاحتفاظ بالدرجات في الكشف... 🧹', 'info');
+        
+        // مسح تفاصيل إجابات الطلاب أولاً (Results Subcollection)
+        const resultsSnap = await db.collection('online_exams').doc(examId).collection('results').get();
+        const deletePromises = [];
+        resultsSnap.forEach(doc => {
+            deletePromises.push(doc.ref.delete());
+        });
+        await Promise.all(deletePromises);
+
+        // مسح ورقة الامتحان نفسه
+        await db.collection('online_exams').doc(examId).delete();
+
+        showToast('🗑️ تم مسح الامتحان بنجاح، ودرجات الطلاب في أمان!', 'success');
+        openManageExamsModal(); // تحديث الشاشة
+
+    } catch(e) {
+        showToast('❌ خطأ في المسح: ' + e.message, 'error');
+    }
+}
