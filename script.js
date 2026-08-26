@@ -4807,62 +4807,107 @@ firebase.auth().onAuthStateChanged((user) => {
         setTimeout(loadClassroomsFromCloud, 1000);
     }
 });
-// دالة حذف فصل بالكامل
+// دالة حذف فصل بالكامل (مع التنظيف العميق لنتائج جميع طلابه)
 async function deleteClassroom(classId) {
     const user = auth.currentUser;
     if (!user) return;
 
-    if (!confirm("⚠️ تحذير: هل أنت متأكد من حذف هذا الفصل بجميع طلابه ودرجاتهم نهائياً؟\n(هذا الإجراء لا يمكن التراجع عنه!)")) {
+    if (!confirm("⚠️ تحذير خطير: هل أنت متأكد من حذف هذا الفصل بجميع طلابه؟\nسيتم مسح الفصل بالكامل وحرق جميع درجات طلابه من قاعدة البيانات نهائياً!")) {
         return;
     }
 
     try {
+        showToast('جاري الحذف العميق للفصل وطلابه... ⏳', 'info');
+
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
         let classrooms = docSnap.data().classrooms || [];
 
-        // تصفية الفصول (نحتفظ بكل الفصول ما عدا اللي عايزين نحذفه)
-        classrooms = classrooms.filter(c => c.id !== classId);
-
-        await docRef.update({ classrooms: classrooms });
+        // 1. استخراج بيانات الفصل قبل حذفه لمعرفة أكواد الطلاب اللي جواه
+        const targetClass = classrooms.find(c => c.id === classId);
+        if (!targetClass) return;
         
-        showToast('🗑️ تم حذف الفصل بجميع بياناته بنجاح', 'success');
+        // تجميع كل أكواد طلاب هذا الفصل في مصفوفة
+        const studentsIds = targetClass.students ? targetClass.students.map(s => s.id) : [];
+
+        // 2. مسح الفصل من حساب المدرس
+        classrooms = classrooms.filter(c => c.id !== classId);
+        await docRef.update({ classrooms: classrooms });
+
+        // 3. 🧹 التنظيف العميق: حرق درجات جميع طلاب هذا الفصل من كل الامتحانات
+        if (studentsIds.length > 0) {
+            const examsSnap = await db.collection('online_exams')
+                .where('teacherId', '==', user.uid)
+                .get();
+
+            const deletePromises = [];
+            
+            // اللف على كل الامتحانات، وجواها نلف على كل طالب في الفصل ونمسح نتيجته
+            examsSnap.docs.forEach(examDoc => {
+                studentsIds.forEach(studentId => {
+                    let p = examDoc.ref.collection('results').doc(studentId).delete().catch(e => {});
+                    deletePromises.push(p);
+                });
+            });
+
+            // انتظار انتهاء مسح كل الدرجات من سيرفرات Firebase
+            await Promise.all(deletePromises);
+        }
+        
+        showToast('🗑️ تم حذف الفصل ومسح جميع بيانات طلابه بنجاح', 'success');
         loadClassroomsFromCloud(); // تحديث واجهة الفصول
 
     } catch (e) {
         showToast('❌ حدث خطأ أثناء الحذف', 'error');
+        console.error(e);
     }
 }
-
-// دالة حذف طالب محدد من فصل
+// دالة حذف طالب محدد من فصل (مع التنظيف العميق من قاعدة البيانات)
 async function removeStudentFromClass(classId, studentId) {
     const user = auth.currentUser;
     if (!user) return;
 
-    if (!confirm("⚠️ هل أنت متأكد من مسح بيانات هذا الطالب؟")) {
+    if (!confirm("⚠️ هل أنت متأكد من حذف هذا الطالب؟ \nسيتم مسح اسمه من الكشف وحرق جميع درجاته السابقة من قاعدة البيانات نهائياً!")) {
         return;
     }
 
     try {
+        let refreshBtn = document.getElementById('btnRefreshScores');
+        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري الحذف العميق...";
+
+        // 1. مسح الطالب من كشف الفصل في حساب المدرس
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
         let classrooms = docSnap.data().classrooms || [];
         
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         if (targetIndex > -1) {
-            // تصفية طلاب هذا الفصل (نحتفظ بكل الطلاب ما عدا اللي عايزين نحذفه)
             classrooms[targetIndex].students = classrooms[targetIndex].students.filter(s => s.id !== studentId);
-            
             await docRef.update({ classrooms: classrooms });
-            
-            showToast('🗑️ تم حذف الطالب بنجاح', 'success');
-            
-            // تحديث الواجهة والنافذة المفتوحة
-            loadClassroomsFromCloud(); 
-            viewClassDetails(classId); 
         }
+
+        // 2. 🧹 التنظيف العميق (Deep Clean): لفة على كل امتحانات المدرس ومسح أوراق الطالب
+        const examsSnap = await db.collection('online_exams')
+            .where('teacherId', '==', user.uid)
+            .get();
+
+        const deletePromises = examsSnap.docs.map(examDoc => {
+            // محاولة حذف النتيجة، وبنستخدم catch عشان لو الطالب ممتحنش الامتحان ده السيستم يتجاهل بدون أخطاء
+            return examDoc.ref.collection('results').doc(studentId).delete().catch(e => {});
+        });
+
+        // انتظار انتهاء مسح كل الدرجات من سيرفرات Firebase
+        await Promise.all(deletePromises);
+        
+        showToast('🗑️ تم حذف الطالب ومسح تاريخه بالكامل بنجاح', 'success');
+        
+        // تحديث الواجهة والنافذة المفتوحة
+        loadClassroomsFromCloud(); 
+        viewClassDetails(classId); 
+        
     } catch (e) {
-        showToast('❌ حدث خطأ أثناء حذف الطالب', 'error');
+        showToast('❌ حدث خطأ أثناء الحذف', 'error');
+        console.error(e);
     }
 }
 /* ========================================================
