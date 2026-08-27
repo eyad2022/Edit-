@@ -2271,9 +2271,28 @@ async function executeExport(printType) {
     }
     else if (printType !== 'bubble' && qC === 0 && currentMode === 'questions') return showToast('أدرج الأسئلة والمفردات الاختبارية أولاً', 'error');
 
-    if (currentMode === 'text') {
+ if (currentMode === 'text') {
         pA.className = 'print-mode-text';
-        pA.innerHTML = generatePageHTML(`<div class="content-card general-text-display">${document.getElementById('generalTextInput').innerHTML}</div>`, getBackgroundCSS());
+        let textContent = document.getElementById('generalTextInput').innerHTML;
+        
+        // 💡 استخدام white-space: pre-wrap لاحترام المسافات الإجبارية
+        let htmlOutput = generatePageHTML(`<div class="content-card general-text-display" style="white-space: pre-wrap !important; color: var(--text-color) !important;">${textContent}</div>`, getBackgroundCSS());
+        
+        // 💡 السحر هنا: كود CSS مخصص لطباعة محرر النصوص يمنع إخفاء السطور الفارغة
+        htmlOutput += `
+        <style>
+            #wordPrintPreviewArea.print-mode-text .pdf-page br { 
+                display: block !important; 
+                content: normal !important; 
+            }
+            #wordPrintPreviewArea.print-mode-text .general-text-display p,
+            #wordPrintPreviewArea.print-mode-text .general-text-display div { 
+                min-height: 1.5em !important; 
+            }
+        </style>
+        `;
+        
+        pA.innerHTML = htmlOutput;
     }
     else {
         pA.className = 'print-mode-questions';
