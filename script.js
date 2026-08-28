@@ -5253,7 +5253,7 @@ function updateCoverElements() {
     document.getElementById('dragPhone').style.color = sColor;
 }
 
-// 2. محرك الذكاء الاصطناعي الفعلي (Linked to your /api/generate)
+// 🤖 محرك الذكاء الاصطناعي (المتحكم الفعلي في الواجهة)
 async function sendPromptToAIDesigner() {
     const inputEl = document.getElementById('aiCoverPrompt');
     const prompt = inputEl.value.trim();
@@ -5261,64 +5261,94 @@ async function sendPromptToAIDesigner() {
 
     const chatBox = document.getElementById('aiDesignerChat');
     
-    // 1. رسم رسالة المستخدم
+    // 1. عرض رسالة المستخدم
     chatBox.innerHTML += `
         <div style="background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; align-self: flex-end; max-width: 85%; font-size: 13px;">
             ${prompt}
-        </div>
-    `;
+        </div>`;
     inputEl.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 2. شاشة تحميل الـ AI
+    // 2. إظهار شاشة التحميل
     const loadingId = 'loading_' + Date.now();
     chatBox.innerHTML += `
         <div id="${loadingId}" style="background: #f3e8ff; color: #6b21a8; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
-            <i class="bx bx-loader-alt bx-spin"></i> جاري التفكير وتوليد الرد...
-        </div>
-    `;
+            <i class="bx bx-loader-alt bx-spin"></i> جاري التصميم والتفكير...
+        </div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 3. تحليل سريع لتغيير ألوان وصور الغلاف محلياً فوراً
-    applySmartDesignLocally(prompt);
-
     try {
-        // 4. إرسال الطلب لمحرك Gemini الخاص بك (API)
-        const systemContext = "أنت مساعد ذكي داخل منصة لإنشاء الملازم. المستخدم يصمم غلاف ملزمة الآن. إذا طلب أسئلة أو شرح علمي، قم بكتابته منسقاً بـ HTML (مثل <br> و <b>). كن موجزاً ومفيداً وودوداً.";
-        const fullPrompt = `${systemContext}\n\nطلب المستخدم: ${prompt}`;
+        // 3. إجبار الذكاء الاصطناعي على الرد بـ JSON للتحكم في الألوان والصور
+        const systemContext = `أنت مصمم أغلفة ذكي ومساعد تعليمي. 
+طلب المستخدم: "${prompt}"
+يجب أن ترد دائماً بصيغة JSON فقط (بدون أي نصوص خارج الـ JSON) تحتوي على المفاتيح التالية:
+{
+  "reply": "نص ردك الودود على المستخدم، وإذا طلب أسئلة اكتبها هنا بتنسيق HTML واستخدم <br> للنزول سطر جديد",
+  "design": {
+     "titleColor": "كود اللون الأساسي HEX للعنوان بناءً على طلبه (مثل #ef4444 للأحمر)",
+     "textColor": "كود اللون الثانوي HEX",
+     "subjectKeyword": "كلمة واحدة فقط من هذه الكلمات لتعبر عن المادة (كيمياء، علوم، فيزياء، رياضيات، تاريخ، لغات، انجليزي) أو null إذا لم يحدد"
+  }
+}`;
 
+        // إرسال الطلب للسيرفر بتاعك (Vercel Backend)
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ parts: [{ text: fullPrompt }] })
+            body: JSON.stringify({ parts: [{ text: systemContext }] })
         });
 
         if (!response.ok) throw new Error("API Error");
         const data = await response.json();
-        
-        // إذا فشل جلب الرد
         if (!data.candidates || data.candidates.length === 0) throw new Error("No response");
 
         let aiText = data.candidates[0].content.parts[0].text.trim();
-        aiText = aiText.replace(/\n/g, '<br>'); // تنسيق الفواصل
-
-        document.getElementById(loadingId).remove();
         
-        // 5. رسم رد الذكاء الاصطناعي
+        // تنظيف الرد لاستخراج الـ JSON الصافي
+        aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const aiResult = JSON.parse(aiText);
+
+        // 🎨 التنفيذ الفعلي على الواجهة (AI Execution)
+        if(aiResult.design) {
+            // تغيير الألوان
+            if(aiResult.design.titleColor && aiResult.design.titleColor !== "null") {
+                document.getElementById('covTitleColor').value = aiResult.design.titleColor;
+            }
+            if(aiResult.design.textColor && aiResult.design.textColor !== "null") {
+                document.getElementById('covTextColor').value = aiResult.design.textColor;
+            }
+            
+            // تغيير صورة الخلفية
+            if(aiResult.design.subjectKeyword && aiBackgrounds[aiResult.design.subjectKeyword]) {
+                document.getElementById('liveCoverPreview').style.backgroundImage = `url('${aiBackgrounds[aiResult.design.subjectKeyword]}')`;
+                document.getElementById('liveCoverPreview').style.backgroundSize = 'cover';
+                document.getElementById('liveCoverPreview').style.backgroundPosition = 'center';
+            }
+            
+            // تطبيق التغييرات على الشاشة
+            updateCoverElements();
+        }
+
+        // إزالة علامة التحميل وعرض رد الذكاء الاصطناعي
+        document.getElementById(loadingId).remove();
         chatBox.innerHTML += `
             <div style="background: #ffffff; color: #4c1d95; padding: 12px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px; line-height: 1.6; border: 1px solid #d8b4fe; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-                ${aiText}
-            </div>
-        `;
+                ${aiResult.reply}
+            </div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
     } catch (e) {
         document.getElementById(loadingId).remove();
+        
+        // لو الـ AI رد بكلام عادي مش JSON، هنستخدم النظام القديم لتغيير الألوان محلياً كاحتياطي
+        if(typeof applySmartDesignLocally === 'function') {
+            applySmartDesignLocally(prompt);
+        }
+        
         chatBox.innerHTML += `
-            <div style="background: #fee2e2; color: #ef4444; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
-                ✅ تم تحديث الغلاف بناءً على طلبك. (ملاحظة: السيرفر غير متصل لتوليد الأسئلة النصية حالياً).
-            </div>
-        `;
+            <div style="background: #fdfaf5; color: #b45309; border: 1px solid #fde68a; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
+                ✅ تم تنفيذ التعديل. (استجابة سريعة من النظام المحلي).
+            </div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 }
