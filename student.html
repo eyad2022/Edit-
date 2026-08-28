@@ -1,12 +1,13 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوابة امتحانات الطلاب - M&H</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    
+    <link rel="icon" type="image/png" href="icon.png" />
     <!-- مكتبات Firebase الأساسية -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -17,6 +18,7 @@
             --bg-color: #f8fafc;
             --text-color: #1e293b;
         }
+
         body {
             font-family: 'Cairo', sans-serif;
             background-color: var(--bg-color);
@@ -28,28 +30,33 @@
             align-items: flex-start;
             min-height: 100vh;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
             width: 100%;
             max-width: 700px;
             border-top: 6px solid var(--primary-color);
         }
+
         .header {
             text-align: center;
             margin-bottom: 30px;
         }
+
         .input-group {
             margin-bottom: 20px;
         }
+
         .input-group label {
             display: block;
             font-weight: bold;
             margin-bottom: 8px;
             color: #475569;
         }
+
         .ui-input {
             width: 100%;
             padding: 15px;
@@ -61,7 +68,11 @@
             outline: none;
             transition: 0.3s;
         }
-        .ui-input:focus { border-color: var(--primary-color); }
+
+        .ui-input:focus {
+            border-color: var(--primary-color);
+        }
+
         .btn {
             width: 100%;
             padding: 15px;
@@ -75,8 +86,12 @@
             transition: 0.3s;
             font-family: inherit;
         }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
-        
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
         /* تصميم الأسئلة */
         .question-card {
             background: #f8fafc;
@@ -85,7 +100,14 @@
             border-radius: 12px;
             margin-bottom: 15px;
         }
-        .question-title { font-weight: 900; font-size: 18px; margin-bottom: 15px; color: #0f172a; }
+
+        .question-title {
+            font-weight: 900;
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #0f172a;
+        }
+
         .option-label {
             display: flex;
             align-items: center;
@@ -98,9 +120,17 @@
             transition: 0.2s;
             font-weight: bold;
         }
-        .option-label:hover { border-color: var(--primary-color); background: #e0e7ff; }
-        input[type="radio"] { margin-left: 10px; transform: scale(1.2); }
-        
+
+        .option-label:hover {
+            border-color: var(--primary-color);
+            background: #e0e7ff;
+        }
+
+        input[type="radio"] {
+            margin-left: 10px;
+            transform: scale(1.2);
+        }
+
         .result-box {
             text-align: center;
             padding: 30px;
@@ -108,8 +138,18 @@
             margin-top: 20px;
             display: none;
         }
+
         .toast {
-            position: fixed; bottom: 20px; right: 20px; background: #ef4444; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; display: none; z-index: 1000;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ef4444;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+            z-index: 1000;
         }
 
         /* ⏰ التعديل الجديد: عداد طاير مع تأثير نبض */
@@ -135,11 +175,19 @@
 
         /* أنيميشن النبض للعداد */
         @keyframes pulseTimer {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
         }
-        
+
         /* ضبط مكان العداد في شاشات الموبايل عشان ميغطيش على حاجة */
         @media (max-width: 768px) {
             .timer-display {
@@ -154,22 +202,26 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="container" id="loginSection">
         <div class="header">
-            <h1 style="color: var(--primary-color); margin-bottom: 5px;"><i class='bx bx-laptop'></i> بوابة الامتحانات</h1>
+            <h1 style="color: var(--primary-color); margin-bottom: 5px;"><i class='bx bx-laptop'></i> بوابة الامتحانات
+            </h1>
             <p style="color: #64748b; margin-top: 0;">الرجاء إدخال بياناتك وكود الامتحان للبدء</p>
         </div>
-        
+
         <div class="input-group">
             <label>كود الامتحان (يعطيه لك المعلم)</label>
-            <input type="text" id="examCodeInput" class="ui-input" placeholder="مثال: IN2A5" style="text-transform: uppercase; font-weight: bold; letter-spacing: 2px; text-align: center;">
+            <input type="text" id="examCodeInput" class="ui-input" placeholder="مثال: IN2A5"
+                style="text-transform: uppercase; font-weight: bold; letter-spacing: 2px; text-align: center;">
         </div>
-        
+
         <div class="input-group">
             <label>كود الطالب أو الاسم الثلاثي</label>
-            <input type="text" id="studentIdentifierInput" class="ui-input" placeholder="مثال: ST_2065 أو إياد مسعد فاروق">
+            <input type="text" id="studentIdentifierInput" class="ui-input"
+                placeholder="مثال: ST_2065 أو إياد مسعد فاروق">
         </div>
 
         <button class="btn" onclick="startExam()">بدء الامتحان 🚀</button>
@@ -188,7 +240,8 @@
             <!-- سيتم حقن الأسئلة هنا برمجياً -->
         </div>
 
-        <button class="btn" onclick="submitExam()" style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 20px;">تسليم الإجابات ✅</button>
+        <button class="btn" onclick="submitExam()"
+            style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 20px;">تسليم الإجابات ✅</button>
     </div>
 
     <div class="container result-box" id="resultSection">
@@ -196,19 +249,21 @@
         <h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>
         <div id="scoreDisplay" style="display: none; margin-top: 20px;">
             <p style="font-size: 18px; font-weight: bold; color: #475569;">نتيجتك هي:</p>
-            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;" id="finalScoreText">0 / 0</div>
+            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;"
+                id="finalScoreText">0 / 0</div>
             <p id="feedbackText" style="font-weight: bold; margin-top: 10px;"></p>
         </div>
-        <div id="hiddenResultMsg" style="display: none; margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
+        <div id="hiddenResultMsg"
+            style="display: none; margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
             النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
         </div>
     </div>
 
     <div class="toast" id="toastMsg"></div>
-<script>
-    // إعدادات Firebase الخاصة بك
-    
-    const firebaseConfig = {
+    <script>
+        // إعدادات Firebase الخاصة بك
+
+        const firebaseConfig = {
             apiKey: "AIzaSyDAbNo9AHi73rTNogXHpKk9MDp8HpY16Mw",
             authDomain: "elalfey-app.firebaseapp.com",
             projectId: "elalfey-app",
@@ -219,7 +274,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-       let currentExamData = null;
+        let currentExamData = null;
         let studentIdentifier = "";
         let timerInterval = null;
 
@@ -245,8 +300,8 @@
         async function startExam() {
             const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
             const rawId = document.getElementById('studentIdentifierInput').value.trim();
-            
-            studentIdentifier = rawId.replace(/[\/\\]/g, '_'); 
+
+            studentIdentifier = rawId.replace(/[\/\\]/g, '_');
 
             if (!code || !studentIdentifier) return showToast('يرجى إدخال الكود وبياناتك بالكامل');
 
@@ -255,7 +310,7 @@
                 if (!docSnap.exists) return showToast('❌ كود الامتحان غير صحيح أو الامتحان غير متاح!');
 
                 currentExamData = docSnap.data();
-                
+
                 // 💡 التعديل الجديد (البواب الإلكتروني): لو الامتحان مش للكل، هنفتش في قائمة المدعوين
                 if (currentExamData.classId !== 'all') {
                     let allowed = currentExamData.allowedStudents || [];
@@ -325,7 +380,7 @@
             realQuestions.forEach((q, index) => {
                 html += `<div class="question-card">`;
                 html += `<div class="question-title">${index + 1}. ${q.text.replace(/\\n/g, '<br>')}</div>`;
-                
+
                 if (q.type === 'mcq' && q.options) {
                     q.options.forEach(opt => {
                         html += `<label class="option-label"><input type="radio" name="q_${index}" value="${opt.l}"> (${opt.l}) ${opt.t}</label>`;
@@ -416,7 +471,7 @@
 
         async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
             const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
-            
+
             // تم إزالة try/catch من هنا لكي ينتقل الخطأ (إن وجد) للدالة السابقة وتعرض رسالة الخطأ للطالب
             await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).set({
                 studentIdentifier: studentIdentifier,
@@ -428,4 +483,5 @@
         }
     </script>
 </body>
+
 </html>

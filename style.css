@@ -827,7 +827,8 @@ button.action-btn {
 
     padding: 15px !important;
     border: none;
-    border-radius: 20px !important; /* حواف ناعمة مثل الصورة */
+    border-radius: 20px !important;
+    /* حواف ناعمة مثل الصورة */
     color: white;
     font-weight: bold;
     font-size: 14px !important;
@@ -846,14 +847,16 @@ button.action-btn .icon,
 button.action-btn i {
     width: 48px;
     height: 48px;
-    background: rgba(255, 255, 255, 0.25); /* لون الدائرة الشفاف */
+    background: rgba(255, 255, 255, 0.25);
+    /* لون الدائرة الشفاف */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px !important; /* حجم الإيموجي ليتناسب مع الدائرة */
+    font-size: 24px !important;
+    /* حجم الإيموجي ليتناسب مع الدائرة */
     margin-bottom: 5px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 button.action-btn:hover {
@@ -864,26 +867,79 @@ button.action-btn:hover {
 }
 
 @keyframes floating {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-    100% { transform: translateY(0); }
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
 }
 
-button.action-btn:nth-child(1) { animation-delay: 0.0s; }
-button.action-btn:nth-child(2) { animation-delay: 0.2s; }
-button.action-btn:nth-child(3) { animation-delay: 0.4s; }
-button.action-btn:nth-child(4) { animation-delay: 0.6s; }
-button.action-btn:nth-child(5) { animation-delay: 0.8s; }
-button.action-btn:nth-child(6) { animation-delay: 1.0s; }
+button.action-btn:nth-child(1) {
+    animation-delay: 0.0s;
+}
+
+button.action-btn:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+button.action-btn:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+button.action-btn:nth-child(4) {
+    animation-delay: 0.6s;
+}
+
+button.action-btn:nth-child(5) {
+    animation-delay: 0.8s;
+}
+
+button.action-btn:nth-child(6) {
+    animation-delay: 1.0s;
+}
 
 /* 💡 الألوان المتطابقة مع الصورة المرفقة 100% */
-.btn-pdf-student { background: linear-gradient(135deg, #60a5fa, #3b82f6) !important; } /* أزرق فاتح */
-.btn-pdf-teacher { background: linear-gradient(135deg, #fb7185, #e11d48) !important; } /* وردي/أحمر */
-.btn-pdf-both    { background: linear-gradient(135deg, #22d3ee, #0891b2) !important; } /* سماوي/سيان */
-.btn-pdf-multi   { background: linear-gradient(135deg, #34d399, #059669) !important; } /* أخضر مريح */
-.btn-pdf-general { background: linear-gradient(135deg, #34d399, #059669) !important; font-size: 20px !important; }
-.btn-json-export { background: linear-gradient(135deg, #fbbf24, #d97706) !important; } /* برتقالي */
-.btn-json-import { background: linear-gradient(135deg, #c084fc, #9333ea) !important; } /* بنفسجي فاتح */
+.btn-pdf-student {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+}
+
+/* أزرق فاتح */
+.btn-pdf-teacher {
+    background: linear-gradient(135deg, #fb7185, #e11d48) !important;
+}
+
+/* وردي/أحمر */
+.btn-pdf-both {
+    background: linear-gradient(135deg, #22d3ee, #0891b2) !important;
+}
+
+/* سماوي/سيان */
+.btn-pdf-multi {
+    background: linear-gradient(135deg, #34d399, #059669) !important;
+}
+
+/* أخضر مريح */
+.btn-pdf-general {
+    background: linear-gradient(135deg, #34d399, #059669) !important;
+    font-size: 20px !important;
+}
+
+.btn-json-export {
+    background: linear-gradient(135deg, #fbbf24, #d97706) !important;
+}
+
+/* برتقالي */
+.btn-json-import {
+    background: linear-gradient(135deg, #c084fc, #9333ea) !important;
+}
+
+/* بنفسجي فاتح */
 #printArea {
     display: none;
     width: 100%;
@@ -1678,6 +1734,7 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
         max-height: 75vh;
     }
 }
+
 /* ========================================================
    تنسيقات القائمة الجانبية لأرشيف المحادثات
    ======================================================== */
@@ -1695,25 +1752,44 @@ button.action-btn:nth-child(6) { animation-delay: 1.0s; }
     text-overflow: ellipsis;
     transition: 0.2s;
 }
-.f-history-item:hover { background: rgba(168, 85, 247, 0.1); }
-.f-history-item.active { 
-    background: rgba(168, 85, 247, 0.15); 
-    border-color: rgba(168, 85, 247, 0.5); 
-    color: #a855f7; 
+
+.f-history-item:hover {
+    background: rgba(168, 85, 247, 0.1);
 }
 
-body.dark-mode .f-ai-sidebar { background: rgba(15, 23, 42, 0.5) !important; }
-body.dark-mode .f-history-item { background: rgba(30, 41, 59, 0.5); color: #cbd5e1; }
-body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: rgba(168, 85, 247, 0.5); }
+.f-history-item.active {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.5);
+    color: #a855f7;
+}
+
+body.dark-mode .f-ai-sidebar {
+    background: rgba(15, 23, 42, 0.5) !important;
+}
+
+body.dark-mode .f-history-item {
+    background: rgba(30, 41, 59, 0.5);
+    color: #cbd5e1;
+}
+
+body.dark-mode .f-history-item.active {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
+    border-color: rgba(168, 85, 247, 0.5);
+}
 
 /* تجاوب الموبايل للواجهة الجديدة */
 @media (max-width: 768px) {
-    .f-ai-modal { flex-direction: column !important; }
-    .f-ai-sidebar { 
-        width: 100% !important; 
-        border-left: none !important; 
-        border-bottom: 1px solid rgba(168, 85, 247, 0.2); 
-        max-height: 200px; /* لكي لا تأخذ كل الشاشة في الموبايل */
+    .f-ai-modal {
+        flex-direction: column !important;
+    }
+
+    .f-ai-sidebar {
+        width: 100% !important;
+        border-left: none !important;
+        border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+        max-height: 200px;
+        /* لكي لا تأخذ كل الشاشة في الموبايل */
     }
 }
 
@@ -1800,8 +1876,10 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
         break-inside: avoid !important;
         display: block !important;
         width: 100% !important;
-        padding: 6px 12px !important; /* تقليل الحشو الداخلي */
-        margin-bottom: 8px !important; /* تقليل المسافة بين كل سؤال والذي يليه من 25 إلى 8 */
+        padding: 6px 12px !important;
+        /* تقليل الحشو الداخلي */
+        margin-bottom: 8px !important;
+        /* تقليل المسافة بين كل سؤال والذي يليه من 25 إلى 8 */
         clear: both !important;
         border-width: 1px !important;
         border-right-width: 4px !important;
@@ -1814,17 +1892,21 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
         box-shadow: none !important;
     }
 
-   .q-text {
+    .q-text {
         font-size: 14pt !important;
-        margin-bottom: 2px !important; /* شفط المسافة بين السؤال والخيارات أسفله */
-        line-height: 1.2 !important; /* تقليل تباعد الأسطر إذا كان السؤال طويلاً */
+        margin-bottom: 2px !important;
+        /* شفط المسافة بين السؤال والخيارات أسفله */
+        line-height: 1.2 !important;
+        /* تقليل تباعد الأسطر إذا كان السؤال طويلاً */
     }
+
     .options-list.layout-row {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: wrap !important;
         justify-content: flex-start !important;
-        gap: 6px 15px !important; /* تقليل الفراغ الطولي لـ 6 بيكسل */
+        gap: 6px 15px !important;
+        /* تقليل الفراغ الطولي لـ 6 بيكسل */
         width: 100% !important;
     }
 
@@ -1841,10 +1923,11 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
         text-align: start !important;
     }
 
- .options-list.layout-grid {
+    .options-list.layout-grid {
         display: grid !important;
         grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)) !important;
-        gap: 4px 10px !important; /* تقليل الفراغات الطولية والعرضية في الشبكة */
+        gap: 4px 10px !important;
+        /* تقليل الفراغات الطولية والعرضية في الشبكة */
     }
 
     .options-list.layout-grid .option-item {
@@ -1857,10 +1940,11 @@ body.dark-mode .f-history-item.active { background: rgba(168, 85, 247, 0.2); col
         text-align: start !important;
     }
 
-.options-list.layout-col {
+    .options-list.layout-col {
         display: flex !important;
         flex-direction: column !important;
-        gap: 2px !important; /* ضغط الخيارات لتكون أسفل بعضها مباشرة */
+        gap: 2px !important;
+        /* ضغط الخيارات لتكون أسفل بعضها مباشرة */
     }
 
     .options-list.layout-col .option-item {
@@ -4165,6 +4249,7 @@ body.dark-mode .f-vip-footer {
         margin-top: 10px;
     }
 }
+
 /* ========================================================
    🎨 ألوان الموقع المستقبلية (الألوان والظلال فقط بدون مقاسات)
    ======================================================== */
@@ -4175,10 +4260,11 @@ body.dark-mode .f-vip-footer {
     border-bottom: none !important;
     box-shadow: 0 10px 30px rgba(111, 134, 214, 0.3) !important;
 }
+
 .nav-center h2 {
     background: none !important;
     -webkit-text-fill-color: #ffffff !important;
-    text-shadow: 0 2px 10px rgba(255,255,255,0.4) !important;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.4) !important;
 }
 
 /* 2. الحاوية الكبيرة: زجاج ثلجي نظيف */
@@ -4193,12 +4279,15 @@ body.dark-mode .f-vip-footer {
     background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
     border: 1px solid rgba(186, 230, 253, 0.6) !important;
     box-shadow: 0 8px 20px rgba(186, 230, 253, 0.3) !important;
-    border-radius: 20px !important; /* شكل جمالي للحواف فقط */
-    padding: 15px !important; /* لكي لا يلتصق اللون بالأزرار */
+    border-radius: 20px !important;
+    /* شكل جمالي للحواف فقط */
+    padding: 15px !important;
+    /* لكي لا يلتصق اللون بالأزرار */
 }
 
 /* 4. شرائط الأدوات والعمليات: أزرق نيلي هادئ */
-.editor-toolbar, .futuristic-control-bar {
+.editor-toolbar,
+.futuristic-control-bar {
     background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%) !important;
     border: 1px solid rgba(199, 210, 254, 0.6) !important;
     box-shadow: 0 8px 20px rgba(199, 210, 254, 0.3) !important;
@@ -4231,22 +4320,27 @@ body.dark-mode .tabs {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(99, 102, 241, 0.05) !important;
 }
 
-body.dark-mode .editor-toolbar, 
+body.dark-mode .editor-toolbar,
 body.dark-mode .futuristic-control-bar {
     background: linear-gradient(135deg, #1e293b 0%, #2e1065 100%) !important;
     border: 1px solid rgba(139, 92, 246, 0.3) !important;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(139, 92, 246, 0.05) !important;
 }
+
 /* 📱 تعديل شكل التبويبات ولوحة التحكم في الموبايل ليكونوا زرارين بجوار بعض */
 @media (max-width: 768px) {
-    .tabs, .lms-buttons-container {
+
+    .tabs,
+    .lms-buttons-container {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px !important;
-        width: 100% !important; /* نقلنا العرض 100% هنا عشان يشتغل ع الموبايل بس */
+        width: 100% !important;
+        /* نقلنا العرض 100% هنا عشان يشتغل ع الموبايل بس */
     }
-    
-    .tabs > button, .lms-buttons-container > button {
+
+    .tabs>button,
+    .lms-buttons-container>button {
         width: 100% !important;
         margin: 0 !important;
         padding: 12px 5px !important;
@@ -4256,10 +4350,10 @@ body.dark-mode .futuristic-control-bar {
         text-overflow: ellipsis !important;
         justify-content: center !important;
     }
-    
+
     /* جعل الزر الفردي الأخير يأخذ عرض الشاشة بالكامل ليحافظ على التناسق */
-    .tabs > button:last-child:nth-child(odd),
-    .lms-buttons-container > button:last-child:nth-child(odd) {
+    .tabs>button:last-child:nth-child(odd),
+    .lms-buttons-container>button:last-child:nth-child(odd) {
         grid-column: 1 / -1 !important;
     }
 }

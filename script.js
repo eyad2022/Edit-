@@ -1130,18 +1130,20 @@ function switchTab(mode, btnElement) {
     if (btnElement) btnElement.classList.add('active');
     else {
         let fallbackBtn = document.querySelector(`button[onclick*="switchTab('${mode}'"]`);
-        if(fallbackBtn) fallbackBtn.classList.add('active');
+        if (fallbackBtn) fallbackBtn.classList.add('active');
     }
 
     let tabEl = document.getElementById(mode + 'Tab');
-    if(tabEl) tabEl.classList.add('active');
+    if (tabEl) tabEl.classList.add('active');
 
     let qBtns = document.getElementById('questionActionButtons');
-    if(qBtns) qBtns.style.display = (mode === 'questions') ? 'flex' : 'none';
-    
-    let tBtns = document.getElementById('textActionButtons');
-    if(tBtns) tBtns.style.display = (mode === 'text') ? 'flex' : 'none';
+    if (qBtns) qBtns.style.display = (mode === 'questions') ? 'flex' : 'none';
 
+    let tBtns = document.getElementById('textActionButtons');
+    if (tBtns) tBtns.style.display = (mode === 'text') ? 'flex' : 'none';
+
+    let bBtns = document.getElementById('bookletActionButtons');
+    if (bBtns) bBtns.style.display = (mode === 'booklet') ? 'flex' : 'none';
     // إغلاق جميع اللوحات العائمة عند التبديل لضمان نظافة الشاشة
     ['examSettingsPanel', 'questionSettingsPanel', 'bubbleSettingsPanel', 'bubbleHeaderSettingsPanel', 'multiModelSettingsPanel', 'generalSettingsPanel', 'compactBubblePanel'].forEach(id => {
         let el = document.getElementById(id);
@@ -1151,7 +1153,7 @@ function switchTab(mode, btnElement) {
     // 💡 التعديل السحري: إخفاء القائمة الجانبية بالقوة الجبرية للتغلب على الـ CSS
     const settingsDock = document.querySelector('.settings-dock');
     if (settingsDock) {
-        if (mode === 'classrooms') {
+        if (mode === 'classrooms' || mode === 'booklet') {
             settingsDock.style.setProperty('display', 'none', 'important'); // إخفاء إجباري
         } else {
             settingsDock.style.removeProperty('display'); // إرجاعها للعمل الطبيعي
@@ -1342,9 +1344,9 @@ function syncTextToDatabase() {
             if (isOptMode) {
                 if (line.includes('<img')) {
                     pendingMedia += '\n' + line; // 💡 تخزين الصورة للسؤال التالي
-                    continue; 
+                    continue;
                 }
-                
+
                 parsed.push(curQ);
                 curQ = null;
                 isOptMode = false;
@@ -1532,17 +1534,17 @@ let aiChatContext = ""; // السياق المتراكم للمحادثة الح
 async function openAiModal() {
     document.getElementById('aiModal').style.display = 'flex';
     const user = auth.currentUser;
-    
+
     if (user && aiChatsVault.length === 0) {
         try {
             const docSnap = await db.collection('users').doc(user.uid).get();
             if (docSnap.exists && docSnap.data().aiChats) {
                 aiChatsVault = docSnap.data().aiChats;
             }
-        } catch(e) { console.error("Cloud Error:", e); }
+        } catch (e) { console.error("Cloud Error:", e); }
         renderAiHistoryList();
     }
-    
+
     // إذا كانت الخزنة فارغة، ابدأ محادثة جديدة تلقائياً
     if (aiChatsVault.length === 0 && !currentAiChatId) {
         startNewAIChat();
@@ -1560,7 +1562,7 @@ async function syncAiChatsToCloud() {
             // نحتفظ بآخر 30 محادثة لكي لا يمتلئ الحساب
             if (aiChatsVault.length > 30) aiChatsVault = aiChatsVault.slice(0, 30);
             await db.collection('users').doc(user.uid).set({ aiChats: aiChatsVault }, { merge: true });
-        } catch(e) { console.error('AI Sync failed', e); }
+        } catch (e) { console.error('AI Sync failed', e); }
     }
 }
 
@@ -1600,12 +1602,12 @@ function startNewAIChat() {
 function loadSpecificAiChat(id) {
     const chat = aiChatsVault.find(c => c.id === id);
     if (!chat) return;
-    
+
     currentAiChatId = chat.id;
     aiChatContext = chat.context;
     document.getElementById('currentChatTitle').innerText = chat.title;
     document.getElementById('aiChatOutput').innerHTML = chat.html;
-    
+
     renderAiHistoryList(); // لتحديث اللون النشط
     const outputDiv = document.getElementById('aiChatOutput');
     outputDiv.scrollTop = outputDiv.scrollHeight; // النزول لآخر رسالة
@@ -1624,14 +1626,14 @@ async function generateAIQuestions(mode = 'quiz') {
     // رسم رسالة المستخدم
     let userContentHTML = txt.replace(/\n/g, '<br>');
     if (files.length > 0) userContentHTML += `<br><small style="color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;">📎 مرفق ${files.length} ملفات</small>`;
-    
+
     outputDiv.innerHTML += `
         <div class="chat-message user-message">
             <div class="msg-avatar"><i class="bx bx-user"></i></div>
             <div class="msg-bubble">${userContentHTML}</div>
         </div>
     `;
-    
+
     const loadingId = 'loading-' + Date.now();
     outputDiv.innerHTML += `
         <div id="${loadingId}" class="chat-message ai-message">
@@ -1645,12 +1647,12 @@ async function generateAIQuestions(mode = 'quiz') {
     filesInput.value = '';
     document.getElementById('aiFileName').innerText = 'إرفاق ملف للتحليل';
 
-    let systemInstruction = mode === 'quiz' ? 
-        "أنت مساعد تعليمي. استخرج أسئلة من النص. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" : 
-        mode === 'classify' ? 
-        "أنت خبير تربوي وموجه امتحانات. قم بتحليل وصياغة وتوزيع درجات بأسلوب احترافي. أجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>)." : 
-        "أنت مساعد ذكي موسوعي ومبرمج. أجب باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
-    
+    let systemInstruction = mode === 'quiz' ?
+        "أنت مساعد تعليمي. استخرج أسئلة من النص. المخرج النهائي يجب أن يكون كود JSON فقط (مصفوفة كائنات) بدون أي نصوص أخرى. هيكل الكائن المطلوب:\n[\n  { \"type\": \"mcq\", \"text\": \"نص السؤال؟\", \"options\": [{\"l\":\"أ\", \"t\":\"خيار 1\"}, {\"l\":\"ب\", \"t\":\"خيار 2\"}], \"ans\": \"أ\" }\n]" :
+        mode === 'classify' ?
+            "أنت خبير تربوي وموجه امتحانات. قم بتحليل وصياغة وتوزيع درجات بأسلوب احترافي. أجب باللغة العربية، ونسق إجابتك باستخدام HTML (مثل <strong>، <br>، و <ul>)." :
+            "أنت مساعد ذكي موسوعي ومبرمج. أجب باللغة العربية مع استخدام وسوم HTML البسيطة مثل <strong> و <br> لتنسيق الإجابة.";
+
     let promptText = `${systemInstruction}\n\nالسياق السابق للمحادثة لكي تتذكره:\n${aiChatContext}\n\nطلب المستخدم الحالي:\n${txt}`;
 
     try {
@@ -1755,7 +1757,7 @@ async function generateAIQuestions(mode = 'quiz') {
             currentAiChatId = 'chat_' + Date.now();
             let chatTitle = txt.substring(0, 25) + (txt.length > 25 ? '...' : '');
             if (!txt && files.length > 0) chatTitle = 'تحليل ملفات 📎';
-            
+
             aiChatsVault.unshift({ id: currentAiChatId, title: chatTitle, context: aiChatContext, html: currentHtml, date: Date.now() });
             document.getElementById('currentChatTitle').innerText = chatTitle;
         } else {
@@ -1769,7 +1771,7 @@ async function generateAIQuestions(mode = 'quiz') {
                 aiChatsVault.unshift(existingChat);
             }
         }
-        
+
         renderAiHistoryList();
         syncAiChatsToCloud(); // رفع الخزنة لحسابك في فايربيز
 
@@ -1818,10 +1820,10 @@ async function uploadImageToImgBB(base64Data) {
 // 2. المحرك الأساسي لالتقاط وضغط الصورة ثم إرسالها
 function handleImageInsertion(e, targetId = null) {
     if (!e.target.files[0]) return;
-    
+
     // إظهار رسالة للمستخدم أثناء الرفع
     showToast('جاري رفع الصورة للسحابة... ⏳', 'info');
-    
+
     const rd = new FileReader();
     rd.onload = ev => {
         const i = new Image();
@@ -1833,20 +1835,20 @@ function handleImageInsertion(e, targetId = null) {
             c.width = i.width * scale;
             c.height = i.height * scale;
             c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-            
+
             const compressedBase64 = c.toDataURL('image/jpeg', 0.8);
-            
+
             // 🚀 إرسال الصورة المضغوطة لسيرفر ImgBB بدلاً من حفظها في فايربيز
             const imageUrl = await uploadImageToImgBB(compressedBase64);
-            
+
             if (imageUrl) {
                 const imgHTML = `<br><img src="${imageUrl}" style="width:50%; max-width:100%; display:inline-block; margin:15px; border-radius:6px; cursor:pointer;" class="resizable-img">&nbsp;`;
-                
+
                 if (targetId) {
                     document.getElementById(targetId).focus();
                 }
                 document.execCommand('insertHTML', false, imgHTML);
-                
+
                 if (typeof syncTextToDatabase === 'function') syncTextToDatabase();
                 if (typeof autoSaveData === 'function') autoSaveData();
                 showToast('✅ تم إدراج الصورة بنجاح!', 'success');
@@ -2137,7 +2139,7 @@ function getBubbleSheetContent(qDb, emptyCount = 0, modelBadgeHtml = '', modelIn
     const hC = document.getElementById('bHdrColor').value;
     const hb = document.getElementById('bHdrBorderColor').value;
     const hbg = document.getElementById('bHdrBgColor').value;
-if (hs === 'advanced') {
+    if (hs === 'advanced') {
         let ig = '';
         for (let c = 0; c < 6; c++) {
             // تصغير مربع الإدخال والدوائر درجة واحدة لامتصاص النص
@@ -2220,7 +2222,7 @@ if (hs === 'advanced') {
     let bTopCenter = document.getElementById('bHdrTopCenter') ? document.getElementById('bHdrTopCenter').value : '';
     let bTopLeft = document.getElementById('bHdrTopLeft') ? document.getElementById('bHdrTopLeft').value : '';
 
- let bubbleTopHeader = '';
+    let bubbleTopHeader = '';
     if (bTopRight || bTopCenter || bTopLeft) {
         bubbleTopHeader = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 4px; font-size: 11px; line-height: 1.2; font-weight: 900; color: ${hC}; direction:${dir}; text-align:${align}; border-bottom: 2px solid ${hb}; padding-bottom: 4px;">
@@ -2230,8 +2232,8 @@ if (hs === 'advanced') {
         </div>`;
     }
 
-// 💡 تصميم الـ Anchor Marks الاحترافي الخالي من البراويز مع الباركود الهجين
-   // 💡 إخراج الترويسة لتكون فوق إطار الباركود
+    // 💡 تصميم الـ Anchor Marks الاحترافي الخالي من البراويز مع الباركود الهجين
+    // 💡 إخراج الترويسة لتكون فوق إطار الباركود
     let omrWrapper = `
     ${bubbleTopHeader}
     ${modelBadgeHtml} 
@@ -2271,13 +2273,13 @@ async function executeExport(printType) {
     }
     else if (printType !== 'bubble' && qC === 0 && currentMode === 'questions') return showToast('أدرج الأسئلة والمفردات الاختبارية أولاً', 'error');
 
- if (currentMode === 'text') {
+    if (currentMode === 'text') {
         pA.className = 'print-mode-text';
         let textContent = document.getElementById('generalTextInput').innerHTML;
-        
+
         // 💡 استخدام white-space: pre-wrap لاحترام المسافات الإجبارية
         let htmlOutput = generatePageHTML(`<div class="content-card general-text-display" style="white-space: pre-wrap !important; color: var(--text-color) !important;">${textContent}</div>`, getBackgroundCSS());
-        
+
         // 💡 السحر هنا: كود CSS مخصص لطباعة محرر النصوص يمنع إخفاء السطور الفارغة
         htmlOutput += `
         <style>
@@ -2291,7 +2293,7 @@ async function executeExport(printType) {
             }
         </style>
         `;
-        
+
         pA.innerHTML = htmlOutput;
     }
     else {
@@ -2307,21 +2309,21 @@ async function executeExport(printType) {
             let primaryCol = document.getElementById('userPrimaryColor') ? document.getElementById('userPrimaryColor').value : '#4A00E0';
             const hs = buildQAndA_HTML(questionsDatabase, primaryCol);
             let fH = '';
-            
+
             if (printType === 'student' || printType === 'both') {
                 fH += generatePageHTML(qP + hs.noAns, getBackgroundCSS(), false);
-                
+
                 // 💡 التعديل السحري: ميزة الحفظ التلقائي للخزنة (للامتحان الموحد) 
                 let examTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان دوري';
                 let timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
                 let dateString = new Date().toLocaleDateString('ar-EG');
-                
+
                 let gradingRecord = {
                     id: 'EXAM_SINGLE_' + Date.now(),
                     title: examTitle + ' (نسخة موحدة - ' + timeString + ')',
-                    modelsKeys: { "0": [] } 
+                    modelsKeys: { "0": [] }
                 };
-                
+
                 let ansList = [];
                 questionsDatabase.forEach(q => {
                     if (q.type !== 'heading') {
@@ -2337,18 +2339,18 @@ async function executeExport(printType) {
                         currentVault.unshift(gradingRecord);
                         if (currentVault.length > 50) currentVault.pop();
                         await localforage.setItem('elalfey_grading_vault', currentVault);
-                        
+
                         const user = auth.currentUser;
                         if (user) {
                             try {
                                 await db.collection('users').doc(user.uid).set({ omrVault: currentVault }, { merge: true });
-                            } catch(e) { console.error("Cloud sync failed", e); }
+                            } catch (e) { console.error("Cloud sync failed", e); }
                         }
                     }
                 });
             }
             if (printType === 'teacher' || printType === 'both') fH += generatePageHTML(aP + hs.withAns, getBackgroundCSS(), true);
-            
+
             pA.innerHTML = fH;
             if (typeof renderOMRBarcodes === 'function') setTimeout(renderOMRBarcodes, 100);
         }
@@ -2426,15 +2428,15 @@ async function generateMultiModels() {
     // 💡 الجديد هنا: إنشاء سجل الامتحان لحفظه في "خزنة التصحيح" للكاميرا
     let examTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان دوري';
     if (!examTitle) examTitle = 'امتحان دوري';
-    
+
     // 💡 إضافة الوقت والدقيقة لتمييز الامتحانات عن بعضها بوضوح
     let timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
     let dateString = new Date().toLocaleDateString('ar-EG');
-    
+
     let gradingRecord = {
         id: 'EXAM_' + Date.now(),
         title: examTitle + ' (' + timeString + ' - ' + dateString + ')',
-        modelsKeys: {} 
+        modelsKeys: {}
     };
 
     for (let i = 0; i < mods.length; i++) {
@@ -2445,7 +2447,7 @@ async function generateMultiModels() {
         let essays = questionsDatabase.filter(q => q.type === 'essay').sort(() => Math.random() - 0.5);
 
         let mcqIdx = 0, tfIdx = 0, essayIdx = 0;
-        
+
         let sDb = questionsDatabase.map(q => {
             if (q.type === 'heading') return q;
             if (q.type === 'mcq') return mcqs[mcqIdx++];
@@ -2454,7 +2456,7 @@ async function generateMultiModels() {
         });
 
         let typeCounters = { mcq: 1, tf_inline: 1, essay: 1 };
-        
+
         // 💡 الجديد هنا: حفظ مفتاح الإجابة الخاص بهذا النموذج تحديداً في الخزنة
         let currentModelAnswers = [];
         sDb.forEach(q => {
@@ -2490,7 +2492,7 @@ async function generateMultiModels() {
 
         fH += generatePageHTML(qP + hs.noAns, bgCSS, false, modelBadgeHtml, false);
         fH += generatePageHTML(aP + hs.withAns, bgCSS, true, modelBadgeHtml, false);
-        
+
         // 💡 التعديل الجديد: قراءة اختيار المستخدم (هل نطبع بابل شيت أم لا؟)
         const answerMode = document.getElementById('multiAnswerMode') ? document.getElementById('multiAnswerMode').value : 'with_bubble';
         if (answerMode === 'with_bubble') {
@@ -2501,9 +2503,9 @@ async function generateMultiModels() {
     // 💡 الحفظ المزدوج: في المتصفح + السحابة (ليعمل على أي جهاز)
     localforage.getItem('elalfey_grading_vault').then(async (vault) => {
         let currentVault = vault || [];
-        currentVault.unshift(gradingRecord); 
+        currentVault.unshift(gradingRecord);
         if (currentVault.length > 50) currentVault.pop(); // الاحتفاظ بآخر 50 امتحان فقط
-        
+
         await localforage.setItem('elalfey_grading_vault', currentVault);
 
         const user = auth.currentUser;
@@ -2512,7 +2514,7 @@ async function generateMultiModels() {
                 await db.collection('users').doc(user.uid).set({
                     omrVault: currentVault
                 }, { merge: true });
-            } catch(e) { console.error("Cloud sync failed", e); }
+            } catch (e) { console.error("Cloud sync failed", e); }
         }
     });
 
@@ -2948,7 +2950,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.renderArchiveQuestionsList = async function() {
+    window.renderArchiveQuestionsList = async function () {
         const container = document.getElementById('archiveQuestionsListContainer');
         const user = firebase.auth().currentUser;
 
@@ -3081,11 +3083,11 @@ function insertCustomTable() {
 /* ========================================================
    نظام الجولة التفاعلية الحقيقية (Ultimate FIFA-Style Tour) 🎮🚀
    ======================================================== */
-window.runSmartOnboardingTour = function(isForced) {
+window.runSmartOnboardingTour = function (isForced) {
     const forced = (isForced === true);
 
     if (!forced && localStorage.getItem('mh_pro_tour_done_v1') === 'yes') {
-        return; 
+        return;
     }
 
     localStorage.setItem('mh_pro_tour_done_v1', 'yes');
@@ -3132,7 +3134,7 @@ window.runSmartOnboardingTour = function(isForced) {
     const oBottom = document.createElement('div'); oBottom.className = 'tour-overlay-block';
     const oLeft = document.createElement('div'); oLeft.className = 'tour-overlay-block';
     const oRight = document.createElement('div'); oRight.className = 'tour-overlay-block';
-    
+
     const pulseRing = document.createElement('div'); pulseRing.className = 'tour-pulse-ring';
     const tooltip = document.createElement('div'); tooltip.className = 'tour-tooltip';
 
@@ -3153,30 +3155,30 @@ window.runSmartOnboardingTour = function(isForced) {
         { selector: '.nav-right', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة، ومزامنة مسوداتك وإدارة حسابك.', action: 'next' },
         { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يحلل الـ PDF ويجاوب على أي استفسارات تخص المادة.', action: 'next' },
         { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود التفعيل وفتح كافة الخصائص الاحترافية اللامحدودة.', action: 'next' },
-        
+
         // --- 2. القسم الأول (بنك الأسئلة) ---
         { selector: '#btnTabQuestions', title: 'القسم الأول: بنك الأسئلة 📝', text: 'أولاً سنشرح قسم الامتحانات. <b>اضغط على هذا التبويب</b> للبدء.', action: 'click' },
         { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا مسحت شيئاً بالخطأ في المحرر، هذه الأزرار تعيده فوراً.', action: 'next' },
-        
+
         // 💡 التعديل هنا: إزالة الإجبار على الفتح حتى يدوس المستخدم بنفسه
-        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط على الزر</b> لفتح قائمة لغات الكتابة المتاحة.', action: 'click' }, 
+        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط على الزر</b> لفتح قائمة لغات الكتابة المتاحة.', action: 'click' },
         { selector: '#systemMenu button:nth-child(2)', title: 'نظام اللغات 🇬🇧', text: 'يقلب المحرر لليسار (LTR) للمواد الأجنبية.', action: 'next', forceOpen: 'systemMenu' },
         { selector: '#systemMenu button:nth-child(3)', title: 'النظام العلمي ⚛️', text: 'يفتح أدوات لكتابة المعادلات والرموز الرياضية.', action: 'next', forceOpen: 'systemMenu' },
         { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'الآن <b>اضغط هنا</b> لتفعيل النظام العربي.', action: 'click', forceOpen: 'systemMenu' },
-        
+
         { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية.', action: 'click' },
         { selector: '#smartToolsMenu button:nth-child(1)', title: 'تحليل البنك 📊', text: 'يعرض إحصائية لعدد أنواع الأسئلة التي كتبتها.', action: 'next', forceOpen: 'smartToolsMenu' },
         { selector: '#smartToolsMenu button:nth-child(2)', title: 'خلط شامل 🔀', text: 'يخلط ترتيب الأسئلة والخيارات لمنع الغش بضغطة زر.', action: 'next', forceOpen: 'smartToolsMenu' },
         { selector: '#smartToolsMenu button:nth-child(4)', title: 'الأرشيف السحابي ☁️', text: 'لحفظ واسترجاع مسوداتك في السحابة بأمان.', action: 'next', forceOpen: 'smartToolsMenu' },
         { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي ✨', text: 'الآن <b>اضغط هنا!</b> لينظف أسئلتك ويستخرج الإجابات آلياً.', action: 'click', forceOpen: 'smartToolsMenu' },
-        
+
         { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة القوالب الجاهزة.', action: 'click' },
         { selector: '#insertMenu button:nth-child(2)', title: 'سؤال صح/خطأ ✅', text: 'يرمي لك قالب جاهز لسؤال الصواب والخطأ.', action: 'next', forceOpen: 'insertMenu' },
         { selector: '#insertMenu button:nth-child(3)', title: 'سؤال مقالي 📝', text: 'يرمي لك قالب للأسئلة المقالية.', action: 'next', forceOpen: 'insertMenu' },
         { selector: '#insertMenu button:nth-child(4)', title: 'استخراج نص (OCR) 📄', text: 'ارفع صورة وسيحولها النظام لنص مكتوب فوراً.', action: 'next', forceOpen: 'insertMenu' },
         { selector: '#insertMenu button:nth-child(6)', title: 'إدراج صورة 🖼️', text: 'لإرفاق صورة توضيحية داخل السؤال.', action: 'next', forceOpen: 'insertMenu' },
         { selector: '#insertMenu button:nth-child(1)', title: 'سؤال اختياري 🔘', text: 'الآن <b>اضغط هنا</b> لإدراج قالب سؤال اختياري وجرب.', action: 'click', forceOpen: 'insertMenu' },
-        
+
         { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على الإملاء الصوتي، التنسيق، والألوان.', action: 'next' },
         { selector: '#questionsInput', title: 'مساحة العمل الأساسية 📝', text: 'هنا تكتب أسئلتك. ضع الخيارات تحت بعضها، وتضع [✓] بجوار الخيار الصحيح.', action: 'next' },
         { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط مفتاح الإجابات 🛠️', text: 'لتنسيق صفحة نموذج الإجابة بشكل مستقل.', action: 'next' },
@@ -3191,7 +3193,7 @@ window.runSmartOnboardingTour = function(isForced) {
         { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: 'لإعداد أشكال ترقيم النماذج (A, B, C) وأماكنها.', action: 'next' },
         { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: 'لتحديد شكل وحجم الدوائر والأعمدة للورقة المستقلة.', action: 'next' },
         { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص بيانات الطالب والباركود للورقة المستقلة.', action: 'next' },
-        
+
         { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لفتح نافذة مسح المشروع والبدء من جديد.', action: 'click' },
         { selector: '#confirmModal .modal-content', title: 'احترس! ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> الرجاء الضغط فعلياً على زر <b>"إلغاء"</b> بالأسفل لكي لا تفقد عملك وتقف الجولة!', action: 'next', forceOpenModal: 'confirmModal' },
         { selector: '#confirmModal button:last-child', title: 'إلغاء الإجراء', text: '<b>اضغط على "إلغاء" هنا</b> للمتابعة بأمان.', action: 'click', forceOpenModal: 'confirmModal' },
@@ -3218,7 +3220,7 @@ window.runSmartOnboardingTour = function(isForced) {
     let clickListener = null;
     let animationFrameId = null;
 
-    window.forceCloseTour = function() {
+    window.forceCloseTour = function () {
         cancelAnimationFrame(animationFrameId);
         tourElements.forEach(el => el.remove());
         if (document.getElementById('tourDynamicStyles')) document.getElementById('tourDynamicStyles').remove();
@@ -3242,29 +3244,29 @@ window.runSmartOnboardingTour = function(isForced) {
             return;
         }
 
-        const padding = 6; 
+        const padding = 6;
 
         oTop.style.top = '0'; oTop.style.left = '0'; oTop.style.width = '100vw'; oTop.style.height = Math.max(0, rect.top - padding) + 'px';
         oBottom.style.top = (rect.bottom + padding) + 'px'; oBottom.style.left = '0'; oBottom.style.width = '100vw'; oBottom.style.height = Math.max(0, window.innerHeight - (rect.bottom + padding)) + 'px';
-        oLeft.style.top = Math.max(0, rect.top - padding) + 'px'; oLeft.style.left = '0'; oLeft.style.width = Math.max(0, rect.left - padding) + 'px'; oLeft.style.height = (rect.height + padding*2) + 'px';
-        oRight.style.top = Math.max(0, rect.top - padding) + 'px'; oRight.style.left = (rect.right + padding) + 'px'; oRight.style.width = Math.max(0, window.innerWidth - (rect.right + padding)) + 'px'; oRight.style.height = (rect.height + padding*2) + 'px';
+        oLeft.style.top = Math.max(0, rect.top - padding) + 'px'; oLeft.style.left = '0'; oLeft.style.width = Math.max(0, rect.left - padding) + 'px'; oLeft.style.height = (rect.height + padding * 2) + 'px';
+        oRight.style.top = Math.max(0, rect.top - padding) + 'px'; oRight.style.left = (rect.right + padding) + 'px'; oRight.style.width = Math.max(0, window.innerWidth - (rect.right + padding)) + 'px'; oRight.style.height = (rect.height + padding * 2) + 'px';
 
         pulseRing.style.top = (rect.top - padding) + 'px';
         pulseRing.style.left = (rect.left - padding) + 'px';
-        pulseRing.style.width = (rect.width + padding*2) + 'px';
-        pulseRing.style.height = (rect.height + padding*2) + 'px';
+        pulseRing.style.width = (rect.width + padding * 2) + 'px';
+        pulseRing.style.height = (rect.height + padding * 2) + 'px';
 
         let tooltipTop = rect.bottom + padding + 15;
         let tooltipLeft = rect.left + (rect.width / 2) - 160;
 
         // التجاوب الذكي مع الأطراف
         if (rect.right > window.innerWidth - 120) {
-            tooltipLeft = rect.left - 340; 
+            tooltipLeft = rect.left - 340;
         }
 
         if (tooltipTop + 200 > window.innerHeight) {
-            tooltipTop = rect.top - padding - 220; 
-            if(tooltipTop < 0) tooltipTop = window.innerHeight / 2 - 100;
+            tooltipTop = rect.top - padding - 220;
+            if (tooltipTop < 0) tooltipTop = window.innerHeight / 2 - 100;
         }
         if (tooltipLeft < 10) tooltipLeft = 10;
         if (tooltipLeft + 320 > window.innerWidth) tooltipLeft = window.innerWidth - 330;
@@ -3282,7 +3284,7 @@ window.runSmartOnboardingTour = function(isForced) {
         }
 
         const step = steps[currentStepIndex];
-        
+
         if (step.forceOpen) {
             let menuEl = document.getElementById(step.forceOpen);
             if (menuEl) menuEl.style.display = 'flex';
@@ -3297,10 +3299,10 @@ window.runSmartOnboardingTour = function(isForced) {
         }
 
         let retryCount = 0;
-        
+
         function findTarget() {
             currentTarget = document.querySelector(step.selector);
-            
+
             // تجاوز ذكي للعناصر المخفية
             if (currentTarget && window.getComputedStyle(currentTarget).display === 'none') {
                 currentTarget = null;
@@ -3308,13 +3310,13 @@ window.runSmartOnboardingTour = function(isForced) {
 
             if ((!currentTarget || currentTarget.offsetParent === null) && retryCount < 15) {
                 retryCount++;
-                setTimeout(findTarget, 100); 
+                setTimeout(findTarget, 100);
                 return;
             }
-            
+
             // لو ملقاش العنصر بعد كل المحاولات يتخطى للخطوة اللي بعدها
             if (!currentTarget) {
-                currentStepIndex++; 
+                currentStepIndex++;
                 processStep();
                 return;
             }
@@ -3343,11 +3345,11 @@ window.runSmartOnboardingTour = function(isForced) {
             if (clickListener) document.body.removeEventListener('click', clickListener, true);
 
             if (step.action === 'click') {
-                clickListener = function(e) {
+                clickListener = function (e) {
                     if (currentTarget.contains(e.target) || currentTarget === e.target) {
                         document.body.removeEventListener('click', clickListener, true);
                         currentStepIndex++;
-                        setTimeout(processStep, 600); 
+                        setTimeout(processStep, 600);
                     }
                 };
                 document.body.addEventListener('click', clickListener, true);
@@ -3474,7 +3476,7 @@ function getStrictCompactBubbleSheetContent(lType, sColor, modelName, placement)
                 <div style="flex:2; border-bottom: 1px dashed ${sColor}; text-align:${isForeign ? 'right' : 'left'};">${f1} </div>
             </div>`;
     }
-else if (hStyle === 'advanced') {
+    else if (hStyle === 'advanced') {
         let ig = '';
         for (let c = 0; c < 6; c++) {
             let cb = `<div style="border:1px solid ${sColor}; height:14px; margin-bottom:1px; background:#fff;"></div>`;
@@ -3894,7 +3896,7 @@ function showStatsModal() {
 // 📷 المحرك المؤسسي للتصحيح الإلكتروني (Enterprise OMR Engine)
 // ========================================================
 let scannerStream = null;
-let gradingVault = []; 
+let gradingVault = [];
 
 async function openScannerModal() {
     const selectEl = document.getElementById('scannerExamSelect');
@@ -3908,7 +3910,7 @@ async function openScannerModal() {
 
     const user = auth.currentUser;
     let cloudVault = [];
-    
+
     // 1. جلب الامتحانات من حسابك السحابي أولاً (إذا فتحت من جهاز آخر)
     if (user) {
         try {
@@ -3917,7 +3919,7 @@ async function openScannerModal() {
                 cloudVault = docSnap.data().omrVault;
                 await localforage.setItem('elalfey_grading_vault', cloudVault); // تحديث الجهاز المحلي
             }
-        } catch(e) { console.error('Cloud fetch failed', e); }
+        } catch (e) { console.error('Cloud fetch failed', e); }
     }
 
     // 2. الاعتماد على النسخة السحابية إن وجدت، أو المحلية
@@ -3937,18 +3939,18 @@ async function openScannerModal() {
     }
 
     // تشغيل الكاميرا
-    navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
     })
-    .then(function(stream) {
-        scannerStream = stream;
-        const video = document.getElementById('scannerVideo');
-        video.srcObject = stream;
-        video.play();
-    })
-    .catch(function(err) {
-        showToast('❌ لا يمكن الوصول للكاميرا. يرجى إعطاء الصلاحية للمتصفح.', 'error');
-    });
+        .then(function (stream) {
+            scannerStream = stream;
+            const video = document.getElementById('scannerVideo');
+            video.srcObject = stream;
+            video.play();
+        })
+        .catch(function (err) {
+            showToast('❌ لا يمكن الوصول للكاميرا. يرجى إعطاء الصلاحية للمتصفح.', 'error');
+        });
 }
 
 function closeScannerModal() {
@@ -3974,11 +3976,11 @@ async function deleteExamFromVault() {
     if (user) {
         try {
             await db.collection('users').doc(user.uid).set({ omrVault: gradingVault }, { merge: true });
-        } catch(e) { console.error('Cloud delete failed', e); }
+        } catch (e) { console.error('Cloud delete failed', e); }
     }
 
     showToast('تم حذف الامتحان المحدد بنجاح 🗑️', 'success');
-    
+
     // تحديث القائمة
     selectEl.innerHTML = '';
     if (gradingVault.length === 0) {
@@ -4004,11 +4006,11 @@ async function clearEntireVault() {
     if (user) {
         try {
             await db.collection('users').doc(user.uid).set({ omrVault: [] }, { merge: true });
-        } catch(e) {}
+        } catch (e) { }
     }
 
     showToast('تم تفريغ الخزنة بالكامل بنجاح 🗑️', 'success');
-    
+
     const selectEl = document.getElementById('scannerExamSelect');
     selectEl.innerHTML = '<option value="">الخزنة فارغة حالياً</option>';
 }
@@ -4018,7 +4020,7 @@ async function captureAndGradeEnterprise() {
     const canvas = document.getElementById('scannerCanvas');
     const resultDiv = document.getElementById('scannerResult');
     const selectedExamId = document.getElementById('scannerExamSelect').value;
-    
+
     if (!video.videoWidth) return;
     if (!selectedExamId) {
         showToast('يرجى اختيار امتحان من القائمة أولاً', 'error');
@@ -4026,7 +4028,7 @@ async function captureAndGradeEnterprise() {
     }
 
     const targetExam = gradingVault.find(e => e.id === selectedExamId);
-    if(!targetExam) return;
+    if (!targetExam) return;
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -4036,7 +4038,7 @@ async function captureAndGradeEnterprise() {
 
     // 💡 إصلاح CSS الحاوية الرئيسية: جعلها مرنة، تسمح بالتمدد، وتجبر العناصر الداخلية على استخدام كامل العرض
     resultDiv.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: stretch; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px; box-sizing: border-box;';
-    
+
     // شاشة التحميل (Loading)
     resultDiv.innerHTML = `
         <div style="padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; background: rgba(16, 185, 129, 0.05); border-radius: 12px;">
@@ -4047,9 +4049,9 @@ async function captureAndGradeEnterprise() {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000); 
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-       const manualModel = document.getElementById('manualModelSelect').value; 
+        const manualModel = document.getElementById('manualModelSelect').value;
 
         const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
             method: 'POST',
@@ -4057,11 +4059,11 @@ async function captureAndGradeEnterprise() {
             body: JSON.stringify({
                 image: imageData,
                 modelsKeys: targetExam.modelsKeys,
-                manualModel: manualModel 
+                manualModel: manualModel
             }),
             signal: controller.signal
         });
-        clearTimeout(timeoutId); 
+        clearTimeout(timeoutId);
         const result = await response.json();
 
         if (!result.success) throw new Error(result.error || "فشل السيرفر في تحليل الصورة.");
@@ -4095,8 +4097,8 @@ async function captureAndGradeEnterprise() {
 
         // 💡 إصلاح شبكة الأسئلة (CSS Grid): جعل الحاوية قابلة للتمرير بارتفاع أكبر، خلفية داكنة، وتهيئة مرنة للأعمدة (110px).
         let detailsHtml = '<div style="margin-top: 15px; max-height: 400px; overflow-y: auto; background: #0f172a; border-radius: 12px; padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; box-sizing: border-box;">';
-        
-        if(result.details) {
+
+        if (result.details) {
             result.details.forEach(d => {
                 let color = d.ok ? '#10b981' : '#ef4444';
                 let icon = d.ok ? '✅' : '❌';
@@ -4140,15 +4142,15 @@ async function handleImageUpload(event) {
 
     const resultDiv = document.getElementById('scannerResult');
     const selectedExamId = document.getElementById('scannerExamSelect').value;
-    
+
     if (!selectedExamId) {
         showToast('يرجى اختيار امتحان من القائمة أولاً', 'error');
-        event.target.value = ''; 
+        event.target.value = '';
         return;
     }
 
     const targetExam = gradingVault.find(e => e.id === selectedExamId);
-    if(!targetExam) return;
+    if (!targetExam) return;
 
     resultDiv.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: stretch; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px; box-sizing: border-box;';
     resultDiv.innerHTML = `
@@ -4158,11 +4160,11 @@ async function handleImageUpload(event) {
         </div>`;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const img = new Image();
-        img.onload = async function() {
+        img.onload = async function () {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200; 
+            const MAX_WIDTH = 1200;
             const scaleSize = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
             canvas.height = img.height * scaleSize;
@@ -4172,7 +4174,7 @@ async function handleImageUpload(event) {
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000); 
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
                 const manualModelValue = document.getElementById('manualModelSelect') ? document.getElementById('manualModelSelect').value : 'auto';
 
                 const response = await fetch('https://eyad26.pythonanywhere.com/api/grade', {
@@ -4212,7 +4214,7 @@ async function handleImageUpload(event) {
                     </div>`;
 
                 let detailsHtml = '<div style="margin-top: 15px; max-height: 250px; overflow-y: auto; background: #0f172a; border-radius: 12px; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px;">';
-                if(result.details) {
+                if (result.details) {
                     result.details.forEach(d => {
                         let color = d.ok ? '#10b981' : '#ef4444';
                         let icon = d.ok ? '✅' : '❌';
@@ -4225,14 +4227,14 @@ async function handleImageUpload(event) {
                     });
                 }
                 detailsHtml += '</div>';
-                
+
                 resultDiv.innerHTML = html + detailsHtml;
                 showToast('تم التصحيح بنجاح!', 'success');
 
             } catch (err) {
                 resultDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #ef4444;">خطأ: ${err.message}</div>`;
             }
-            event.target.value = ''; 
+            event.target.value = '';
         };
         img.src = e.target.result;
     };
@@ -4246,9 +4248,9 @@ function renderOMRBarcodes() {
             text: "MH_PRO_ID_" + el.getAttribute('data-qr'),
             width: 30,
             height: 30,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.L
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.L
         });
     });
 }
@@ -4314,7 +4316,7 @@ function generateFromLessonPrompt() {
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
-    
+
     document.getElementById('aiLessonName').value = '';
     document.getElementById('aiGenerateModal').style.display = 'flex';
 }
@@ -4338,7 +4340,7 @@ async function executeAIGeneration() {
 
     // النقل الآلي لتبويب بنك الأسئلة
     const btnTabQ = document.getElementById('btnTabQuestions');
-    if(btnTabQ) switchTab('questions', btnTabQ);
+    if (btnTabQ) switchTab('questions', btnTabQ);
 
     showToast('جاري توليد الأسئلة من الدرس عبر الذكاء الاصطناعي... ⏳', 'info');
 
@@ -4346,8 +4348,8 @@ async function executeAIGeneration() {
     // 💡 بداية شاشة التحميل الأنيقة داخل المحرر
     // =========================================================
     let qInput = document.getElementById('questionsInput');
-    let originalHTML = qInput.innerHTML; 
-    
+    let originalHTML = qInput.innerHTML;
+
     // تفريغ المحرر إذا كان مجرد نص افتراضي
     if (originalHTML.includes('اكتب العنوان الرئيسي هنا') || originalHTML.trim() === '' || originalHTML === '<br>') {
         originalHTML = '';
@@ -4371,31 +4373,31 @@ async function executeAIGeneration() {
 ]`;
 
     try {
-        const response = await fetch('/api/generate', { 
+        const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ parts: [{ text: systemInstruction }] })
         });
 
         if (!response.ok) throw new Error("فشل الاتصال بمولد الذكاء الاصطناعي");
-        
+
         const data = await response.json();
         if (!data.candidates || data.candidates.length === 0) throw new Error("لا توجد استجابة.");
-        
+
         let aiResponse = data.candidates[0].content.parts[0].text.trim();
-        
+
         const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
         if (!jsonMatch) throw new Error("التنسيق المُرجع غير صالح، جرب تقليل العدد قليلاً");
-        
+
         const generatedQuestions = JSON.parse(jsonMatch[0]);
-        
+
         // =========================================================
         // 💡 إزالة شاشة التحميل بعد انتهاء الذكاء الاصطناعي بنجاح
         // =========================================================
         let loadingUI = document.getElementById('aiLoadingUI');
         if (loadingUI) loadingUI.remove();
         // =========================================================
-        
+
         let generatedHTML = "<br>";
 
         generatedQuestions.forEach(q => {
@@ -4412,11 +4414,11 @@ async function executeAIGeneration() {
         });
 
         qInput.innerHTML += generatedHTML;
-        
+
         if (typeof smartFormatAndClean === 'function') {
-            smartFormatAndClean(); 
+            smartFormatAndClean();
         }
-        
+
         showToast('✅ تم توليد الأسئلة وإدراجها وتنسيقها بنجاح!', 'success');
 
     } catch (error) {
@@ -4438,7 +4440,7 @@ async function loadClassroomsFromCloud() {
     if (!user) return;
 
     const grid = document.getElementById('classroomsGrid');
-    
+
     try {
         const docSnap = await db.collection('users').doc(user.uid).get();
         let classrooms = [];
@@ -4460,7 +4462,7 @@ async function loadClassroomsFromCloud() {
             classrooms.forEach(cls => {
                 let studentsCount = cls.students ? cls.students.length : 0;
                 totalStudents += studentsCount;
-                
+
                 html += `
                 <div style="background: var(--ui-container); border: 1px solid var(--ui-border); border-radius: 16px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed var(--ui-border); padding-bottom: 15px; margin-bottom: 15px;">
@@ -4489,10 +4491,10 @@ async function loadClassroomsFromCloud() {
 
         // تحديث الإحصائيات وفحص الباقة
         document.getElementById('lmsTotalClasses').innerText = classrooms.length;
-        
+
         let expiry = localStorage.getItem('elalfey_vip_expiry');
         let isVIP = (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now()));
-        
+
         const countDisplay = document.getElementById('lmsTotalStudents');
         const noticeDisplay = document.getElementById('lmsPlanNotice');
 
@@ -4517,7 +4519,7 @@ async function loadClassroomsFromCloud() {
             }
         }
 
-    } catch(e) {}
+    } catch (e) { }
 }
 
 // إنشاء فصل جديد
@@ -4532,7 +4534,7 @@ async function createNewClassroom() {
         showToast('جاري إنشاء الفصل...', 'info');
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
-        
+
         let classrooms = [];
         if (docSnap.exists && docSnap.data().classrooms) {
             classrooms = docSnap.data().classrooms;
@@ -4547,7 +4549,7 @@ async function createNewClassroom() {
 
         classrooms.push(newClass);
         await docRef.update({ classrooms: classrooms });
-        
+
         showToast('✅ تم إنشاء الفصل بنجاح!', 'success');
         loadClassroomsFromCloud();
 
@@ -4564,23 +4566,23 @@ async function viewClassDetails(classId) {
     if (!user) return;
 
     currentViewedClassId = classId;
-    
+
     try {
         const docSnap = await db.collection('users').doc(user.uid).get();
         if (!docSnap.exists) return;
-        
+
         let classrooms = docSnap.data().classrooms || [];
         let targetClass = classrooms.find(c => c.id === classId);
-        
+
         if (!targetClass) return;
 
         // 💡 إضافة زر التحديث السريع بجوار اسم الفصل (الإضافة الأولى)
         document.getElementById('modalClassName').innerHTML = `${targetClass.name} <button id="btnRefreshScores" onclick="syncOnlineScores('${classId}', window.tempClassroomsData, window.tempTargetClass)" style="margin-right: 15px; background: #e0e7ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; font-family: inherit;"><i class='bx bx-refresh'></i> تحديث الدرجات</button>`;
-        
+
         // حفظ المتغيرات مؤقتاً عشان زر التحديث يشتغل
         window.tempClassroomsData = classrooms;
         window.tempTargetClass = targetClass;
-        
+
         // 💡 استدعاء دالة رسم الجدول المحدثة
         renderStudentsTable(targetClass.students, classId);
 
@@ -4590,7 +4592,7 @@ async function viewClassDetails(classId) {
         // 🚀 السحر هنا: استدعاء محرك المزامنة الخلفي لجلب الدرجات من السحابة وتحديثها آلياً
         syncOnlineScores(classId, classrooms, targetClass);
 
-    } catch(e) {}
+    } catch (e) { }
 }
 
 // دالة رسم الجدول (النسخة المستقرة والنظيفة + رادار الأخطاء)
@@ -4603,14 +4605,14 @@ function renderStudentsTable(students, classId, unlinkedResults = []) {
     } else {
         students.forEach((std, idx) => {
             let scoresHtml = '';
-            
+
             // رص الامتحانات المتعددة للطالب
             if (std.examRecords && Object.keys(std.examRecords).length > 0) {
                 Object.values(std.examRecords).forEach(record => {
-                    let parts = record.split('|'); 
+                    let parts = record.split('|');
                     scoresHtml += `<div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--primary-color); font-weight: bold; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${parts[0]}</span> <span style="color: #10b981; font-weight: 900; direction: ltr; background: #d1fae5; padding: 2px 8px; border-radius: 6px;">${parts[1]}</span></div>`;
                 });
-            } else if (std.lastScore) { 
+            } else if (std.lastScore) {
                 scoresHtml = `<div style="color: #10b981; font-weight: 900; direction: ltr; display: inline-block; background: #d1fae5; padding: 4px 10px; border-radius: 6px;">${std.lastScore}</div>`;
             } else {
                 scoresHtml = `<div style="color: #94a3b8; font-size: 12px; padding: 10px 0;">لم يمتحن بعد 📭</div>`;
@@ -4633,7 +4635,7 @@ function renderStudentsTable(students, classId, unlinkedResults = []) {
     if (unlinkedResults && unlinkedResults.length > 0) {
         tbody.innerHTML += `<tr><td colspan="5" style="background: #fffbeb; padding: 12px; text-align: center; font-weight: bold; color: #d97706; border-top: 3px dashed #fcd34d;">⚠️ درجات بكود خاطئ (طلاب أدخلوا كوداً غير موجود بالكشف)</td></tr>`;
         unlinkedResults.forEach(res => {
-            let parts = res.record.split('|'); 
+            let parts = res.record.split('|');
             tbody.innerHTML += `
             <tr style="background: #fef3c7; border-bottom: 1px solid #fde68a;">
                 <td style="padding: 15px; color: #b45309;">❓</td>
@@ -4666,60 +4668,60 @@ function normalizeArabicName(text) {
 // 🚀 محرك المزامنة الآلي (بالمتوازيات + كاشف الأخطاء + فلتر الزمن السحري)
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
-    if(!user) return;
-    
+    if (!user) return;
+
     try {
         let refreshBtn = document.getElementById('btnRefreshScores');
-        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري السحب...";
+        if (refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري السحب...";
 
         const examsSnap = await db.collection('online_exams')
             .where('teacherId', '==', user.uid)
             .get();
-            
+
         let updated = false;
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         let currentStudents = classrooms[targetIndex].students;
-        let unlinkedResults = []; 
-        
+        let unlinkedResults = [];
+
         const fetchPromises = examsSnap.docs.map(async (examDoc) => {
             let examData = examDoc.data();
             if (examData.classId !== classId && examData.classId !== 'all') return;
 
             const examTitle = examData.title || "امتحان بدون عنوان";
             const resultsSnap = await examDoc.ref.collection('results').get();
-            
+
             resultsSnap.forEach(resDoc => {
                 let resData = resDoc.data();
                 let rawIdentifier = resData.studentIdentifier || resData.studentName || "غير معروف";
-                let identifier = normalizeArabicName(rawIdentifier); 
-                
-                let studentIndex = currentStudents.findIndex(s => 
-                    normalizeArabicName(s.id) === identifier || 
+                let identifier = normalizeArabicName(rawIdentifier);
+
+                let studentIndex = currentStudents.findIndex(s =>
+                    normalizeArabicName(s.id) === identifier ||
                     normalizeArabicName(s.name) === identifier
                 );
-                
+
                 let formattedScore = resData.score + ' / ' + resData.total;
                 let newRecord = `${examTitle}|${formattedScore}`;
 
-                if(studentIndex > -1) {
+                if (studentIndex > -1) {
                     let student = currentStudents[studentIndex];
 
                     // 💡 الحماية الذكية: لو الطالب امتحن قبل ما يتضاف للفصل ده، نتجاهل الدرجة!
                     let submittedTime = 0;
                     if (resData.submittedAt) {
-                        submittedTime = typeof resData.submittedAt.toMillis === 'function' 
-                                        ? resData.submittedAt.toMillis() 
-                                        : Date.parse(resData.submittedAt);
+                        submittedTime = typeof resData.submittedAt.toMillis === 'function'
+                            ? resData.submittedAt.toMillis()
+                            : Date.parse(resData.submittedAt);
                     }
 
                     // لو عنده تاريخ إضافة، والامتحان ده اتسلم قبل تاريخ إضافته، متسجلوش!
                     if (student.enrolledAt && submittedTime > 0 && submittedTime < student.enrolledAt) {
                         return; // 🛑 تخطي هذه النتيجة القديمة تماماً لتبدأ ببيانات جديدة
                     }
-                    
+
                     if (!student.examRecords) student.examRecords = {};
-                    
-                    if(student.examRecords[examDoc.id] !== newRecord) {
+
+                    if (student.examRecords[examDoc.id] !== newRecord) {
                         student.examRecords[examDoc.id] = newRecord;
                         updated = true;
                     }
@@ -4730,20 +4732,20 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         });
 
         await Promise.all(fetchPromises);
-        
-        if(updated) {
+
+        if (updated) {
             await db.collection('users').doc(user.uid).update({ classrooms: classrooms });
             window.tempClassroomsData = classrooms;
         }
-        
+
         renderStudentsTable(currentStudents, classId, unlinkedResults);
-        
-        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
-        
-    } catch(e) {
+
+        if (refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
+
+    } catch (e) {
         console.error("خطأ في المزامنة:", e);
         let refreshBtn = document.getElementById('btnRefreshScores');
-        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
+        if (refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
     }
 }
 // إضافة طالب (بمراقبة الباقة + تسجيل لحظة الانضمام)
@@ -4757,7 +4759,7 @@ async function addStudentToClass(classId) {
     const docRef = db.collection('users').doc(user.uid);
     const docSnap = await docRef.get();
     let classrooms = docSnap.data().classrooms || [];
-    
+
     let totalStudents = classrooms.reduce((sum, cls) => sum + (cls.students ? cls.students.length : 0), 0);
 
     if (!isVIP && totalStudents >= 30) {
@@ -4775,21 +4777,21 @@ async function addStudentToClass(classId) {
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         if (targetIndex > -1) {
             if (!classrooms[targetIndex].students) classrooms[targetIndex].students = [];
-            
+
             classrooms[targetIndex].students.push({
                 id: studentId,
                 name: studentName.trim(),
                 lastScore: null,
                 enrolledAt: Date.now() // 💡 سر الحماية الجديد: تسجيل لحظة الانضمام بالمللي ثانية
             });
-            
+
             await docRef.update({ classrooms: classrooms });
             showToast(`✅ تمت إضافة (${studentName}) بنجاح! كوده: ${studentId}`, 'success');
-            
-            loadClassroomsFromCloud(); 
-            viewClassDetails(classId); 
+
+            loadClassroomsFromCloud();
+            viewClassDetails(classId);
         }
-    } catch(e) {
+    } catch (e) {
         showToast('❌ خطأ أثناء الإضافة', 'error');
     }
 }
@@ -4806,7 +4808,7 @@ async function addManualScore(studentId) {
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
         let classrooms = docSnap.data().classrooms || [];
-        
+
         let targetIndex = classrooms.findIndex(c => c.id === currentViewedClassId);
         if (targetIndex > -1) {
             let studentIndex = classrooms[targetIndex].students.findIndex(s => s.id === studentId);
@@ -4817,7 +4819,7 @@ async function addManualScore(studentId) {
                 viewClassDetails(currentViewedClassId); // تحديث النافذة
             }
         }
-    } catch(e) {}
+    } catch (e) { }
 }
 
 // مراقب لتشغيل جلب الفصول عند الدخول
@@ -4845,7 +4847,7 @@ async function deleteClassroom(classId) {
         // 1. استخراج بيانات الفصل قبل حذفه لمعرفة أكواد الطلاب اللي جواه
         const targetClass = classrooms.find(c => c.id === classId);
         if (!targetClass) return;
-        
+
         // تجميع كل أكواد طلاب هذا الفصل في مصفوفة
         const studentsIds = targetClass.students ? targetClass.students.map(s => s.id) : [];
 
@@ -4860,11 +4862,11 @@ async function deleteClassroom(classId) {
                 .get();
 
             const deletePromises = [];
-            
+
             // اللف على كل الامتحانات، وجواها نلف على كل طالب في الفصل ونمسح نتيجته
             examsSnap.docs.forEach(examDoc => {
                 studentsIds.forEach(studentId => {
-                    let p = examDoc.ref.collection('results').doc(studentId).delete().catch(e => {});
+                    let p = examDoc.ref.collection('results').doc(studentId).delete().catch(e => { });
                     deletePromises.push(p);
                 });
             });
@@ -4872,7 +4874,7 @@ async function deleteClassroom(classId) {
             // انتظار انتهاء مسح كل الدرجات من سيرفرات Firebase
             await Promise.all(deletePromises);
         }
-        
+
         showToast('🗑️ تم حذف الفصل ومسح جميع بيانات طلابه بنجاح', 'success');
         loadClassroomsFromCloud(); // تحديث واجهة الفصول
 
@@ -4892,13 +4894,13 @@ async function removeStudentFromClass(classId, studentId) {
 
     try {
         let refreshBtn = document.getElementById('btnRefreshScores');
-        if(refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري الحذف العميق...";
+        if (refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري الحذف العميق...";
 
         // 1. مسح الطالب من كشف الفصل في حساب المدرس
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
         let classrooms = docSnap.data().classrooms || [];
-        
+
         let targetIndex = classrooms.findIndex(c => c.id === classId);
         if (targetIndex > -1) {
             classrooms[targetIndex].students = classrooms[targetIndex].students.filter(s => s.id !== studentId);
@@ -4912,18 +4914,18 @@ async function removeStudentFromClass(classId, studentId) {
 
         const deletePromises = examsSnap.docs.map(examDoc => {
             // محاولة حذف النتيجة، وبنستخدم catch عشان لو الطالب ممتحنش الامتحان ده السيستم يتجاهل بدون أخطاء
-            return examDoc.ref.collection('results').doc(studentId).delete().catch(e => {});
+            return examDoc.ref.collection('results').doc(studentId).delete().catch(e => { });
         });
 
         // انتظار انتهاء مسح كل الدرجات من سيرفرات Firebase
         await Promise.all(deletePromises);
-        
+
         showToast('🗑️ تم حذف الطالب ومسح تاريخه بالكامل بنجاح', 'success');
-        
+
         // تحديث الواجهة والنافذة المفتوحة
-        loadClassroomsFromCloud(); 
-        viewClassDetails(classId); 
-        
+        loadClassroomsFromCloud();
+        viewClassDetails(classId);
+
     } catch (e) {
         showToast('❌ حدث خطأ أثناء الحذف', 'error');
         console.error(e);
@@ -4937,7 +4939,7 @@ async function removeStudentFromClass(classId, studentId) {
 async function openPublishOnlineModal() {
     const user = auth.currentUser;
     if (!user) return showToast('يرجى تسجيل الدخول أولاً لنشر الامتحانات', 'error');
-    
+
     // التأكد من وجود أسئلة في المحرر
     syncTextToDatabase();
     const realQs = questionsDatabase.filter(q => q.type !== 'heading');
@@ -4946,12 +4948,12 @@ async function openPublishOnlineModal() {
     // تهيئة النافذة
     document.getElementById('publishOnlineModal').style.display = 'flex';
     document.getElementById('publishSuccessBox').style.display = 'none';
-    
+
     const btnConfirm = document.getElementById('btnConfirmPublish');
     btnConfirm.style.display = 'flex';
     btnConfirm.innerText = '🚀 تأكيد ونشر الامتحان';
     btnConfirm.disabled = false;
-    
+
     // التقاط اسم الامتحان من الترويسة (إن وجد)
     let defaultTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان إلكتروني جديد';
     document.getElementById('onlineExamTitle').value = defaultTitle;
@@ -4959,7 +4961,7 @@ async function openPublishOnlineModal() {
     // جلب الفصول من السحابة لوضعها في القائمة المنسدلة
     const selectEl = document.getElementById('onlineExamClassSelect');
     selectEl.innerHTML = '<option value="all">جميع الفصول (عام / مفتوح للكل)</option>';
-    
+
     try {
         const docSnap = await db.collection('users').doc(user.uid).get();
         if (docSnap.exists && docSnap.data().classrooms) {
@@ -4971,7 +4973,7 @@ async function openPublishOnlineModal() {
                 selectEl.appendChild(opt);
             });
         }
-    } catch(e) {
+    } catch (e) {
         console.error("خطأ في جلب الفصول", e);
     }
 }
@@ -4984,11 +4986,11 @@ async function publishExamToCloud() {
     const title = document.getElementById('onlineExamTitle').value.trim() || 'امتحان بدون عنوان';
     const classId = document.getElementById('onlineExamClassSelect').value;
     const showResults = document.getElementById('onlineExamShowResults').value === 'yes';
-    
+
     // ⏰ قراءة وقت انتهاء الامتحان
     const endTimeRaw = document.getElementById('onlineExamEndTime').value;
     if (!endTimeRaw) return showToast('يرجى تحديد موعد إغلاق الامتحان ⏰', 'error');
-    const endTimestamp = new Date(endTimeRaw).getTime(); 
+    const endTimestamp = new Date(endTimeRaw).getTime();
 
     const examCode = Math.random().toString(36).substring(2, 7).toUpperCase();
 
@@ -4999,7 +5001,7 @@ async function publishExamToCloud() {
             type: q.type || "mcq",
             text: q.text || "",
             options: q.options ? q.options.map(o => ({ l: o.l || "", t: o.t || "" })) : [],
-            ans: q.ans || "" 
+            ans: q.ans || ""
         };
     });
 
@@ -5018,8 +5020,8 @@ async function publishExamToCloud() {
                 if (targetClass && targetClass.students) {
                     targetClass.students.forEach(s => {
                         // بنحط كود الطالب واسمه (متنظف لغوياً) في القائمة المسموح بيها
-                        allowedStudentsList.push(String(s.id).trim().toLowerCase()); 
-                        allowedStudentsList.push(normalizeArabicName(s.name)); 
+                        allowedStudentsList.push(String(s.id).trim().toLowerCase());
+                        allowedStudentsList.push(normalizeArabicName(s.name));
                     });
                 }
             }
@@ -5032,7 +5034,7 @@ async function publishExamToCloud() {
             title: title,
             questions: cleanQuestions,
             showResults: showResults,
-            endTime: endTimestamp, 
+            endTime: endTimestamp,
             active: true,
             allowedStudents: allowedStudentsList, // 💡 حفظ قائمة المسموح لهم في السحابة
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -5080,7 +5082,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
     </div>`;
-    
+
     // التحقق من عدم تكرار المودال
     if (!document.getElementById('manageExamsModal')) {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
@@ -5116,10 +5118,10 @@ async function openManageExamsModal() {
         let html = '';
         exams.forEach(data => {
             let isExpired = data.endTime && Date.now() > data.endTime;
-            let statusBadge = isExpired 
-                ? '<span style="background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-x-circle"></i> مغلق (منتهي)</span>' 
+            let statusBadge = isExpired
+                ? '<span style="background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-x-circle"></i> مغلق (منتهي)</span>'
                 : '<span style="background: #d1fae5; color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-check-circle"></i> مفتوح (نشط)</span>';
-            
+
             let endDateTime = data.endTime ? new Date(data.endTime).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) : 'غير محدد';
 
             html += `
@@ -5149,7 +5151,7 @@ async function extendExamTime(examId, classId) {
     let now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     let defaultTime = now.toISOString().slice(0, 16); // تنسيق الوقت المحلي
-    
+
     let newTimeStr = prompt("أدخل تاريخ ووقت الإغلاق الجديد:\n(مثال: 2026-08-25T15:30)", defaultTime);
     if (!newTimeStr) return;
 
@@ -5170,8 +5172,8 @@ async function extendExamTime(examId, classId) {
                 if (targetClass && targetClass.students) {
                     let allowedStudentsList = [];
                     targetClass.students.forEach(s => {
-                        allowedStudentsList.push(String(s.id).trim().toLowerCase()); 
-                        allowedStudentsList.push(normalizeArabicName(s.name)); 
+                        allowedStudentsList.push(String(s.id).trim().toLowerCase());
+                        allowedStudentsList.push(normalizeArabicName(s.name));
                     });
                     updateData.allowedStudents = allowedStudentsList;
                 }
@@ -5181,7 +5183,7 @@ async function extendExamTime(examId, classId) {
         await db.collection('online_exams').doc(examId).update(updateData);
         showToast('✅ تم تمديد الوقت وتحديث قائمة المسموح لهم بنجاح!', 'success');
         openManageExamsModal(); // تحديث الشاشة
-        
+
     } catch (e) {
         showToast('❌ خطأ في التحديث: ' + e.message, 'error');
     }
@@ -5194,7 +5196,7 @@ async function deleteCloudExam(examId) {
 
     try {
         showToast('جاري مسح ورقة الامتحان والاحتفاظ بالدرجات في الكشف... 🧹', 'info');
-        
+
         // مسح تفاصيل إجابات الطلاب أولاً (Results Subcollection)
         const resultsSnap = await db.collection('online_exams').doc(examId).collection('results').get();
         const deletePromises = [];
@@ -5209,7 +5211,504 @@ async function deleteCloudExam(examId) {
         showToast('🗑️ تم مسح الامتحان بنجاح، ودرجات الطلاب في أمان!', 'success');
         openManageExamsModal(); // تحديث الشاشة
 
-    } catch(e) {
+    } catch (e) {
         showToast('❌ خطأ في المسح: ' + e.message, 'error');
     }
+}
+/* ========================================================
+   🤖 محرك المصمم الذكي والمحادثة الحقيقية (Real AI Designer)
+   ======================================================== */
+
+// مكتبة الصور الذكية (يفهمها الـ AI بناءً على الكلمات المفتاحية)
+const aiBackgrounds = {
+    'كيمياء': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
+    'علوم': 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
+    'فيزياء': 'https://images.unsplash.com/photo-1614935151651-0bea6508abb0?auto=format&fit=crop&w=800&q=80',
+    'رياضيات': 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80',
+    'تاريخ': 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=800&q=80',
+    'لغات': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80',
+    'انجليزي': 'https://images.unsplash.com/photo-1513635269975-5969336ac1cb?auto=format&fit=crop&w=800&q=80'
+};
+
+function openCoverModal() {
+    document.getElementById('coverGeneratorModal').style.display = 'flex';
+    scaleLivePreview(); // تفعيل التحجيم فوراً
+    initDragAndDrop(); // تفعيل سحب النصوص
+    updateCoverElements();
+}
+
+// 1. التحديث الفوري للبيانات على الغلاف
+function updateCoverElements() {
+    document.getElementById('dragTitle').innerText = document.getElementById('covTitle').value || 'عنوان الملزمة';
+    document.getElementById('dragSubject').innerText = document.getElementById('covSubject').value || 'المادة والصف';
+    document.getElementById('dragTeacher').innerText = document.getElementById('covTeacher').value || 'اسم المعلم';
+    document.getElementById('dragPhone').innerText = document.getElementById('covPhone').value || 'التواصل';
+
+    const pColor = document.getElementById('covTitleColor').value;
+    const sColor = document.getElementById('covTextColor').value;
+
+    document.getElementById('dragTitle').style.color = pColor;
+    document.getElementById('dragTeacher').style.color = pColor;
+    document.getElementById('dragSubject').style.color = sColor;
+    document.getElementById('dragPhone').style.color = sColor;
+}
+
+// 2. محرك الذكاء الاصطناعي الفعلي (Linked to your /api/generate)
+async function sendPromptToAIDesigner() {
+    const inputEl = document.getElementById('aiCoverPrompt');
+    const prompt = inputEl.value.trim();
+    if(!prompt) return;
+
+    const chatBox = document.getElementById('aiDesignerChat');
+    
+    // 1. رسم رسالة المستخدم
+    chatBox.innerHTML += `
+        <div style="background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; align-self: flex-end; max-width: 85%; font-size: 13px;">
+            ${prompt}
+        </div>
+    `;
+    inputEl.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // 2. شاشة تحميل الـ AI
+    const loadingId = 'loading_' + Date.now();
+    chatBox.innerHTML += `
+        <div id="${loadingId}" style="background: #f3e8ff; color: #6b21a8; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
+            <i class="bx bx-loader-alt bx-spin"></i> جاري التفكير وتوليد الرد...
+        </div>
+    `;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // 3. تحليل سريع لتغيير ألوان وصور الغلاف محلياً فوراً
+    applySmartDesignLocally(prompt);
+
+    try {
+        // 4. إرسال الطلب لمحرك Gemini الخاص بك (API)
+        const systemContext = "أنت مساعد ذكي داخل منصة لإنشاء الملازم. المستخدم يصمم غلاف ملزمة الآن. إذا طلب أسئلة أو شرح علمي، قم بكتابته منسقاً بـ HTML (مثل <br> و <b>). كن موجزاً ومفيداً وودوداً.";
+        const fullPrompt = `${systemContext}\n\nطلب المستخدم: ${prompt}`;
+
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parts: [{ text: fullPrompt }] })
+        });
+
+        if (!response.ok) throw new Error("API Error");
+        const data = await response.json();
+        
+        // إذا فشل جلب الرد
+        if (!data.candidates || data.candidates.length === 0) throw new Error("No response");
+
+        let aiText = data.candidates[0].content.parts[0].text.trim();
+        aiText = aiText.replace(/\n/g, '<br>'); // تنسيق الفواصل
+
+        document.getElementById(loadingId).remove();
+        
+        // 5. رسم رد الذكاء الاصطناعي
+        chatBox.innerHTML += `
+            <div style="background: #ffffff; color: #4c1d95; padding: 12px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px; line-height: 1.6; border: 1px solid #d8b4fe; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                ${aiText}
+            </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (e) {
+        document.getElementById(loadingId).remove();
+        chatBox.innerHTML += `
+            <div style="background: #fee2e2; color: #ef4444; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
+                ✅ تم تحديث الغلاف بناءً على طلبك. (ملاحظة: السيرفر غير متصل لتوليد الأسئلة النصية حالياً).
+            </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
+// دالة تحليل الكلمات وتغيير شكل الغلاف فورياً
+function applySmartDesignLocally(text) {
+    text = text.toLowerCase();
+    
+    // 1. تحليل الألوان وتطبيقها
+    if(text.includes('أحمر') || text.includes('احمر')) { 
+        document.getElementById('covTitleColor').value = '#ef4444'; 
+        document.getElementById('covTextColor').value = '#ffffff'; 
+    }
+    else if(text.includes('أزرق') || text.includes('ازرق')) { 
+        document.getElementById('covTitleColor').value = '#3b82f6'; 
+        document.getElementById('covTextColor').value = '#ffffff'; 
+    }
+    else if(text.includes('أخضر') || text.includes('اخضر')) { 
+        document.getElementById('covTitleColor').value = '#10b981'; 
+        document.getElementById('covTextColor').value = '#ffffff'; 
+    }
+    else if(text.includes('أصفر') || text.includes('اصفر') || text.includes('ذهبي')) { 
+        document.getElementById('covTitleColor').value = '#fbbf24'; 
+        document.getElementById('covTextColor').value = '#000000'; 
+    }
+    else if(text.includes('أسود') || text.includes('اسود')) { 
+        document.getElementById('covTitleColor').value = '#0f172a'; 
+        document.getElementById('covTextColor').value = '#fbbf24'; 
+    }
+
+    // 2. تحليل المواد وتغيير صورة الخلفية (هنا كان الخطأ وتم إصلاحه)
+    let foundImage = false;
+    for (const [key, value] of Object.entries(aiBackgrounds)) {
+        if (text.includes(key)) {
+            // إجبار النظام على استخدام الصورة وإلغاء الخلفية السادة
+            isSolidBgMode = false; 
+            activeCoverBgUrl = value;
+            document.getElementById('liveCoverPreview').style.background = `url('${value}') center/cover`;
+            foundImage = true;
+            break;
+        }
+    }
+
+    updateCoverElements();
+}
+
+// تفعيل زر Enter للشات
+document.addEventListener('DOMContentLoaded', () => {
+    const aiInput = document.getElementById('aiCoverPrompt');
+    if(aiInput) {
+        aiInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendPromptToAIDesigner();
+        });
+    }
+});
+
+// 3. رفع صورة خلفية من الجهاز
+function handleCustomBgUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('liveCoverPreview').style.background = `url('${e.target.result}') center/cover`;
+        showToast('تم رفع الصورة! اسحب النصوص لتعديلها.', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+// 4. الحل الجذري لمشكلة التكبير والمقاسات (Perfect Scaling Math)
+function scaleLivePreview() {
+    const wrapper = document.getElementById('previewContainerWrapper');
+    const scaleWrapper = document.getElementById('scaleWrapper');
+    if(!wrapper || !scaleWrapper) return;
+    
+    const availableWidth = wrapper.clientWidth - 40; 
+    const availableHeight = wrapper.clientHeight - 40;
+    
+    const originalWidth = 794;  // عرض A4
+    const originalHeight = 1122; // طول A4
+
+    const scaleX = availableWidth / originalWidth;
+    const scaleY = availableHeight / originalHeight;
+    const finalScale = Math.min(scaleX, scaleY); // يضمن احتواء الورقة بالكامل في الشاشة
+
+    scaleWrapper.style.transform = `scale(${finalScale})`;
+}
+window.addEventListener('resize', scaleLivePreview);
+
+// 5. محرك السحب والإفلات (Drag & Drop) بدون قفزات عشوائية
+function initDragAndDrop() {
+    const draggables = document.querySelectorAll('.draggable-item');
+    const scaleWrapper = document.getElementById('scaleWrapper');
+
+    draggables.forEach(item => {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        item.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = item.offsetLeft;
+            initialTop = item.offsetTop;
+            
+            item.style.cursor = 'grabbing';
+            item.style.border = '3px dashed #10b981';
+            item.style.background = 'rgba(255,255,255,0.1)';
+            item.style.zIndex = '50';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            // قراءة نسبة التكبير الحالية بشكل دقيق من الـ CSS
+            const transformMatrix = window.getComputedStyle(scaleWrapper).getPropertyValue('transform');
+            let currentScale = 1;
+            if (transformMatrix !== 'none') {
+                currentScale = parseFloat(transformMatrix.split('(')[1].split(',')[0]);
+            }
+            
+            // القسمة على currentScale تمنع الماوس من الإفلات
+            const dx = (e.clientX - startX) / currentScale;
+            const dy = (e.clientY - startY) / currentScale;
+
+            item.style.left = `${initialLeft + dx}px`;
+            item.style.top = `${initialTop + dy}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if(isDragging) {
+                isDragging = false;
+                item.style.cursor = 'grab';
+                item.style.border = 'none';
+                item.style.background = 'transparent';
+                item.style.zIndex = '10';
+            }
+        });
+    });
+}
+
+// 6. الإدراج النهائي في المحرر
+function insertLiveCoverToEditor() {
+    // تنظيف حدود السحب قبل الطباعة
+    document.querySelectorAll('.draggable-item').forEach(el => {
+        el.style.border = 'none';
+        el.style.background = 'transparent';
+    });
+    
+    const previewDiv = document.getElementById('liveCoverPreview');
+    const previewHtml = previewDiv.innerHTML;
+    const bgStyle = previewDiv.style.background;
+    
+    // 💡 استخدام ID المحرر الأساسي أو محرر الملزمة أيهما متاح
+    const editor = document.getElementById('bookletEditorArea') || document.getElementById('generalTextInput');
+    if(!editor) return;
+    
+    if(editor.innerHTML.includes('ابدأ بتأليف') || editor.innerHTML.includes('اكتب محتوى المستند')) {
+        editor.innerHTML = '';
+    }
+    
+    // وضع الغلاف في حاوية PDF Page مطابقة للمقاس
+    const coverFullHtml = `
+    <div class="pdf-page" contenteditable="false" style="page-break-after: always; width: 210mm; min-height: 297mm; background: ${bgStyle}; position: relative; overflow: hidden; padding: 0 !important; margin: 0 auto 20px auto; border: 1px solid #e2e8f0;">
+        ${previewHtml}
+    </div><p>&#8203;</p>`;
+    
+    editor.innerHTML = coverFullHtml + editor.innerHTML;
+    document.getElementById('coverGeneratorModal').style.display = 'none';
+    showToast('✨ تم إدراج الغلاف بنجاح!', 'success');
+}
+// 2. فاصل الصفحات الذكي (Page Break)
+function insertPageBreak() {
+    let breakHtml = `
+    <div contenteditable="false" style="page-break-after: always; width: 100%; border-bottom: 2px dashed #cbd5e1; margin: 30px 0; position: relative; text-align: center; clear: both;" class="page-break-line">
+        <span style="background: white; padding: 0 15px; color: #94a3b8; font-size: 13px; font-weight: bold; position: relative; top: 10px;">✂️ --- بداية صفحة جديدة --- ✂️</span>
+    </div>
+    <p>&#8203;</p>
+    `;
+
+    const editor = document.getElementById('bookletEditorArea');
+    if (editor.innerHTML.includes('ابدأ بتأليف وتنسيق ملزمتك هنا')) {
+        editor.innerHTML = '';
+    }
+    editor.focus();
+    document.execCommand('insertHTML', false, breakHtml);
+}
+
+// 3. تنظيف مساحة الملزمة
+function clearBookletArea() {
+    if (confirm('⚠️ هل أنت متأكد من مسح محتوى الملزمة بالكامل والبدء من جديد؟')) {
+        document.getElementById('bookletEditorArea').innerHTML = `
+            <div style="text-align: center; color: #94a3b8; font-weight: bold; margin-top: 100px; font-size: 24px;">
+                ابدأ بتأليف وتنسيق ملزمتك هنا...
+            </div>
+        `;
+        showToast('تم مسح الملزمة وبدء مسودة جديدة', 'info');
+    }
+}
+
+/* ========================================================
+   🚀 أدوات صانع الملازم المتقدمة (Enterprise Booklet)
+   ======================================================== */
+
+/* ========================================================
+   🪄 حزمة أدوات الملازم السحرية (Booklet Toolkit) - المصححة 100%
+   ======================================================== */
+
+function insertBookletBox(type) {
+    let html = '';
+    if (type === 'important') {
+        html = `<div style="border-right: 6px solid #ef4444; background: #fef2f2; padding: 15px; margin: 20px 0; border-radius: 8px 0 0 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);"><h4 style="color: #ef4444; margin: 0 0 10px 0; font-size: 18px;">🚨 ملاحظة هامة جداً:</h4><p style="margin: 0; color: #1e293b; font-weight: bold;">اكتب ملاحظتك هنا...</p></div><p>&#8203;</p>`;
+    } else if (type === 'remember') {
+        html = `<div style="border-right: 6px solid #3b82f6; background: #eff6ff; padding: 15px; margin: 20px 0; border-radius: 8px 0 0 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);"><h4 style="color: #3b82f6; margin: 0 0 10px 0; font-size: 18px;">💡 تذكر أن:</h4><p style="margin: 0; color: #1e293b; font-weight: bold;">اكتب القاعدة أو الاستنتاج هنا...</p></div><p>&#8203;</p>`;
+    } else if (type === 'exam') {
+        html = `<div style="border-right: 6px solid #f59e0b; background: #fffbeb; padding: 15px; margin: 20px 0; border-radius: 8px 0 0 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);"><h4 style="color: #f59e0b; margin: 0 0 10px 0; font-size: 18px;">🎯 فكرة امتحان:</h4><p style="margin: 0; color: #1e293b; font-weight: bold;">اكتب الفكرة أو التنبيه هنا...</p></div><p>&#8203;</p>`;
+    }
+    // 👇 تم تصحيح المسار ليكون bookletEditorArea
+    document.getElementById('bookletEditorArea').focus();
+    document.execCommand('insertHTML', false, html);
+}
+
+function insertWritingLines() {
+    let count = prompt("كم عدد سطور الإجابة المطلوبة للطلاب؟", "5");
+    if (!count || isNaN(count)) return;
+    let html = `<div contenteditable="false" style="margin: 25px 0; width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #fdfdfd; page-break-inside: avoid;"><div style="font-size: 12px; color: #94a3b8; font-weight: bold; margin-bottom: 10px;">✍️ مساحة للإجابة:</div>`;
+    for (let i = 0; i < count; i++) html += `<div style="border-bottom: 2px dotted #cbd5e1; height: 35px; width: 100%;"></div>`;
+    html += `</div><p>&#8203;</p>`;
+    document.getElementById('bookletEditorArea').focus();
+    document.execCommand('insertHTML', false, html);
+}
+
+function insertQRLink() {
+    let url = prompt("🔗 أدخل رابط فيديو الشرح (مثال: يوتيوب):");
+    if (!url) return;
+    let title = prompt("أدخل عنوان الباركود:", "شاهد فيديو الشرح 📺");
+    let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+    let html = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 30px auto; padding: 15px 30px; border: 2px dashed #94a3b8; border-radius: 16px; width: fit-content; background: #f8fafc; page-break-inside: avoid;"><strong style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">${title}</strong><img src="${qrUrl}" alt="QR Code" style="width: 130px; height: 130px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"><span style="font-size: 12px; color: #64748b; margin-top: 10px; font-weight: bold;">امسح الباركود بكاميرا الهاتف للوصول</span></div><p>&#8203;</p>`;
+    document.getElementById('bookletEditorArea').focus();
+    document.execCommand('insertHTML', false, html);
+}
+
+function insertTwoColumns() {
+    let html = `<div style="display: flex; gap: 20px; margin: 20px 0; width: 100%; direction: rtl;"><div style="flex: 1; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; background: #fff;"><h4 style="color: var(--primary-color); margin: 0 0 10px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">العمود الأول</h4><p style="margin: 0; line-height: 1.8;">اكتب محتوى العمود الأول هنا...</p></div><div style="flex: 1; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; background: #fff;"><h4 style="color: var(--primary-color); margin: 0 0 10px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">العمود الثاني</h4><p style="margin: 0; line-height: 1.8;">اكتب محتوى العمود الثاني هنا...</p></div></div><p>&#8203;</p>`;
+    document.getElementById('bookletEditorArea').focus();
+    document.execCommand('insertHTML', false, html);
+}
+
+function generateTableOfContents() {
+    // 👇 تم تصحيح المسار ليكون bookletEditorArea
+    const editor = document.getElementById('bookletEditorArea');
+    let elements = editor.querySelectorAll('h1, h2, h3, strong, b');
+    let tocList = [];
+    elements.forEach(el => {
+        let text = el.innerText.trim();
+        if (text.length > 4 && text.length < 50) {
+            if (!tocList.includes(text)) tocList.push(text);
+        }
+    });
+    if (tocList.length === 0) return showToast('لم يتم العثور على عناوين بارزة للفهرس. استخدم أداة (عريض B) لتمييز العناوين.', 'error');
+
+    let html = `<div contenteditable="false" style="border: 2px solid var(--primary-color); border-radius: 12px; padding: 20px; margin: 25px 0; background: #f8fafc; page-break-inside: avoid; width: 100%;"><h2 style="text-align: center; color: var(--primary-color); margin: 0 0 15px 0;"><i class='bx bx-list-ol'></i> فهرس المحتويات</h2><div style="border-top: 2px dashed #cbd5e1; margin-bottom: 15px;"></div>`;
+    tocList.forEach(title => { html += `<div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;"><strong style="color: #1e293b; font-size: 16px;">${title}</strong><span style="color: #94a3b8; font-weight: bold; letter-spacing: 2px;">....................</span></div>`; });
+    html += `</div><p>&#8203;</p>`;
+    editor.focus();
+    document.execCommand('insertHTML', false, html);
+    showToast('✅ تم توليد الفهرس الآلي بنجاح!', 'success');
+}
+
+function insertGridPaper() {
+    let html = `<div contenteditable="false" style="width: 100%; height: 300px; margin: 25px 0; border: 2px solid #64748b; background-color: #fff; background-image: linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px); background-size: 20px 20px; page-break-inside: avoid; display: flex; align-items: center; justify-content: center; position: relative;"><span style="background: white; padding: 4px 15px; font-size: 13px; font-weight: bold; color: #64748b; border-radius: 6px; opacity: 0.7; border: 1px dashed #cbd5e1;">📈 مساحة رسم بياني</span></div><p>&#8203;</p>`;
+    document.getElementById('bookletEditorArea').focus();
+    document.execCommand('insertHTML', false, html);
+}
+
+function insertCornellNotes() {
+    let html = `<div contenteditable="false" style="width: 100%; border: 3px solid #475569; border-radius: 12px; margin: 25px 0; background: #fff; page-break-inside: avoid; overflow: hidden;"><div style="display: flex; border-bottom: 3px solid #475569; min-height: 250px;"><div contenteditable="true" style="width: 30%; border-left: 3px solid #475569; padding: 15px; background: #f8fafc;"><h4 style="margin: 0 0 15px 0; color: #3b82f6; text-align: center;">الأسئلة / الأفكار</h4><p>...</p></div><div contenteditable="true" style="width: 70%; padding: 15px;"><h4 style="margin: 0 0 15px 0; color: #3b82f6; text-align: center;">الشرح والملاحظات</h4><p>...</p></div></div><div contenteditable="true" style="padding: 15px; background: #f1f5f9; min-height: 100px;"><h4 style="margin: 0 0 10px 0; color: #10b981;">الملخص</h4><p>...</p></div></div><p>&#8203;</p>`;
+    document.getElementById('bookletEditorArea').focus();
+    document.execCommand('insertHTML', false, html);
+}
+
+function printBooklet() {
+    // 👇 تم تصحيح المسار ليكون bookletEditorArea
+    const editorEl = document.getElementById('bookletEditorArea');
+    if (!editorEl) return showToast('مساحة الملزمة غير موجودة!', 'error');
+
+    const editorContent = editorEl.innerHTML;
+
+    // التحقق الصحيح من الفراغ أو النص الافتراضي
+    if (!editorContent.trim() || editorContent.includes('اكتب محتوى المستند الخاص بك هنا...') || editorContent.includes('ابدأ بتأليف')) {
+        return showToast('الملزمة فارغة! الرجاء تأليف محتوى أولاً.', 'error');
+    }
+    document.getElementById('bookletSettingsModal').style.display = 'flex';
+}
+
+async function printBookletFinal() {
+    // 👇 تم تصحيح المسار ليكون bookletEditorArea
+    const editorContent = document.getElementById('bookletEditorArea').innerHTML;
+
+    let hdrText = document.getElementById('bkHeader').value.trim();
+    let ftrText = document.getElementById('bkFooter').value.trim();
+    let wmText = document.getElementById('bkWatermark').value.trim();
+
+    let bgRule = '';
+    if (wmText) {
+        let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800"><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" transform="rotate(-45 400 400)" fill="rgba(0,0,0,0.06)" font-family="Arial" font-size="70" font-weight="900">${wmText}</text></svg>`;
+        bgRule = `background-image: url("data:image/svg+xml,${encodeURIComponent(svg)}") !important; background-position: center !important; background-repeat: repeat !important; background-attachment: fixed !important;`;
+    }
+
+    const previewArea = document.getElementById('wordPrintPreviewArea');
+    previewArea.innerHTML = '';
+    previewArea.className = 'print-mode-text isolated-booklet';
+
+    let tableHtml = `
+    <table style="width: 100%; border-collapse: collapse; border: none;">
+        ${hdrText ? `
+        <thead style="display: table-header-group;">
+            <tr><td style="border: none; padding: 0;">
+                <div style="padding: 10px 0; border-bottom: 2px solid #cbd5e1; margin-bottom: 10mm; font-size: 16px; font-weight: bold; color: #475569; display: flex; justify-content: space-between;">
+                    <span>${hdrText}</span>
+                    <span style="color: var(--primary-color);">M&H Booklet</span>
+                </div>
+            </td></tr>
+        </thead>` : ''}
+        
+        <tbody>
+            <tr><td style="border: none; padding: 0;">
+                <div class="general-text-display" style="border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; font-size: 18px; line-height: 1.8; color: #000 !important; white-space: pre-wrap !important;">
+                    ${editorContent}
+                </div>
+            </td></tr>
+        </tbody>
+        
+        ${ftrText ? `
+        <tfoot style="display: table-footer-group;">
+            <tr><td style="border: none; padding: 0;">
+                <div style="padding: 10px 0; border-top: 2px solid #cbd5e1; margin-top: 10mm; font-size: 14px; font-weight: bold; color: #475569; text-align: center;">
+                    ${ftrText}
+                </div>
+            </td></tr>
+        </tfoot>` : ''}
+    </table>
+    `;
+
+    let finalHtml = `
+    <div class="pdf-page" style="background: #ffffff !important; border: none !important; box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; direction: rtl; text-align: right; padding: 10mm 15mm; min-height: 297mm; position: relative; box-sizing: border-box; overflow: visible; ${bgRule}">
+        ${tableHtml}
+    </div>
+    `;
+
+    finalHtml += `
+    <style>
+        #wordPrintPreviewArea.isolated-booklet .pdf-page br { display: block !important; content: normal !important; }
+        #wordPrintPreviewArea.isolated-booklet .general-text-display p,
+        #wordPrintPreviewArea.isolated-booklet .general-text-display div { min-height: 1.5em !important; }
+        
+        /* 🔢 ترقيم الصفحات الآلي للملزمة */
+        body { counter-reset: booklet-page; }
+        #wordPrintPreviewArea.isolated-booklet .pdf-page {
+            counter-increment: booklet-page;
+            position: relative !important; 
+        }
+        #wordPrintPreviewArea.isolated-booklet .pdf-page::after {
+            content: "- " counter(booklet-page) " -";
+            position: absolute;
+            bottom: 12mm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            color: #475569;
+        }
+
+        @media print {
+            .page-break-line span { display: none !important; }
+            .page-break-line { border-bottom: none !important; margin: 0 !important; padding: 0 !important; }
+            .print-border-overlay { display: none !important; } 
+            body, .pdf-page { background: #ffffff !important; border: none !important; box-shadow: none !important; }
+            @page { margin-top: 15mm; margin-bottom: 15mm; } 
+        }
+    </style>
+    `;
+
+    previewArea.innerHTML = finalHtml;
+    if (window.MathJax) await MathJax.typesetPromise([previewArea]);
+
+    let borderOverlay = document.getElementById('printBorderOverlay');
+    if (borderOverlay) borderOverlay.style.display = 'none';
+
+    document.getElementById('bookletSettingsModal').style.display = 'none';
+    document.getElementById('wordPrintModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
