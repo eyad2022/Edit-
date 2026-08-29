@@ -5219,7 +5219,7 @@ async function deleteCloudExam(examId) {
    🤖 محرك المصمم الذكي والمحادثة الحقيقية (Real AI Designer)
    ======================================================== */
 
-// مكتبة الصور الذكية (يفهمها الـ AI بناءً على الكلمات المفتاحية - مضاف إليها الإنجليزي كحماية)
+// مكتبة الصور الذكية (يفهمها الـ AI بناءً على الكلمات المفتاحية - تم إضافة الإنجليزي كحماية)
 const aiBackgrounds = {
     'كيمياء': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
     'chemistry': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
@@ -5283,12 +5283,9 @@ async function sendPromptToAIDesigner() {
         </div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // تطبيق مبدئي سريع عشان لو السيرفر اتأخر
-    applySmartDesignLocally(prompt);
-
     try {
-        // 3. إجبار الذكاء الاصطناعي على الرد بـ JSON بفرمان صارم يمنع الإنجليزي
-        const systemContext = `أنت مصمم أغلفة ذكي ومساعد تعليمي. ممنوع منعاً باتاً كتابة وصف للصور باللغة الإنجليزية أو التحدث بها. 
+        // 3. إجبار الذكاء الاصطناعي على الرد بـ JSON للتحكم في الألوان والصور (بفرمان يمنع الإنجليزي)
+        const systemContext = `أنت مصمم أغلفة ذكي ومساعد تعليمي. ممنوع منعاً باتاً التحدث باللغة الإنجليزية أو وصف الصور.
 طلب المستخدم: "${prompt}"
 يجب أن ترد دائماً بصيغة JSON فقط (بدون أي نصوص خارج الـ JSON) تحتوي على المفاتيح التالية:
 {
@@ -5327,11 +5324,8 @@ async function sendPromptToAIDesigner() {
                 document.getElementById('covTextColor').value = aiResult.design.textColor;
             }
             
-            // تغيير صورة الخلفية
+            // تغيير صورة الخلفية (تم الإصلاح هنا لتخطي اللون الأسود)
             if(aiResult.design.subjectKeyword && aiBackgrounds[aiResult.design.subjectKeyword]) {
-                if (typeof isSolidBgMode !== 'undefined') isSolidBgMode = false; 
-                if (typeof activeCoverBgUrl !== 'undefined') activeCoverBgUrl = aiBackgrounds[aiResult.design.subjectKeyword];
-                
                 document.getElementById('liveCoverPreview').style.backgroundColor = 'transparent';
                 document.getElementById('liveCoverPreview').style.backgroundImage = `url('${aiBackgrounds[aiResult.design.subjectKeyword]}')`;
                 document.getElementById('liveCoverPreview').style.backgroundSize = 'cover';
@@ -5353,7 +5347,7 @@ async function sendPromptToAIDesigner() {
     } catch (e) {
         document.getElementById(loadingId).remove();
         
-        // لو الـ AI رد بكلام عادي مش JSON أو حصل خطأ، هنستخدم النظام الاحتياطي
+        // لو الـ AI رد بكلام عادي مش JSON، هنستخدم النظام القديم لتغيير الألوان محلياً كاحتياطي
         if(typeof applySmartDesignLocally === 'function') {
             applySmartDesignLocally(prompt);
         }
@@ -5366,7 +5360,7 @@ async function sendPromptToAIDesigner() {
     }
 }
 
-// دالة تحليل الكلمات وتغيير شكل الغلاف فورياً (تم تحصينها باللغة الإنجليزية)
+// دالة تحليل الكلمات وتغيير شكل الغلاف فورياً (تم تحصينها وتعديل الخلفية)
 function applySmartDesignLocally(text) {
     text = text.toLowerCase();
     
