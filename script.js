@@ -5754,3 +5754,60 @@ async function printBookletFinal() {
     document.getElementById('wordPrintModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
+// 🪄 ميزة الاقتراحات الجاهزة (تولد 4 تصميمات بضغطة واحدة)
+function generateAISuggestions() {
+    const grid = document.getElementById('aiSuggestionsGrid');
+    const subj = document.getElementById('covSubject').value || '';
+    if (!grid) return;
+
+    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #3b82f6; font-weight: bold; font-size: 13px;"><i class="bx bx-loader-alt bx-spin"></i> جاري توليد التصاميم...</div>';
+
+    // البحث عن خلفية تناسب المادة المكتوبة
+    let defaultBg = aiBackgrounds['علوم']; 
+    for (const [key, value] of Object.entries(aiBackgrounds)) {
+        if (subj.includes(key)) { defaultBg = value; break; }
+    }
+
+    setTimeout(() => {
+        grid.innerHTML = '';
+        const palettes = [
+            { p: '#ffffff', s: '#fbbf24', bg: defaultBg },
+            { p: '#ef4444', s: '#ffffff', bg: aiBackgrounds['رياضيات'] || defaultBg },
+            { p: '#3b82f6', s: '#ffffff', bg: aiBackgrounds['تاريخ'] || defaultBg },
+            { p: '#10b981', s: '#ffffff', bg: defaultBg }
+        ];
+
+        for(let i=0; i<4; i++) {
+            let finalBg = (i === 0 || i === 3) ? defaultBg : palettes[i].bg;
+            let color = palettes[i];
+
+            grid.innerHTML += `
+            <div onclick="applyAISuggestion('${finalBg}', '${color.p}', '${color.s}')" style="background: url('${finalBg}') center/cover no-repeat; height: 80px; border-radius: 8px; cursor: pointer; position: relative; border: 2px solid transparent; transition: 0.2s;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='transparent'">
+                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; border-radius: 6px;">
+                    <span style="color: ${color.p}; font-size: 12px; font-weight: bold;">تصميم ${i+1}</span>
+                </div>
+            </div>`;
+        }
+    }, 600);
+}
+
+// دالة تطبيق التصميم الجاهز عند الضغط عليه
+function applyAISuggestion(bgUrl, pColor, sColor) {
+    document.getElementById('covTitleColor').value = pColor;
+    document.getElementById('covTextColor').value = sColor;
+    
+    const preview = document.getElementById('liveCoverPreview');
+    if (typeof isSolidBgMode !== 'undefined') isSolidBgMode = false; 
+    if (typeof activeCoverBgUrl !== 'undefined') activeCoverBgUrl = bgUrl;
+    
+    preview.style.backgroundColor = 'transparent';
+    preview.style.backgroundImage = `url('${bgUrl}')`;
+    preview.style.backgroundSize = 'cover';
+    preview.style.backgroundPosition = 'center';
+    
+    updateCoverElements();
+    
+    if(typeof showToast === 'function') {
+        showToast('✨ تم تطبيق التصميم الجاهز! اسحب النصوص لتعديلها', 'success');
+    }
+}
