@@ -5219,7 +5219,7 @@ async function deleteCloudExam(examId) {
    🤖 محرك المصمم الذكي والمحادثة الحقيقية (Real AI Designer)
    ======================================================== */
 
-// مكتبة الصور الذكية (يفهمها الـ AI بناءً على الكلمات المفتاحية - تم إضافة الإنجليزي كحماية)
+// مكتبة الصور الذكية
 const aiBackgrounds = {
     'كيمياء': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
     'chemistry': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
@@ -5236,14 +5236,32 @@ const aiBackgrounds = {
     'english': 'https://images.unsplash.com/photo-1513635269975-5969336ac1cb?auto=format&fit=crop&w=800&q=80'
 };
 
+// الدالة السحرية لتطبيق الصورة وتخفيف الظلام
+function applyCoverImage(url) {
+    const preview = document.getElementById('liveCoverPreview');
+    if(!preview) return;
+    
+    // إجبار الصورة على الظهور وإلغاء أي لون أسود للخلفية
+    preview.style.backgroundColor = 'transparent';
+    preview.style.backgroundImage = `url('${url}')`;
+    preview.style.backgroundSize = 'cover';
+    preview.style.backgroundPosition = 'center';
+    preview.style.backgroundRepeat = 'no-repeat';
+
+    // تخفيف الطبقة السوداء اللي كانت بتخفي الصور الغامقة
+    const overlay = preview.children[0];
+    if (overlay && overlay.style.background.includes('rgba')) {
+        overlay.style.background = 'rgba(0,0,0,0.2)'; // قللناها من 0.6 لـ 0.2 عشان تنور
+    }
+}
+
 function openCoverModal() {
     document.getElementById('coverGeneratorModal').style.display = 'flex';
-    scaleLivePreview(); // تفعيل التحجيم فوراً
-    initDragAndDrop(); // تفعيل سحب النصوص
+    scaleLivePreview(); 
+    initDragAndDrop(); 
     updateCoverElements();
 }
 
-// 1. التحديث الفوري للبيانات على الغلاف
 function updateCoverElements() {
     document.getElementById('dragTitle').innerText = document.getElementById('covTitle').value || 'عنوان الملزمة';
     document.getElementById('dragSubject').innerText = document.getElementById('covSubject').value || 'المادة والصف';
@@ -5259,62 +5277,125 @@ function updateCoverElements() {
     document.getElementById('dragPhone').style.color = sColor;
 }
 
-// 🪄 ميزة الاقتراحات الجاهزة (تولد 4 تصميمات بضغطة واحدة)
-function generateAISuggestions() {
-    const grid = document.getElementById('aiSuggestionsGrid');
-    const subj = document.getElementById('covSubject').value || '';
-    if (!grid) return;
+// 🤖 محرك الذكاء الاصطناعي (المتحكم الفعلي في الواجهة)
+async function sendPromptToAIDesigner() {
+    const inputEl = document.getElementById('aiCoverPrompt');
+    const prompt = inputEl.value.trim();
+    if(!prompt) return;
 
-    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #3b82f6; font-weight: bold; font-size: 13px;"><i class="bx bx-loader-alt bx-spin"></i> جاري توليد التصاميم...</div>';
+    const chatBox = document.getElementById('aiDesignerChat');
+    
+    chatBox.innerHTML += `
+        <div style="background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; align-self: flex-end; max-width: 85%; font-size: 13px;">
+            ${prompt}
+        </div>`;
+    inputEl.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    // البحث عن خلفية تناسب المادة المكتوبة
-    let defaultBg = aiBackgrounds['علوم']; 
-    for (const [key, value] of Object.entries(aiBackgrounds)) {
-        if (subj.includes(key)) { defaultBg = value; break; }
-    }
+    const loadingId = 'loading_' + Date.now();
+    chatBox.innerHTML += `
+        <div id="${loadingId}" style="background: #f3e8ff; color: #6b21a8; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
+            <i class="bx bx-loader-alt bx-spin"></i> جاري التصميم والتفكير...
+        </div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-    setTimeout(() => {
-        grid.innerHTML = '';
-        const palettes = [
-            { p: '#ffffff', s: '#fbbf24', bg: defaultBg },
-            { p: '#ef4444', s: '#ffffff', bg: aiBackgrounds['رياضيات'] || defaultBg },
-            { p: '#3b82f6', s: '#ffffff', bg: aiBackgrounds['تاريخ'] || defaultBg },
-            { p: '#10b981', s: '#ffffff', bg: defaultBg }
-        ];
+    // تطبيق سريع محلياً
+    applySmartDesignLocally(prompt);
 
-        for(let i=0; i<4; i++) {
-            let finalBg = (i === 0 || i === 3) ? defaultBg : palettes[i].bg;
-            let color = palettes[i];
+    try {
+        const systemContext = `أنت مصمم أغلفة ذكي ومساعد تعليمي. 
+طلب المستخدم: "${prompt}"
+يجب أن ترد دائماً بصيغة JSON فقط (بدون أي نصوص خارج الـ JSON) تحتوي على المفاتيح التالية:
+{
+  "reply": "نص ردك الودود على المستخدم بالعربية، وإذا طلب أسئلة اكتبها هنا بتنسيق HTML واستخدم <br> للنزول سطر جديد",
+  "design": {
+     "titleColor": "كود اللون الأساسي HEX للعنوان بناءً على طلبه (مثل #ef4444 للأحمر)",
+     "textColor": "كود اللون الثانوي HEX",
+     "subjectKeyword": "كلمة واحدة فقط من هذه الكلمات لتعبر عن المادة (كيمياء، علوم، فيزياء، رياضيات، تاريخ، لغات، انجليزي) أو null إذا لم يحدد"
+  }
+}`;
 
-            grid.innerHTML += `
-            <div onclick="applyAISuggestion('${finalBg}', '${color.p}', '${color.s}')" style="background: url('${finalBg}') center/cover no-repeat; height: 80px; border-radius: 8px; cursor: pointer; position: relative; border: 2px solid transparent; transition: 0.2s;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='transparent'">
-                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; border-radius: 6px;">
-                    <span style="color: ${color.p}; font-size: 12px; font-weight: bold;">تصميم ${i+1}</span>
-                </div>
-            </div>`;
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parts: [{ text: systemContext }] })
+        });
+
+        if (!response.ok) throw new Error("API Error");
+        const data = await response.json();
+        if (!data.candidates || data.candidates.length === 0) throw new Error("No response");
+
+        let aiText = data.candidates[0].content.parts[0].text.trim();
+        aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const aiResult = JSON.parse(aiText);
+
+        if(aiResult.design) {
+            if(aiResult.design.titleColor && aiResult.design.titleColor !== "null") {
+                document.getElementById('covTitleColor').value = aiResult.design.titleColor;
+            }
+            if(aiResult.design.textColor && aiResult.design.textColor !== "null") {
+                document.getElementById('covTextColor').value = aiResult.design.textColor;
+            }
+            
+            if(aiResult.design.subjectKeyword && aiBackgrounds[aiResult.design.subjectKeyword]) {
+                // استخدام الدالة السحرية لتطبيق الصورة وتخفيف الظلام
+                applyCoverImage(aiBackgrounds[aiResult.design.subjectKeyword]);
+            }
+            updateCoverElements();
         }
-    }, 600);
+
+        document.getElementById(loadingId).remove();
+        chatBox.innerHTML += `
+            <div style="background: #ffffff; color: #4c1d95; padding: 12px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px; line-height: 1.6; border: 1px solid #d8b4fe; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                ${aiResult.reply}
+            </div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (e) {
+        document.getElementById(loadingId).remove();
+        applySmartDesignLocally(prompt);
+        chatBox.innerHTML += `
+            <div style="background: #fdfaf5; color: #b45309; border: 1px solid #fde68a; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-start; max-width: 85%; font-size: 13px;">
+                ✅ تم تنفيذ التعديل. (استجابة سريعة من النظام المحلي).
+            </div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
 }
 
-// دالة تطبيق التصميم الجاهز عند الضغط عليه
-function applyAISuggestion(bgUrl, pColor, sColor) {
-    document.getElementById('covTitleColor').value = pColor;
-    document.getElementById('covTextColor').value = sColor;
+// دالة تحليل الكلمات وتغيير شكل الغلاف فورياً
+function applySmartDesignLocally(text) {
+    text = text.toLowerCase();
     
-    const preview = document.getElementById('liveCoverPreview');
-    if (typeof isSolidBgMode !== 'undefined') isSolidBgMode = false; 
-    if (typeof activeCoverBgUrl !== 'undefined') activeCoverBgUrl = bgUrl;
-    
-    preview.style.backgroundColor = 'transparent';
-    preview.style.backgroundImage = `url('${bgUrl}')`;
-    preview.style.backgroundSize = 'cover';
-    preview.style.backgroundPosition = 'center';
-    
-    updateCoverElements();
-    
-    if(typeof showToast === 'function') {
-        showToast('✨ تم تطبيق التصميم الجاهز! اسحب النصوص لتعديلها', 'success');
+    if(text.includes('أحمر') || text.includes('احمر')) { 
+        document.getElementById('covTitleColor').value = '#ef4444'; 
+        document.getElementById('covTextColor').value = '#ffffff'; 
     }
+    else if(text.includes('أزرق') || text.includes('ازرق')) { 
+        document.getElementById('covTitleColor').value = '#3b82f6'; 
+        document.getElementById('covTextColor').value = '#ffffff'; 
+    }
+    else if(text.includes('أخضر') || text.includes('اخضر')) { 
+        document.getElementById('covTitleColor').value = '#10b981'; 
+        document.getElementById('covTextColor').value = '#ffffff'; 
+    }
+    else if(text.includes('أصفر') || text.includes('اصفر') || text.includes('ذهبي')) { 
+        document.getElementById('covTitleColor').value = '#fbbf24'; 
+        document.getElementById('covTextColor').value = '#000000'; 
+    }
+    else if(text.includes('أسود') || text.includes('اسود')) { 
+        document.getElementById('covTitleColor').value = '#0f172a'; 
+        document.getElementById('covTextColor').value = '#fbbf24'; 
+    }
+
+    for (const [key, value] of Object.entries(aiBackgrounds)) {
+        if (text.includes(key)) {
+            // استخدام الدالة السحرية لتطبيق الصورة وتخفيف الظلام
+            applyCoverImage(value);
+            break;
+        }
+    }
+
+    updateCoverElements();
 }
 // تفعيل زر Enter للشات
 document.addEventListener('DOMContentLoaded', () => {
