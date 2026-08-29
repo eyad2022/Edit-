@@ -5219,15 +5219,21 @@ async function deleteCloudExam(examId) {
    🤖 محرك المصمم الذكي والمحادثة الحقيقية (Real AI Designer)
    ======================================================== */
 
-// مكتبة الصور الذكية (يفهمها الـ AI بناءً على الكلمات المفتاحية)
+// مكتبة الصور الذكية (يفهمها الـ AI بناءً على الكلمات المفتاحية - مضاف إليها الإنجليزي كحماية)
 const aiBackgrounds = {
     'كيمياء': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
+    'chemistry': 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
     'علوم': 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
+    'science': 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
     'فيزياء': 'https://images.unsplash.com/photo-1614935151651-0bea6508abb0?auto=format&fit=crop&w=800&q=80',
+    'physics': 'https://images.unsplash.com/photo-1614935151651-0bea6508abb0?auto=format&fit=crop&w=800&q=80',
     'رياضيات': 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80',
+    'math': 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80',
     'تاريخ': 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=800&q=80',
+    'history': 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=800&q=80',
     'لغات': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80',
-    'انجليزي': 'https://images.unsplash.com/photo-1513635269975-5969336ac1cb?auto=format&fit=crop&w=800&q=80'
+    'انجليزي': 'https://images.unsplash.com/photo-1513635269975-5969336ac1cb?auto=format&fit=crop&w=800&q=80',
+    'english': 'https://images.unsplash.com/photo-1513635269975-5969336ac1cb?auto=format&fit=crop&w=800&q=80'
 };
 
 function openCoverModal() {
@@ -5277,13 +5283,16 @@ async function sendPromptToAIDesigner() {
         </div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
+    // تطبيق مبدئي سريع عشان لو السيرفر اتأخر
+    applySmartDesignLocally(prompt);
+
     try {
-        // 3. إجبار الذكاء الاصطناعي على الرد بـ JSON للتحكم في الألوان والصور
-        const systemContext = `أنت مصمم أغلفة ذكي ومساعد تعليمي. 
+        // 3. إجبار الذكاء الاصطناعي على الرد بـ JSON بفرمان صارم يمنع الإنجليزي
+        const systemContext = `أنت مصمم أغلفة ذكي ومساعد تعليمي. ممنوع منعاً باتاً كتابة وصف للصور باللغة الإنجليزية أو التحدث بها. 
 طلب المستخدم: "${prompt}"
 يجب أن ترد دائماً بصيغة JSON فقط (بدون أي نصوص خارج الـ JSON) تحتوي على المفاتيح التالية:
 {
-  "reply": "نص ردك الودود على المستخدم، وإذا طلب أسئلة اكتبها هنا بتنسيق HTML واستخدم <br> للنزول سطر جديد",
+  "reply": "نص ردك الودود باللغة العربية حصراً، وإذا طلب أسئلة اكتبها هنا بتنسيق HTML واستخدم <br> للنزول سطر جديد",
   "design": {
      "titleColor": "كود اللون الأساسي HEX للعنوان بناءً على طلبه (مثل #ef4444 للأحمر)",
      "textColor": "كود اللون الثانوي HEX",
@@ -5320,6 +5329,10 @@ async function sendPromptToAIDesigner() {
             
             // تغيير صورة الخلفية
             if(aiResult.design.subjectKeyword && aiBackgrounds[aiResult.design.subjectKeyword]) {
+                if (typeof isSolidBgMode !== 'undefined') isSolidBgMode = false; 
+                if (typeof activeCoverBgUrl !== 'undefined') activeCoverBgUrl = aiBackgrounds[aiResult.design.subjectKeyword];
+                
+                document.getElementById('liveCoverPreview').style.backgroundColor = 'transparent';
                 document.getElementById('liveCoverPreview').style.backgroundImage = `url('${aiBackgrounds[aiResult.design.subjectKeyword]}')`;
                 document.getElementById('liveCoverPreview').style.backgroundSize = 'cover';
                 document.getElementById('liveCoverPreview').style.backgroundPosition = 'center';
@@ -5340,7 +5353,7 @@ async function sendPromptToAIDesigner() {
     } catch (e) {
         document.getElementById(loadingId).remove();
         
-        // لو الـ AI رد بكلام عادي مش JSON، هنستخدم النظام القديم لتغيير الألوان محلياً كاحتياطي
+        // لو الـ AI رد بكلام عادي مش JSON أو حصل خطأ، هنستخدم النظام الاحتياطي
         if(typeof applySmartDesignLocally === 'function') {
             applySmartDesignLocally(prompt);
         }
@@ -5353,28 +5366,28 @@ async function sendPromptToAIDesigner() {
     }
 }
 
-// دالة تحليل الكلمات وتغيير شكل الغلاف فورياً
+// دالة تحليل الكلمات وتغيير شكل الغلاف فورياً (تم تحصينها باللغة الإنجليزية)
 function applySmartDesignLocally(text) {
     text = text.toLowerCase();
     
     // 1. تحليل الألوان وتطبيقها
-    if(text.includes('أحمر') || text.includes('احمر')) { 
+    if(text.includes('أحمر') || text.includes('احمر') || text.includes('red')) { 
         document.getElementById('covTitleColor').value = '#ef4444'; 
         document.getElementById('covTextColor').value = '#ffffff'; 
     }
-    else if(text.includes('أزرق') || text.includes('ازرق')) { 
+    else if(text.includes('أزرق') || text.includes('ازرق') || text.includes('blue')) { 
         document.getElementById('covTitleColor').value = '#3b82f6'; 
         document.getElementById('covTextColor').value = '#ffffff'; 
     }
-    else if(text.includes('أخضر') || text.includes('اخضر')) { 
+    else if(text.includes('أخضر') || text.includes('اخضر') || text.includes('green')) { 
         document.getElementById('covTitleColor').value = '#10b981'; 
         document.getElementById('covTextColor').value = '#ffffff'; 
     }
-    else if(text.includes('أصفر') || text.includes('اصفر') || text.includes('ذهبي')) { 
+    else if(text.includes('أصفر') || text.includes('اصفر') || text.includes('ذهبي') || text.includes('yellow')) { 
         document.getElementById('covTitleColor').value = '#fbbf24'; 
         document.getElementById('covTextColor').value = '#000000'; 
     }
-    else if(text.includes('أسود') || text.includes('اسود')) { 
+    else if(text.includes('أسود') || text.includes('اسود') || text.includes('black')) { 
         document.getElementById('covTitleColor').value = '#0f172a'; 
         document.getElementById('covTextColor').value = '#fbbf24'; 
     }
@@ -5384,9 +5397,14 @@ function applySmartDesignLocally(text) {
     for (const [key, value] of Object.entries(aiBackgrounds)) {
         if (text.includes(key)) {
             // إجبار النظام على استخدام الصورة وإلغاء الخلفية السادة
-            isSolidBgMode = false; 
-            activeCoverBgUrl = value;
-            document.getElementById('liveCoverPreview').style.background = `url('${value}') center/cover`;
+            if (typeof isSolidBgMode !== 'undefined') isSolidBgMode = false; 
+            if (typeof activeCoverBgUrl !== 'undefined') activeCoverBgUrl = value;
+            
+            document.getElementById('liveCoverPreview').style.backgroundColor = 'transparent';
+            document.getElementById('liveCoverPreview').style.backgroundImage = `url('${value}')`;
+            document.getElementById('liveCoverPreview').style.backgroundSize = 'cover';
+            document.getElementById('liveCoverPreview').style.backgroundPosition = 'center';
+            
             foundImage = true;
             break;
         }
