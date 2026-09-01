@@ -4522,7 +4522,7 @@ async function loadClassroomsFromCloud() {
     } catch (e) { }
 }
 
-// إنشاء فصل جديد
+// 1. تحديث دالة إنشاء الفصل لتوليد كود خاص وإنشاء مساحات للمواد
 async function createNewClassroom() {
     const user = auth.currentUser;
     if (!user) return showToast('يرجى تسجيل الدخول لإنشاء فصول', 'error');
@@ -4531,26 +4531,38 @@ async function createNewClassroom() {
     if (!className || className.trim() === "") return;
 
     try {
-        showToast('جاري إنشاء الفصل...', 'info');
+        showToast('جاري إنشاء الفصل وتوليد الكود...', 'info');
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
 
-        let classrooms = [];
-        if (docSnap.exists && docSnap.data().classrooms) {
-            classrooms = docSnap.data().classrooms;
-        }
+        let classrooms = docSnap.exists ? (docSnap.data().classrooms || []) : [];
+        let teacherName = docSnap.exists ? (docSnap.data().name || "معلم") : "معلم";
+
+        // توليد كود فريد للفصل من 5 حروف وأرقام
+        let classCode = 'C' + Math.random().toString(36).substr(2, 5).toUpperCase();
+        let classId = 'CLASS_' + Date.now();
 
         const newClass = {
-            id: 'CLASS_' + Date.now(),
+            id: classId,
+            code: classCode, // 🔑 الكود السري للطلاب
             name: className.trim(),
             students: [],
+            materials: { pdfs: [], videos: [], homework: [] }, // 📚 مساحة الرفع
             createdAt: new Date().toLocaleDateString('ar-EG')
         };
 
         classrooms.push(newClass);
         await docRef.update({ classrooms: classrooms });
 
-        showToast('✅ تم إنشاء الفصل بنجاح!', 'success');
+        // حفظ الكود في فهرس عام ليتمكن الطلاب من البحث عنه
+        await db.collection('class_codes').doc(classCode).set({
+            teacherId: user.uid,
+            classId: classId,
+            className: className.trim(),
+            teacherName: teacherName
+        });
+
+        showToast('✅ تم إنشاء الفصل! كود الانضمام للطلاب هو: ' + classCode, 'success');
         loadClassroomsFromCloud();
 
     } catch (e) {
@@ -4558,13 +4570,10 @@ async function createNewClassroom() {
     }
 }
 
-// عرض نافذة الفصل وإضافة طالب (محدثة بزر الحذف والمزامنة الآلية وزر التحديث السريع)
-let currentViewedClassId = null;
-
+// 2. تحديث دالة عرض تفاصيل الفصل لإظهار الكود وأزرار رفع المواد
 async function viewClassDetails(classId) {
     const user = auth.currentUser;
     if (!user) return;
-
     currentViewedClassId = classId;
 
     try {
@@ -4573,26 +4582,63 @@ async function viewClassDetails(classId) {
 
         let classrooms = docSnap.data().classrooms || [];
         let targetClass = classrooms.find(c => c.id === classId);
-
         if (!targetClass) return;
 
-        // 💡 إضافة زر التحديث السريع بجوار اسم الفصل (الإضافة الأولى)
-        document.getElementById('modalClassName').innerHTML = `${targetClass.name} <button id="btnRefreshScores" onclick="syncOnlineScores('${classId}', window.tempClassroomsData, window.tempTargetClass)" style="margin-right: 15px; background: #e0e7ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; font-family: inherit;"><i class='bx bx-refresh'></i> تحديث الدرجات</button>`;
+        // تحديث عنوان النافذة ليحتوي على كود الفصل وأزرار الرفع
+        document.getElementById('modalClassName').innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:5px;">
+                <span>${targetClass.name}</span>
+                <span style="font-size: 14px; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; width: fit-content; border: 1px dashed #cbd5e1;">
+                    🔑 كود دعوة الطلاب: <strong style="color: #ef4444; letter-spacing: 1px;">${targetClass.code}</strong>
+                </span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                <button onclick="uploadMaterialToClass('pdfs')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;"><i class='bx bxs-file-pdf'></i> رفع PDF</button>
+                <button onclick="uploadMaterialToClass('videos')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;"><i class='bx bx-video'></i> رفع فيديو</button>
+                <button onclick="uploadMaterialToClass('homework')" style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;"><i class='bx bx-edit'></i> إضافة واجب</button>
+                <button id="btnRefreshScores" onclick="syncOnlineScores('${classId}', window.tempClassroomsData, window.tempTargetClass)" style="background: #e0e7ff; color: #3b82f6; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;"><i class='bx bx-refresh'></i> تحديث الدرجات</button>
+            </div>
+        `;
 
-        // حفظ المتغيرات مؤقتاً عشان زر التحديث يشتغل
         window.tempClassroomsData = classrooms;
         window.tempTargetClass = targetClass;
-
-        // 💡 استدعاء دالة رسم الجدول المحدثة
         renderStudentsTable(targetClass.students, classId);
-
         document.getElementById('btnAddStudentModal').onclick = () => addStudentToClass(classId);
         document.getElementById('classDetailsModal').style.display = 'flex';
-
-        // 🚀 السحر هنا: استدعاء محرك المزامنة الخلفي لجلب الدرجات من السحابة وتحديثها آلياً
         syncOnlineScores(classId, classrooms, targetClass);
 
-    } catch (e) { }
+    } catch (e) { console.error(e); }
+}
+
+// 3. دالة جديدة للمعلم لرفع المذكرات والروابط للفصل
+async function uploadMaterialToClass(type) {
+    const title = prompt("أدخل عنوان المادة (مثال: مذكرة الباب الأول):");
+    if (!title) return;
+    const url = prompt("أدخل الرابط (رابط جوجل درايف للـ PDF، أو رابط يوتيوب للفيديو):");
+    if (!url) return;
+
+    const user = auth.currentUser;
+    try {
+        const docRef = db.collection('users').doc(user.uid);
+        const docSnap = await docRef.get();
+        let classrooms = docSnap.data().classrooms;
+        let targetIndex = classrooms.findIndex(c => c.id === currentViewedClassId);
+        
+        if (targetIndex > -1) {
+            if (!classrooms[targetIndex].materials) classrooms[targetIndex].materials = { pdfs: [], videos: [], homework: [] };
+            
+            classrooms[targetIndex].materials[type].push({
+                title: title,
+                url: url,
+                date: new Date().toLocaleDateString('ar-EG')
+            });
+            
+            await docRef.update({ classrooms: classrooms });
+            showToast('✅ تم رفع المادة بنجاح وستظهر للطلاب فوراً!', 'success');
+        }
+    } catch(e) {
+        showToast('❌ حدث خطأ أثناء الرفع', 'error');
+    }
 }
 
 // دالة رسم الجدول (النسخة المستقرة والنظيفة + رادار الأخطاء)
