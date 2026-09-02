@@ -4,18 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة امتحانات الطلاب - M&H</title>
+    <title>بوابة الطالب - M&H Editor Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="icon.png" />
-    <!-- مكتبات Firebase الأساسية -->
+    
+    <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
         :root {
             --primary-color: #6366f1;
-            --bg-color: #f8fafc;
+            --bg-color: #f1f5f9;
             --text-color: #1e293b;
         }
 
@@ -26,403 +28,252 @@
             margin: 0;
             padding: 0;
             display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
 
         /* =======================================
-           تنسيقات القائمة الجانبية (Sidebar)
+           1. شاشة الدخول (الانضمام للفصل)
            ======================================= */
-        .app-wrapper {
-            display: flex;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 260px;
-            background: #ffffff;
-            box-shadow: -2px 0 15px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            z-index: 100;
-            flex-shrink: 0;
-        }
-
-        .sidebar-logo {
-            font-size: 22px;
-            font-weight: 900;
-            color: var(--primary-color);
-            margin-bottom: 30px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .sidebar-logo i {
-            font-size: 28px;
-            background: #e0e7ff;
-            padding: 8px;
-            border-radius: 12px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 15px;
-            color: #475569;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            transition: 0.3s;
-            font-size: 16px;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: #e0e7ff;
-            color: var(--primary-color);
-        }
-
-        .nav-item i {
-            font-size: 24px;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            overflow-y: auto;
-            height: 100vh;
+        #authScreen {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #e0e7ff, #ffffff);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 999999;
+            padding: 20px; /* إضافة مساحة للتنفس من الحواف */
             box-sizing: border-box;
         }
-
+        .auth-box {
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1); width: 90%; max-width: 400px;
+            text-align: center; border-top: 6px solid var(--primary-color);
+            max-height: 95vh; /* منع المربع من تخطي طول الشاشة */
+            overflow-y: auto; /* تفعيل شريط التمرير الداخلي عند الحاجة */
+            box-sizing: border-box;
+        }
+        /* تجميل شكل شريط التمرير داخل المربع */
+        .auth-box::-webkit-scrollbar { width: 5px; }
+        .auth-box::-webkit-scrollbar-track { background: transparent; }
+        .auth-box::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .app-wrapper {
+            display: none; 
+            width: 100%; min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px; background: #ffffff; box-shadow: -2px 0 15px rgba(0, 0, 0, 0.05);
+            display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; z-index: 100;
+        }
+        .sidebar-logo {
+            font-size: 22px; font-weight: 900; color: var(--primary-color);
+            margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .student-profile {
+            background: #f8fafc; padding: 15px; border-radius: 12px; text-align: center;
+            margin-bottom: 20px; border: 1px dashed #cbd5e1;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+            color: #475569; text-decoration: none; font-weight: bold; border-radius: 10px;
+            margin-bottom: 8px; cursor: pointer; transition: 0.2s; font-size: 15px;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: #e0e7ff; color: var(--primary-color);
+        }
+        .main-content {
+            flex: 1; padding: 30px; overflow-y: auto; height: 100vh; box-sizing: border-box;
+        }
         .content-tab {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            display: none; flex-direction: column; gap: 15px; align-items: center;
+        }
+        
+        .container {
+            background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+            width: 100%; max-width: 700px; border-top: 6px solid var(--primary-color);
+        }
+        .material-card {
+            background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; transition: 0.2s;
+            width: 100%; box-sizing: border-box;
+        }
+        .material-card:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+        .material-icon {
+            width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white;
         }
 
-        /* متجاوب مع الموبايل */
+        .header { text-align: center; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; width: 100%; text-align: right;}
+        .input-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
+        .ui-input {
+            width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px;
+            font-size: 15px; font-family: inherit; margin-bottom: 15px; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        .ui-input:focus { border-color: var(--primary-color); }
+        .btn {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+            color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 900;
+            cursor: pointer; transition: 0.3s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+        
+        .exam-container { margin: 40px auto; max-width: 800px; display: none; }
+        .question-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .question-title { font-weight: 900; font-size: 18px; margin-bottom: 15px; color: #0f172a; }
+        .option-label { display: flex; align-items: center; padding: 12px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .option-label:hover { border-color: var(--primary-color); background: #e0e7ff; }
+        input[type="radio"] { margin-left: 10px; transform: scale(1.2); }
+        .result-box { text-align: center; padding: 30px; border-radius: 15px; margin-top: 20px; display: none; }
+        
+        .timer-display {
+            position: fixed; top: 20px; left: 20px; background: rgba(254, 226, 226, 0.95); color: #ef4444;
+            padding: 10px 25px; border-radius: 50px; font-weight: 900; font-size: 16px; text-align: center;
+            border: 2px solid #fca5a5; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3); z-index: 99999;
+            display: none; direction: rtl; backdrop-filter: blur(5px); animation: pulseTimer 2s infinite;
+        }
+        @keyframes pulseTimer { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #ef4444; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; display: none; z-index: 1000000; }
+        .placeholder-box { text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); width: 100%; max-width: 700px; border-top: 6px solid #94a3b8; }
+        .placeholder-box i { font-size: 60px; color: #cbd5e1; margin-bottom: 15px; }
+
         @media (max-width: 768px) {
             .app-wrapper { flex-direction: column; }
-            .sidebar { width: 100%; padding: 15px; flex-direction: row; overflow-x: auto; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-            .sidebar-logo { display: none; }
-            .nav-item { padding: 10px 15px; white-space: nowrap; margin-bottom: 0; margin-left: 10px; font-size: 14px; }
+            .sidebar { width: 100%; padding: 15px; flex-direction: row; flex-wrap: wrap; box-sizing: border-box; }
+            .student-profile, .sidebar-logo { width: 100%; }
+            .nav-item { flex: 1; justify-content: center; font-size: 13px; padding: 10px; margin-bottom:0; }
             .main-content { height: auto; overflow-y: visible; padding: 15px; }
-        }
-
-        /* =======================================
-           تنسيقات محتوى الامتحان (الأساسية)
-           ======================================= */
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            max-width: 700px;
-            border-top: 6px solid var(--primary-color);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #475569;
-        }
-
-        .ui-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: inherit;
-            box-sizing: border-box;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .ui-input:focus {
-            border-color: var(--primary-color);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, var(--primary-color), #4f46e5);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 900;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: inherit;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-        }
-
-        .question-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-
-        .question-title {
-            font-weight: 900;
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #0f172a;
-        }
-
-        .option-label {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: white;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-        }
-
-        .option-label:hover {
-            border-color: var(--primary-color);
-            background: #e0e7ff;
-        }
-
-        input[type="radio"] {
-            margin-left: 10px;
-            transform: scale(1.2);
-        }
-
-        .result-box {
-            text-align: center;
-            padding: 30px;
-            border-radius: 15px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #ef4444;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-weight: bold;
-            display: none;
-            z-index: 1000;
-        }
-
-        .timer-display {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(254, 226, 226, 0.95);
-            color: #ef4444;
-            padding: 10px 25px;
-            border-radius: 50px;
-            font-weight: 900;
-            font-size: 16px;
-            text-align: center;
-            border: 2px solid #fca5a5;
-            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-            z-index: 99999;
-            display: none;
-            direction: rtl;
-            backdrop-filter: blur(5px);
-            animation: pulseTimer 2s infinite;
-        }
-
-        @keyframes pulseTimer {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-
-        @media (max-width: 768px) {
-            .timer-display {
-                top: auto;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                font-size: 14px;
-                padding: 10px 20px;
-                width: max-content;
-            }
-        }
-
-        /* تصميم الأقسام الفارغة */
-        .placeholder-box {
-            text-align: center;
-            padding: 50px 20px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            max-width: 700px;
-            border-top: 6px solid #94a3b8;
-        }
-        .placeholder-box i {
-            font-size: 60px;
-            color: #cbd5e1;
-            margin-bottom: 15px;
+            .timer-display { top: auto; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; padding: 10px 20px; width: max-content; }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="app-wrapper">
-        <!-- =======================================
-             القائمة الجانبية (Sidebar)
-             ======================================= -->
+    <!-- 1️⃣ شاشة الدخول والتسجيل (بنظام الحسابات والأكواد) -->
+    <div id="authScreen">
+        <div class="auth-box">
+            <i class='bx bxs-graduation auth-icon' style="font-size: 60px; color: var(--primary-color); margin-bottom: 10px;"></i>
+            <h2 style="margin-top: 0; color: #1e293b;">بوابة الطالب الذكية</h2>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 25px; background: #f8fafc; padding: 6px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <button id="tabLogin" onclick="switchAuthMode('login')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;">تسجيل الدخول</button>
+                <button id="tabRegister" onclick="switchAuthMode('register')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;">تفعيل حساب جديد</button>
+            </div>
+
+            <!-- نموذج تسجيل الدخول (للطالب القديم) -->
+            <div id="loginFormSection">
+                <input type="email" id="loginEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
+                <input type="password" id="loginPass" class="ui-input" placeholder="كلمة المرور">
+                <button class="btn" onclick="studentLogin()">دخول 🚀</button>
+            </div>
+
+            <!-- نموذج تفعيل حساب جديد (لأول مرة) -->
+            <div id="registerFormSection" style="display: none;">
+                <input type="text" id="regName" class="ui-input" placeholder="اسمك الثلاثي (كما سيظهر للمعلم)">
+                <input type="email" id="regEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
+                <input type="password" id="regPass" class="ui-input" placeholder="اختر كلمة مرور (6 أحرف أو أكثر)">
+                <div style="border-top: 1px dashed #cbd5e1; margin: 15px 0;"></div>
+                <input type="text" id="regClassCode" class="ui-input" placeholder="كود الفصل العام (مثال: C1X9P)" style="text-transform: uppercase;">
+                <input type="text" id="regActivationCode" class="ui-input" placeholder="كود التفعيل (تشتريه من المعلم)" style="text-transform: uppercase; border-color: #f59e0b; background: #fffbeb;">
+                
+                <button class="btn" onclick="studentRegister()" style="background: #10b981;">إنشاء وتفعيل الحساب ✅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🛑 شاشة انتهاء الاشتراك (تظهر تلقائياً عندما تنتهي المدة) -->
+    <div id="renewalScreen" style="display: none; position: fixed; inset: 0; background: linear-gradient(135deg, #fee2e2, #ffffff); justify-content: center; align-items: center; z-index: 999999;">
+        <div class="auth-box" style="border-top-color: #ef4444; box-shadow: 0 25px 50px rgba(239, 68, 68, 0.2);">
+            <i class='bx bx-time-five' style="font-size: 60px; color: #ef4444; margin-bottom: 10px;"></i>
+            <h2 style="margin-top: 0; color: #1e293b;">انتهى اشتراكك!</h2>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">لقد انتهت مدة صلاحية اشتراكك في هذا الفصل. يرجى إدخال كود تفعيل جديد لمواصلة التعلم.</p>
+            
+            <input type="text" id="renewalCodeInput" class="ui-input" placeholder="كود التفعيل الجديد" style="text-transform: uppercase; border-color: #ef4444; color: #ef4444; font-weight: bold; text-align: center; letter-spacing: 2px;">
+            
+            <button class="btn" onclick="renewSubscription()" style="background: #ef4444; margin-bottom: 15px;">تجديد الاشتراك 🚀</button>
+            <button onclick="logoutStudent()" style="background: transparent; color: #64748b; border: none; font-weight: bold; cursor: pointer;">تسجيل خروج مبدئياً</button>
+        </div>
+    </div>
+
+    <!-- 2️⃣ لوحة التحكم الشاملة للطالب (Dashboard) -->
+    <div class="app-wrapper" id="studentDashboard">
         <aside class="sidebar">
-            <div class="sidebar-logo">
-                <i class='bx bx-book-reader'></i> M&H Student
+            <div class="sidebar-logo"><i class='bx bx-book-reader'></i> M&H Student</div>
+            <div class="student-profile">
+                <i class='bx bx-user-circle' style="font-size: 40px; color: #94a3b8;"></i>
+                <h4 id="displayStuName" style="margin: 5px 0; color: var(--primary-color);">اسم الطالب</h4>
+                <span id="displayClassName" style="font-size: 12px; color: #64748b; font-weight: bold;">اسم الفصل</span><br>
+                <button onclick="logoutStudent()" style="margin-top: 10px; background: #fee2e2; color: #ef4444; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold;">تسجيل خروج</button>
             </div>
             <nav class="sidebar-nav">
-                <!-- الأقسام الجديدة حسب الصورة -->
-                <a href="#" class="nav-item" onclick="switchTab('pdfsTab', this)">
-                    <i class='bx bxs-file-pdf'></i> ملفات PDF بشرح
-                </a>
-                <a href="#" class="nav-item" onclick="switchTab('videosTab', this)">
-                    <i class='bx bx-video'></i> فيديوهات
-                </a>
-                <a href="#" class="nav-item" onclick="switchTab('homeworkTab', this)">
-                    <i class='bx bx-edit'></i> واجب
-                </a>
-                <!-- قسم الامتحانات (النشط افتراضياً) -->
-                <a href="#" class="nav-item active" onclick="switchTab('examsTab', this)">
-                    <i class='bx bx-laptop'></i> امتحانات
-                </a>
+                <a class="nav-item active" onclick="switchTab('tabExams', this)"><i class='bx bx-laptop'></i> الامتحانات</a>
+                <a class="nav-item" onclick="switchTab('tabPDFs', this)"><i class='bx bxs-file-pdf'></i> ملفات PDF بشرح</a>
+                <a class="nav-item" onclick="switchTab('tabVideos', this)"><i class='bx bx-video'></i> فيديوهات</a>
+                <a class="nav-item" onclick="switchTab('tabHomework', this)"><i class='bx bx-edit'></i> واجب</a>
             </nav>
         </aside>
 
-        <!-- =======================================
-             منطقة المحتوى الرئيسي (Main Content)
-             ======================================= -->
-        <main class="main-content">
-            
-            <!-- 1. قسم الامتحانات (يحتوي على الأكواد القديمة بالكامل دون تخريب) -->
-            <div id="examsTab" class="content-tab">
-                <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-                    <div class="container" id="loginSection">
-                        <div class="header">
-                            <h1 style="color: var(--primary-color); margin-bottom: 5px;"><i class='bx bx-laptop'></i> بوابة الامتحانات</h1>
-                            <p style="color: #64748b; margin-top: 0;">الرجاء إدخال بياناتك وكود الامتحان للبدء</p>
-                        </div>
-
-                        <div class="input-group">
-                            <label>كود الامتحان (يعطيه لك المعلم)</label>
-                            <input type="text" id="examCodeInput" class="ui-input" placeholder="مثال: IN2A5"
-                                style="text-transform: uppercase; font-weight: bold; letter-spacing: 2px; text-align: center;">
-                        </div>
-
-                        <div class="input-group">
-                            <label>كود الطالب أو الاسم الثلاثي</label>
-                            <input type="text" id="studentIdentifierInput" class="ui-input"
-                                placeholder="مثال: ST_2065 أو إياد مسعد فاروق">
-                        </div>
-
-                        <button class="btn" onclick="startExam()">بدء الامتحان 🚀</button>
-                    </div>
-
-                    <div class="container" id="examSection" style="display: none;">
-                        <div class="header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
-                            <h2 id="displayExamTitle" style="color: var(--primary-color); margin: 0;">جاري التحميل...</h2>
-                            <p id="displayStudentName" style="color: #64748b; margin-top: 5px; font-weight: bold;"></p>
-                        </div>
-
-                        <!-- ⏰ العداد الطاير تم تجهيزه هنا -->
-                        <div id="timerDisplay" class="timer-display"></div>
-
-                        <div id="questionsContainer">
-                            <!-- سيتم حقن الأسئلة هنا برمجياً -->
-                        </div>
-
-                        <button class="btn" onclick="submitExam()"
-                            style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 20px;">تسليم الإجابات ✅</button>
-                    </div>
-
-                    <div class="container result-box" id="resultSection">
-                        <i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i>
-                        <h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>
-                        <div id="scoreDisplay" style="display: none; margin-top: 20px;">
-                            <p style="font-size: 18px; font-weight: bold; color: #475569;">نتيجتك هي:</p>
-                            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;"
-                                id="finalScoreText">0 / 0</div>
-                            <p id="feedbackText" style="font-weight: bold; margin-top: 10px;"></p>
-                        </div>
-                        <div id="hiddenResultMsg"
-                            style="display: none; margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
-                            النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
-                        </div>
+        <main class="main-content" id="mainDashboardContent">
+            <!-- قسم الامتحانات -->
+            <div id="tabExams" class="content-tab" style="display: flex;">
+                <div style="width: 100%; max-width: 700px;">
+                    <h3 style="color: #475569; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class='bx bx-list-ul'></i> الامتحانات الخاصة بفصلك:</h3>
+                    <div id="examsList" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="text-align: center; color: #94a3b8;"><i class='bx bx-loader-alt bx-spin'></i> جاري البحث...</div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. قسم ملفات PDF -->
-            <div id="pdfsTab" class="content-tab" style="display: none;">
+            <!-- الأقسام الأخرى -->
+            <div id="tabPDFs" class="content-tab">
                 <div class="placeholder-box">
-                    <i class='bx bxs-file-pdf'></i>
-                    <h2 style="color: #475569;">ملفات PDF بـ شرح</h2>
-                    <p style="color: #94a3b8;">سيتم إضافة المذكرات وملفات الشرح الخاصة بك هنا قريباً.</p>
+                    <i class='bx bxs-file-pdf'></i><h2 style="color: #475569;">ملفات PDF بـ شرح</h2>
+                    <div id="pdfsList" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center;"></div>
                 </div>
             </div>
-
-            <!-- 3. قسم الفيديوهات -->
-            <div id="videosTab" class="content-tab" style="display: none;">
+            <div id="tabVideos" class="content-tab">
                 <div class="placeholder-box">
-                    <i class='bx bx-video'></i>
-                    <h2 style="color: #475569;">الفيديوهات التعليمية</h2>
-                    <p style="color: #94a3b8;">سيتم عرض فيديوهات الشرح والمراجعات هنا قريباً.</p>
+                    <i class='bx bx-video'></i><h2 style="color: #475569;">الفيديوهات التعليمية</h2>
+                    <div id="videosList" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center;"></div>
                 </div>
             </div>
-
-            <!-- 4. قسم الواجب -->
-            <div id="homeworkTab" class="content-tab" style="display: none;">
+            <div id="tabHomework" class="content-tab">
                 <div class="placeholder-box">
-                    <i class='bx bx-edit'></i>
-                    <h2 style="color: #475569;">الواجبات المنزلية</h2>
-                    <p style="color: #94a3b8;">سيتم إدراج الواجبات والتكليفات الخاصة بك هنا قريباً.</p>
+                    <i class='bx bx-edit'></i><h2 style="color: #475569;">الواجبات المنزلية</h2>
+                    <div id="homeworkList" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center;"></div>
                 </div>
             </div>
-
         </main>
     </div>
 
+    <!-- 3️⃣ شاشة ورقة الامتحان -->
+    <div class="container exam-container" id="examSection">
+        <div class="header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 id="displayExamTitle" style="color: var(--primary-color); margin: 0;">جاري التحميل...</h2>
+            <p id="displayExamStudentName" style="color: #64748b; margin-top: 5px; font-weight: bold;"></p>
+        </div>
+        <div id="timerDisplay" class="timer-display"></div>
+        <div id="questionsContainer"></div>
+        <button class="btn" onclick="submitExam()" style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 20px;">تسليم الإجابات ✅</button>
+    </div>
+
+    <!-- 4️⃣ شاشة النتيجة -->
+    <div class="container result-box" id="resultSection" style="margin: 40px auto; max-width: 700px;">
+        <i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i>
+        <h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>
+        <div id="scoreDisplay" style="display: none; margin-top: 20px;">
+            <p style="font-size: 18px; font-weight: bold; color: #475569;">نتيجتك هي:</p>
+            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;" id="finalScoreText">0 / 0</div>
+            <p id="feedbackText" style="font-weight: bold; margin-top: 10px;"></p>
+        </div>
+        <div id="hiddenResultMsg" style="display: none; margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
+            النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
+        </div>
+        <button class="btn" onclick="location.reload()" style="background: #3b82f6; margin-top: 30px; width: fit-content; padding: 10px 40px; margin-left: auto; margin-right: auto;">العودة للرئيسية</button>
+    </div>
+
     <div class="toast" id="toastMsg"></div>
- <script src="main.js"></script>
+    
     <script>
-        // إعدادات Firebase الخاصة بك
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDAbNo9AHi73rTNogXHpKk9MDp8HpY16Mw",
             authDomain: "elalfey-app.firebaseapp.com",
@@ -431,94 +282,421 @@
             messagingSenderId: "676659616653",
             appId: "1:676659616653:web:6a6e3ef338cc9a0e8bfbc4"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        
         const db = firebase.firestore();
+        const auth = firebase.auth(); 
 
-        let currentExamData = null;
-        let studentIdentifier = "";
-        let timerInterval = null;
+        db.enablePersistence({synchronizeTabs:true}).catch(function(err) { console.log('خطأ في الكاش', err); });
+        
+        let currentExamData = null; let timerInterval = null; let currentExamCode = null; let activeStudentId = "";
+        let myStudentId = localStorage.getItem('mh_student_id'); let myName = localStorage.getItem('mh_student_name');
+        let myClassCode = localStorage.getItem('mh_class_code'); let myTeacherId = localStorage.getItem('mh_teacher_id'); let myClassId = localStorage.getItem('mh_class_id');
 
-        // ==========================================
-        // دالة التبديل بين الأقسام (القائمة الجانبية)
-        // ==========================================
-        function switchTab(tabId, element) {
-            // إزالة التفعيل من جميع الأزرار
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // تفعيل الزر المضغوط
-            element.classList.add('active');
-
-            // إخفاء جميع المحتويات
-            document.querySelectorAll('.content-tab').forEach(el => el.style.display = 'none');
-            // إظهار المحتوى المطلوب
-            document.getElementById(tabId).style.display = 'flex';
-        }
-
-        function showToast(msg) {
+        function showToast(msg, type = 'info') {
             const t = document.getElementById('toastMsg');
             t.innerText = msg;
+            t.style.background = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6';
             t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 4000);
         }
 
-        function normalizeArabicName(text) {
-            if (!text) return "";
-            return String(text)
-                .replace(/[أإآا]/g, 'ا')
-                .replace(/[يى]/g, 'ي')
-                .replace(/[ةه]/g, 'ه')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .toLowerCase();
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.content-tab').forEach(el => el.style.display = 'none');
+            document.getElementById(tabId).style.display = 'flex';
         }
 
-        async function startExam() {
-            const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
-            const rawId = document.getElementById('studentIdentifierInput').value.trim();
+        // ==========================================
+        // 🔐 نظام الحسابات والتسجيل وتجديد الاشتراك
+        // ==========================================
 
-            studentIdentifier = rawId.replace(/[\/\\]/g, '_');
+        function switchAuthMode(mode) {
+            document.getElementById('loginFormSection').style.display = mode === 'login' ? 'block' : 'none';
+            document.getElementById('registerFormSection').style.display = mode === 'register' ? 'block' : 'none';
+            document.getElementById('tabLogin').style.cssText = mode === 'login' ? 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;' : 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;';
+            document.getElementById('tabRegister').style.cssText = mode === 'register' ? 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;' : 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;';
+        }
+// ==========================================
+        // 🛡️ نظام بصمة الأجهزة للطالب (جهازين كحد أقصى)
+        // ==========================================
+        function generateStudentFingerprint() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 200; canvas.height = 50;
+                ctx.textBaseline = "top"; ctx.font = "14px 'Arial'";
+                ctx.fillStyle = "#ef4444"; ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = "#3b82f6"; ctx.fillText("MH_Student_Pro", 2, 15);
+                const rawString = canvas.toDataURL() + window.screen.width + "x" + window.screen.height + navigator.userAgent;
+                let hash = 0;
+                for (let i = 0; i < rawString.length; i++) {
+                    hash = ((hash << 5) - hash) + rawString.charCodeAt(i);
+                    hash = hash & hash;
+                }
+                return "STU_DEV_" + Math.abs(hash).toString(16);
+            } catch (err) {
+                return "STU_RND_" + Math.random().toString(36).substring(2, 15);
+            }
+        }
 
-            if (!code || !studentIdentifier) return showToast('يرجى إدخال الكود وبياناتك بالكامل');
+        let localStudentDeviceId = localStorage.getItem('mh_stu_device_id');
+        if (!localStudentDeviceId || localStudentDeviceId === "[object Promise]") {
+            localStudentDeviceId = generateStudentFingerprint();
+            localStorage.setItem('mh_stu_device_id', localStudentDeviceId);
+        }
+
+// 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية (مُصحح لحماية المعلمين)
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // 🛡️ الدرع الواقي: ننتظر ثانيتين لتفادي التعارض (Race Condition) عند إنشاء حساب مدرس جديد في تاب أخرى
+                setTimeout(async () => {
+                    try {
+                        // 1. هل هذا حساب معلم أو مدير؟
+                        const teacherDoc = await db.collection('users').doc(user.uid).get();
+                        if (teacherDoc.exists) {
+                            // لو معلم فاتح صفحة الطالب، نمنعه من الدخول بهدوء (مستحيل نحذف حسابه!)
+                            document.getElementById('studentDashboard').style.display = 'none';
+                            if(document.getElementById('renewalScreen')) document.getElementById('renewalScreen').style.display = 'none';
+                            
+                            document.getElementById('authScreen').style.display = 'flex';
+                            document.querySelector('#authScreen .auth-box').innerHTML = `
+                                <i class='bx bx-shield-quarter' style="font-size: 60px; color: #f59e0b; margin-bottom: 10px;"></i>
+                                <h2 style="margin-top: 0; color: #1e293b;">أنت في صفحة الطلاب</h2>
+                                <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">أنت مسجل دخول حالياً بحساب (معلم / إدارة). يرجى الذهاب لصفحة المعلم، أو تسجيل الخروج من هنا.</p>
+                                <button class="btn" onclick="logoutStudent()" style="background: #ef4444;">تسجيل خروج للعودة</button>
+                            `;
+                            return; // توقف هنا تماماً
+                        }
+
+                        // 2. إذا لم يكن معلماً، نتحقق هل هو طالب؟
+                        const stuDoc = await db.collection('students').doc(user.uid).get();
+                        
+                        // 🚨 3. الانتحار الذاتي للطالب: لو مش موجود في الطلاب ولا المعلمين!
+                        if (!stuDoc.exists) {
+                            showToast('⚠️ تم إلغاء وحذف حسابك من قبل المعلم!', 'error');
+                            // الطالب اتمسح من المدرس، يقوم السيستم يمسح إيميله بالكامل عشان يعرف يسجل تاني بعدين
+                            await user.delete().catch(e => console.warn(e));
+                            auth.signOut();
+                            localStorage.clear();
+                            location.reload();
+                            return;
+                        }
+
+                        const data = stuDoc.data();
+                        
+                        // 🛑 4. فحص الصلاحية وتاريخ الانتهاء للطالب
+                        if (data.expiryDate && Date.now() > data.expiryDate) {
+                            document.getElementById('authScreen').style.display = 'none';
+                            document.getElementById('studentDashboard').style.display = 'none';
+                            document.getElementById('renewalScreen').style.display = 'flex';
+                            return; 
+                        }
+
+                        // 📱 5. نظام حماية الأجهزة للطالب (جهازين كحد أقصى)
+                        let devices = data.devices || [];
+                        if (!devices.includes(localStudentDeviceId)) {
+                            if (devices.length >= 2) {
+                                let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (جهازين فقط).\n\n- اضغط [إلغاء] لتسجيل الخروج من جهازك القديم.\n- اضغط [موافق] لتصفير الأجهزة وطرد أجهزتك السابقة.");
+                                if (resetConfirm) {
+                                    devices = [localStudentDeviceId];
+                                    await stuDoc.ref.update({ devices: devices });
+                                } else {
+                                    auth.signOut();
+                                    return;
+                                }
+                            } else {
+                                devices.push(localStudentDeviceId);
+                                await stuDoc.ref.update({ devices: devices });
+                            }
+                        }
+
+                        // فتح المنصة للطالب بأمان
+                        document.getElementById('renewalScreen').style.display = 'none';
+                        document.getElementById('authScreen').style.display = 'none';
+                        document.getElementById('studentDashboard').style.display = 'flex';
+                        
+                        myStudentId = user.uid; 
+                        myName = data.name;
+                        myTeacherId = data.teacherId;
+                        myClassId = data.classId;
+                        myClassCode = data.classCode;
+                        
+                        localStorage.setItem('mh_student_id', myStudentId);
+                        localStorage.setItem('mh_student_name', myName);
+                        localStorage.setItem('mh_teacher_id', myTeacherId);
+                        localStorage.setItem('mh_class_id', myClassId);
+                        
+                        initDashboard();
+                        
+                    } catch(e) { console.error(e); }
+                }, 2000); // 👈 (الثانيتين) السحرية اللي بتدي فرصة لصفحة المدرس تحفظ البيانات وتمنع الحذف!
+            } else {
+                // حالة تسجيل الخروج
+                if (document.querySelector('#authScreen .auth-box').innerHTML.includes('أنت في صفحة الطلاب')) {
+                    location.reload(); // إعادة تحميل الصفحة لترجع شاشة الدخول الأصلية
+                } else {
+                    document.getElementById('authScreen').style.display = 'flex';
+                    document.getElementById('studentDashboard').style.display = 'none';
+                    if(document.getElementById('renewalScreen')) document.getElementById('renewalScreen').style.display = 'none';
+                }
+            }
+        });
+        async function studentLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            if(!email || !pass) return showToast('يرجى كتابة البريد وكلمة المرور', 'error');
 
             try {
-                const docSnap = await db.collection('online_exams').doc(code).get();
-                if (!docSnap.exists) return showToast('❌ كود الامتحان غير صحيح أو الامتحان غير متاح!');
+                showToast('جاري تسجيل الدخول...', 'info');
+                await auth.signInWithEmailAndPassword(email, pass);
+                showToast('✅ أهلاً بك مجدداً!', 'success');
+            } catch(e) { showToast('❌ البريد أو كلمة المرور غير صحيحة', 'error'); }
+        }
 
-                currentExamData = docSnap.data();
+// 💡 تفعيل حساب طالب جديد (محدث لدعم بصمة الأجهزة)
+async function studentRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value.trim();
+    const classCode = document.getElementById('regClassCode').value.trim().toUpperCase();
+    const actCode = document.getElementById('regActivationCode').value.trim().toUpperCase();
 
-                if (currentExamData.classId !== 'all') {
-                    let allowed = currentExamData.allowedStudents || [];
-                    let normalizedInput = normalizeArabicName(studentIdentifier);
-                    let rawLowerInput = String(studentIdentifier).trim().toLowerCase();
+    if(!name || !email || !pass || !classCode || !actCode) return showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
 
-                    if (!allowed.includes(normalizedInput) && !allowed.includes(rawLowerInput)) {
-                        return showToast('⛔ عذراً، أنت لست مسجلاً في هذا الفصل. راجع المعلم للتأكد من الكود أو الاسم!');
+    try {
+        showToast('جاري التحقق من الأكواد...', 'info');
+        
+        const codeDoc = await db.collection('class_codes').doc(classCode).get();
+        if (!codeDoc.exists) return showToast('❌ كود الفصل غير صحيح!', 'error');
+        const { teacherId, classId } = codeDoc.data();
+
+        const actDoc = await db.collection('student_codes').doc(actCode).get();
+        if (!actDoc.exists) return showToast('❌ كود التفعيل غير صحيح!', 'error');
+        const actData = actDoc.data();
+        if (actData.used) return showToast('❌ كود التفعيل هذا تم استخدامه من قبل!', 'error');
+        if (actData.teacherId !== teacherId) return showToast('❌ كود التفعيل هذا غير صالح لهذا الفصل!', 'error');
+
+        showToast('الأكواد سليمة، جاري إنشاء الحساب...', 'info');
+
+        const validityDays = actData.validityDays || 30; 
+        const expiryDate = Date.now() + (validityDays * 24 * 60 * 60 * 1000);
+
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        const studentUid = cred.user.uid;
+
+        await actDoc.ref.update({ used: true, usedBy: studentUid, usedAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+        // 💡 الإضافة هنا: سطر devices لحفظ بصمة الجهاز الأول للطالب
+        await db.collection('students').doc(studentUid).set({
+            name: name, email: email, teacherId: teacherId, classId: classId, classCode: classCode,
+            expiryDate: expiryDate, 
+            devices: [localStudentDeviceId], // 👈 تسجيل بصمة الجهاز
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const teacherRef = db.collection('users').doc(teacherId);
+        const teacherSnap = await teacherRef.get();
+        if(teacherSnap.exists) {
+            let classrooms = teacherSnap.data().classrooms;
+            let classIdx = classrooms.findIndex(c => c.id === classId);
+            if(classIdx > -1) {
+                classrooms[classIdx].students.push({ id: studentUid, name: name, lastScore: null, enrolledAt: Date.now() });
+                await teacherRef.update({ classrooms: classrooms });
+            }
+        }
+        
+        showToast('✅ تم إنشاء الحساب والانضمام للفصل بنجاح!', 'success');
+        
+        setTimeout(() => {
+            location.reload();
+        }, 1500);
+
+    } catch(e) {
+        if (e.code === 'auth/email-already-in-use') showToast('❌ هذا البريد مسجل مسبقاً! قم بتسجيل الدخول بدلاً من إنشاء حساب جديد.', 'error');
+        else if (e.code === 'auth/weak-password') showToast('❌ كلمة المرور ضعيفة جداً.', 'error');
+        else showToast('❌ خطأ: ' + e.message, 'error');
+    }
+}
+        async function renewSubscription() {
+            const newCode = document.getElementById('renewalCodeInput').value.trim().toUpperCase();
+            if (!newCode) return showToast('يرجى إدخال كود التفعيل الجديد', 'error');
+
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                showToast('جاري فحص الكود وتجديد اشتراكك...', 'info');
+                const stuDoc = await db.collection('students').doc(user.uid).get();
+                const studentData = stuDoc.data();
+
+                const codeDoc = await db.collection('student_codes').doc(newCode).get();
+                if (!codeDoc.exists) return showToast('❌ الكود غير صحيح!', 'error');
+                
+                const codeData = codeDoc.data();
+                if (codeData.used) return showToast('❌ هذا الكود مستخدم من قبل!', 'error');
+                if (codeData.teacherId !== studentData.teacherId) return showToast('❌ هذا الكود ليس تابعاً لمدرسك!', 'error');
+
+                const validityDays = codeData.validityDays || 30;
+                let currentExpiry = studentData.expiryDate || Date.now();
+                if (currentExpiry < Date.now()) currentExpiry = Date.now(); 
+                const newExpiryDate = currentExpiry + (validityDays * 24 * 60 * 60 * 1000);
+
+                const batch = db.batch();
+                batch.update(codeDoc.ref, { used: true, usedBy: user.uid, usedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                batch.update(stuDoc.ref, { expiryDate: newExpiryDate });
+                await batch.commit();
+
+                showToast('✅ مبروك! تم تجديد اشتراكك بنجاح.', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) { showToast('❌ خطأ في النظام: ' + e.message, 'error'); }
+        }
+
+        function logoutStudent() {
+            auth.signOut().then(() => {
+                localStorage.clear();
+                location.reload();
+            });
+        }
+
+        // ==========================================
+        // 📚 لوحة التحكم والمواد والامتحانات
+        // ==========================================
+
+        async function initDashboard() {
+            if (!myStudentId || !myTeacherId) return; 
+            document.getElementById('displayStuName').innerText = myName;
+
+            try {
+                const teacherSnap = await db.collection('users').doc(myTeacherId).get();
+                let classrooms = teacherSnap.data().classrooms;
+                let myClass = classrooms.find(c => c.id === myClassId);
+                
+                if(document.getElementById('displayClassName')) document.getElementById('displayClassName').innerText = myClass.name;
+
+                renderMaterials('pdfsList', myClass.materials?.pdfs || [], '#ef4444', 'bxs-file-pdf');
+                renderMaterials('videosList', myClass.materials?.videos || [], '#3b82f6', 'bx-video');
+                renderMaterials('homeworkList', myClass.materials?.homework || [], '#f59e0b', 'bx-edit');
+
+                const examsSnap = await db.collection('online_exams').where('teacherId', '==', myTeacherId).get();
+                
+                const examPromises = examsSnap.docs.map(async (doc) => {
+                    let exam = doc.data();
+                    if ((exam.classId === myClassId || exam.classId === 'all') && exam.active) {
+                        
+                        let isSubmitted = false;
+                        try {
+                            const res = await db.collection('online_exams').doc(doc.id).collection('results').doc(myStudentId).get();
+                            if (res.exists) isSubmitted = true;
+                        } catch(e) {}
+
+                        let now = Date.now();
+                        let isExpired = exam.endTime && now > exam.endTime;
+
+                        let btnHtml = ''; let cardStyle = '';
+                        if (isSubmitted) {
+                            btnHtml = `<button disabled style="background: #f1f5f9; color: #10b981; border: 1px solid #10b981; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-check-double'></i> تم الامتحان</button>`;
+                            cardStyle = 'border-right: 5px solid #10b981; opacity: 0.9; background: #f8fafc;';
+                        } else if (isExpired) {
+                            btnHtml = `<button disabled style="background: #fef2f2; color: #ef4444; border: 1px solid #ef4444; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-time-five'></i> منتهي</button>`;
+                            cardStyle = 'border-right: 5px solid #ef4444; opacity: 0.8; background: #fef2f2;';
+                        } else {
+                            btnHtml = `<button id="btn-exam-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
+                            cardStyle = 'border-right: 5px solid var(--primary-color);';
+                        }
+
+                        return `
+                        <div class="material-card" style="${cardStyle} width: 100%; max-width: 100%;">
+                            <div>
+                                <h3 style="margin: 0 0 5px 0; color: #1e293b;">${exam.title}</h3>
+                                <span style="font-size: 13px; color: #64748b;">${exam.endTime ? '⏱️ ينتهي: ' + new Date(exam.endTime).toLocaleString('ar-EG') : 'مفتوح دائماً'}</span>
+                            </div>
+                            ${btnHtml}
+                        </div>`;
                     }
+                    return ''; 
+                });
+
+                const examsHtmlArray = await Promise.all(examPromises);
+                const finalExamsHtml = examsHtmlArray.join('');
+                document.getElementById('examsList').innerHTML = finalExamsHtml || '<p style="color:#94a3b8; text-align: center;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
+
+            } catch (e) { console.error(e); }
+        }
+
+        function renderMaterials(containerId, items, color, icon) {
+            const container = document.getElementById(containerId);
+            if (items.length === 0) {
+                container.innerHTML = `<p style="color: #94a3b8; text-align: center; width: 100%;">لا توجد مواد مرفوعة في هذا القسم حالياً.</p>`;
+                return;
+            }
+            let html = '';
+            items.forEach(item => {
+                html += `
+                <div class="material-card" style="width: 100%; max-width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div class="material-icon" style="background: ${color};"><i class='bx ${icon}'></i></div>
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: #1e293b;">${item.title}</h4>
+                            <span style="font-size: 11px; color: #64748b;">تاريخ الرفع: ${item.date}</span>
+                        </div>
+                    </div>
+                    <a href="${item.url}" target="_blank" style="background: #f1f5f9; color: #475569; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 13px; border: 1px solid #cbd5e1;">عرض المادة</a>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function startDashboardExam(examCode) {
+            activeStudentId = myStudentId; 
+            const btnId = 'btn-exam-' + examCode;
+            const btn = document.getElementById(btnId);
+            const originalText = btn ? btn.innerHTML : '';
+            
+            if(btn) {
+                btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> جاري التحميل...';
+                btn.style.opacity = '0.7'; btn.style.cursor = 'not-allowed'; btn.disabled = true;
+            }
+
+            try {
+                const docSnap = await db.collection('online_exams').doc(examCode).get();
+                if (!docSnap.exists) {
+                    if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+                    return showToast('❌ كود الامتحان غير صحيح!', 'error');
                 }
+                
+                currentExamData = docSnap.data();
+                currentExamCode = examCode;
 
                 if (currentExamData.endTime && Date.now() > currentExamData.endTime) {
-                    return showToast('⏳ لقد انتهى الموعد المحدد لهذا الامتحان وتم إغلاقه!');
+                    if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+                    return showToast('⏳ لقد انتهى الموعد المحدد لهذا الامتحان!', 'error');
+                }
+                if (!currentExamData.active) {
+                    if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+                    return showToast('⚠️ هذا الامتحان مغلق حالياً.', 'error');
                 }
 
-                if (!currentExamData.active) return showToast('⚠️ هذا الامتحان مغلق حالياً من قبل المعلم.');
-
-                const resultSnap = await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).get();
+                const resultSnap = await db.collection('online_exams').doc(examCode).collection('results').doc(activeStudentId).get();
                 if (resultSnap.exists) {
-                    return showToast('✋ لقد قمت بأداء وتسليم هذا الامتحان مسبقاً، لا يمكنك الدخول مرة أخرى!');
+                    if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+                    return showToast('✋ لقد قمت بتسليم هذا الامتحان مسبقاً!', 'error');
                 }
 
-                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('studentDashboard').style.display = 'none';
                 document.getElementById('examSection').style.display = 'block';
                 document.getElementById('displayExamTitle').innerText = currentExamData.title;
-                document.getElementById('displayStudentName').innerText = "الطالب: " + studentIdentifier;
+                document.getElementById('displayExamStudentName').innerText = "الطالب: " + myName;
 
                 renderQuestions();
+                if (currentExamData.endTime) startTimer(currentExamData.endTime);
 
-                if (currentExamData.endTime) {
-                    startTimer(currentExamData.endTime);
-                }
+                if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
 
             } catch (error) {
-                showToast('حدث خطأ في الاتصال بالسيرفر: ' + error.message);
+                if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+                showToast('خطأ: ' + error.message, 'error');
             }
         }
 
@@ -575,9 +753,7 @@
             }
 
             const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
-            let correctCount = 0;
-            let totalAutoGraded = 0;
-            let studentAnswers = {};
+            let correctCount = 0; let totalAutoGraded = 0; let studentAnswers = {};
 
             realQuestions.forEach((q, index) => {
                 if (q.type === 'mcq' || q.type === 'tf_inline') {
@@ -613,39 +789,39 @@
                             <p style="font-weight: bold; margin-top: 10px; color: ${feedbackColor};">${feedbackText}</p>
                         </div>`;
                 } else {
-                    scoreHtml = `
-                        <div style="margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">
-                            النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
-                        </div>`;
+                    scoreHtml = `<div id="hiddenResultMsg" style="margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 10px; font-weight: bold;">النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.</div>`;
                 }
 
-                resultSec.innerHTML = `
-                    <i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i>
-                    <h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>
-                    ${scoreHtml}
-                `;
+                resultSec.innerHTML = `<i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i><h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>${scoreHtml}<button class="btn" onclick="location.reload()" style="background: #3b82f6; margin-top: 20px; width: fit-content; padding: 10px 30px; margin-left: auto; margin-right: auto;">العودة للرئيسية</button>`;
             } catch (error) {
-                resultSec.innerHTML = `
-                    <i class='bx bx-error-circle' style="font-size: 80px; color: #ef4444;"></i>
-                    <h2 style="color: #ef4444;">فشل إرسال النتيجة!</h2>
-                    <p style="font-weight: bold; color: #475569;">${error.message}</p>
-                    <button class="btn" onclick="submitExam(true)" style="background: #ef4444; margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>
-                `;
+                resultSec.innerHTML = `<i class='bx bx-error-circle' style="font-size: 80px; color: #ef4444;"></i><h2 style="color: #ef4444;">فشل إرسال النتيجة!</h2><p style="font-weight: bold; color: #475569;">${error.message}</p><button class="btn" onclick="submitExam(true)" style="background: #ef4444; margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>`;
             }
         }
 
         async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
-            const code = document.getElementById('examCodeInput').value.trim().toUpperCase();
-            await db.collection('online_exams').doc(code).collection('results').doc(studentIdentifier).set({
-                studentIdentifier: studentIdentifier,
+            await db.collection('online_exams').doc(currentExamCode).collection('results').doc(activeStudentId).set({
+                studentIdentifier: activeStudentId,
+                studentName: myName,
                 score: correctCount,
                 total: totalAutoGraded,
                 answers: studentAnswers,
                 submittedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            
+            const teacherRef = db.collection('users').doc(myTeacherId);
+            const teacherSnap = await teacherRef.get();
+            if(teacherSnap.exists) {
+                let classrooms = teacherSnap.data().classrooms;
+                let classIdx = classrooms.findIndex(c => c.id === myClassId);
+                if(classIdx > -1) {
+                    let stuIdx = classrooms[classIdx].students.findIndex(s => s.id === activeStudentId);
+                    if(stuIdx > -1) {
+                        classrooms[classIdx].students[stuIdx].lastScore = `${correctCount} / ${totalAutoGraded}`;
+                        await teacherRef.update({ classrooms: classrooms });
+                    }
+                }
+            }
         }
     </script>
-
 </body>
-
 </html>
