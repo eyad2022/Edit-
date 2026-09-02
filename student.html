@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
     <style>
         :root {
@@ -625,24 +626,45 @@ async function studentRegister() {
             } catch (e) { console.error(e); }
         }
 
-        function renderMaterials(containerId, items, color, icon) {
+function renderMaterials(containerId, items, color, icon) {
             const container = document.getElementById(containerId);
             if (items.length === 0) {
-                container.innerHTML = `<p style="color: #94a3b8; text-align: center; width: 100%;">لا توجد مواد مرفوعة في هذا القسم حالياً.</p>`;
+                container.innerHTML = `<p style="color: #94a3b8; text-align: center; width: 100%; font-size: 13px;">لا توجد مواد مرفوعة في هذا القسم حالياً.</p>`;
                 return;
             }
             let html = '';
             items.forEach(item => {
+                let actionBtnHtml = '';
+                
+                if (item.isExamMode) {
+                    actionBtnHtml = `<button onclick="startDashboardExam('${item.url}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; white-space: nowrap;"><i class='bx bx-laptop'></i> بدء الواجب</button>`;
+                } else {
+                    let directUrl = item.url;
+                    
+                    // 🪄 السحر هنا: تحويل رابط جوجل درايف العادي إلى رابط تحميل مباشر (Direct Download)
+                    if (directUrl.includes('drive.google.com/file/d/')) {
+                        const fileIdMatch = directUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                        if (fileIdMatch && fileIdMatch[1]) {
+                            directUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
+                        }
+                    }
+                    
+                    let btnText = icon.includes('video') ? 'مشاهدة' : 'تنزيل / عرض';
+                    let btnIcon = icon.includes('video') ? 'bx-play-circle' : 'bx-cloud-download';
+
+                    actionBtnHtml = `<a href="${directUrl}" target="_blank" style="background: #f1f5f9; color: #475569; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 13px; border: 1px solid #cbd5e1; display: flex; align-items: center; gap: 5px; transition: 0.2s; white-space: nowrap;"><i class='bx ${btnIcon}'></i> ${btnText}</a>`;
+                }
+
                 html += `
-                <div class="material-card" style="width: 100%; max-width: 100%;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="material-icon" style="background: ${color};"><i class='bx ${icon}'></i></div>
-                        <div>
-                            <h4 style="margin: 0 0 5px 0; color: #1e293b;">${item.title}</h4>
-                            <span style="font-size: 11px; color: #64748b;">تاريخ الرفع: ${item.date}</span>
+                <div class="material-card" style="width: 100%; max-width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 15px; overflow: hidden;">
+                        <div class="material-icon" style="background: ${color}; flex-shrink: 0;"><i class='bx ${icon}'></i></div>
+                        <div style="overflow: hidden;">
+                            <h4 style="margin: 0 0 5px 0; color: #1e293b; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</h4>
+                            <span style="font-size: 11px; color: #64748b; font-weight: bold;">تاريخ النشر: ${item.date}</span>
                         </div>
                     </div>
-                    <a href="${item.url}" target="_blank" style="background: #f1f5f9; color: #475569; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 13px; border: 1px solid #cbd5e1;">عرض المادة</a>
+                    ${actionBtnHtml}
                 </div>`;
             });
             container.innerHTML = html;

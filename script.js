@@ -4659,35 +4659,107 @@ async function generateStudentCodes(classId) {
     }
 }
 
-// 3. دالة جديدة للمعلم لرفع المذكرات والروابط للفصل
-async function uploadMaterialToClass(type) {
-    const title = prompt("أدخل عنوان المادة (مثال: مذكرة الباب الأول):");
-    if (!title) return;
-    const url = prompt("أدخل الرابط (رابط جوجل درايف للـ PDF، أو رابط يوتيوب للفيديو):");
-    if (!url) return;
+// 3. دالة إضافة الروابط الخارجية (درايف/يوتيوب) بشكل احترافي
+function uploadMaterialToClass(type) {
+    const existingModal = document.getElementById('modernUploadModal');
+    if (existingModal) existingModal.remove();
 
-    const user = auth.currentUser;
-    try {
-        const docRef = db.collection('users').doc(user.uid);
-        const docSnap = await docRef.get();
-        let classrooms = docSnap.data().classrooms;
-        let targetIndex = classrooms.findIndex(c => c.id === currentViewedClassId);
-        
-        if (targetIndex > -1) {
-            if (!classrooms[targetIndex].materials) classrooms[targetIndex].materials = { pdfs: [], videos: [], homework: [] };
+    let typeName = type === 'pdfs' ? 'رابط ملف PDF (جوجل درايف)' : type === 'videos' ? 'رابط فيديو (يوتيوب)' : 'واجب';
+    let icon = type === 'pdfs' ? 'bxs-file-pdf' : type === 'videos' ? 'bx-video' : 'bx-edit';
+
+    // خيارات مخصصة للواجب
+    let homeworkOptions = type === 'homework' ? `
+        <select id="uploadHwType" class="ui-input" style="margin-bottom: 15px; font-weight: bold; border-color: #f59e0b;" onchange="toggleHwInput()">
+            <option value="link">رابط خارجي (جوجل درايف / يوتيوب)</option>
+            <option value="exam">كود امتحان إلكتروني (يصحح تلقائياً)</option>
+        </select>
+    ` : '';
+
+    const modalHtml = `
+    <div id="modernUploadModal" class="custom-modal" style="display:flex; z-index: 9999999; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div class="modal-content" style="width: 90%; max-width: 450px; background: #fff; padding: 25px; border-radius: 16px; text-align: right; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border-top: 5px solid #3b82f6;">
+            <h3 style="margin-top: 0; color: #1e293b; display: flex; align-items: center; gap: 8px;"><i class='bx ${icon}' style="font-size: 24px; color: #3b82f6;"></i> إضافة ${typeName}</h3>
             
-            classrooms[targetIndex].materials[type].push({
-                title: title,
-                url: url,
-                date: new Date().toLocaleDateString('ar-EG')
-            });
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #475569; font-size: 13px;">عنوان المادة:</label>
+            <input type="text" id="uploadTitle" class="ui-input" placeholder="مثال: الباب الأول، مراجعة نهائية..." style="margin-bottom: 15px;">
             
-            await docRef.update({ classrooms: classrooms });
-            showToast('✅ تم رفع المادة بنجاح وستظهر للطلاب فوراً!', 'success');
+            ${homeworkOptions}
+
+            <div id="linkInputContainer">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #475569; font-size: 13px;">الرابط (انسخ رابط درايف أو يوتيوب هنا):</label>
+                <input type="url" id="uploadLinkUrl" class="ui-input" placeholder="https://..." style="margin-bottom: 15px; text-align: left; direction: ltr;">
+            </div>
+
+            <div id="examInputContainer" style="display: none;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #475569; font-size: 13px;">كود الامتحان الإلكتروني للواجب:</label>
+                <input type="text" id="uploadExamCode" class="ui-input" placeholder="أدخل الكود (مثال: ABCD1)" style="margin-bottom: 15px; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; text-align: center;">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btnStartUpload" style="flex: 2; background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;">إضافة ونشر 🚀</button>
+                <button onclick="document.getElementById('modernUploadModal').remove()" style="flex: 1; background: #fee2e2; color: #ef4444; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">إلغاء</button>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    window.toggleHwInput = function() {
+        const val = document.getElementById('uploadHwType').value;
+        document.getElementById('linkInputContainer').style.display = val === 'link' ? 'block' : 'none';
+        document.getElementById('examInputContainer').style.display = val === 'exam' ? 'block' : 'none';
+    };
+
+    document.getElementById('btnStartUpload').onclick = async () => {
+        const title = document.getElementById('uploadTitle').value.trim();
+        if(!title) return showToast('يرجى إدخال عنوان المادة', 'error');
+
+        let finalUrl = '';
+        let isExam = false;
+
+        if (type === 'homework' && document.getElementById('uploadHwType').value === 'exam') {
+            finalUrl = document.getElementById('uploadExamCode').value.trim().toUpperCase();
+            if(!finalUrl) return showToast('يرجى إدخال كود الامتحان', 'error');
+            isExam = true;
+        } else {
+            finalUrl = document.getElementById('uploadLinkUrl').value.trim();
+            if(!finalUrl) return showToast('يرجى إدخال الرابط', 'error');
+            
+            if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                finalUrl = 'https://' + finalUrl;
+            }
         }
-    } catch(e) {
-        showToast('❌ حدث خطأ أثناء الرفع', 'error');
-    }
+
+        document.getElementById('btnStartUpload').innerText = 'جاري الحفظ... ⏳';
+        document.getElementById('btnStartUpload').disabled = true;
+
+        try {
+            const user = auth.currentUser;
+            const docRef = db.collection('users').doc(user.uid);
+            const docSnap = await docRef.get();
+            let classrooms = docSnap.data().classrooms;
+            let targetIndex = classrooms.findIndex(c => c.id === currentViewedClassId);
+            
+            if (targetIndex > -1) {
+                if (!classrooms[targetIndex].materials) classrooms[targetIndex].materials = { pdfs: [], videos: [], homework: [] };
+                
+                classrooms[targetIndex].materials[type].push({
+                    title: title,
+                    url: finalUrl,
+                    isExamMode: isExam,
+                    date: new Date().toLocaleDateString('ar-EG')
+                });
+                
+                await docRef.update({ classrooms: classrooms });
+                document.getElementById('modernUploadModal').remove();
+                showToast('✅ تمت الإضافة للفصل بنجاح!', 'success');
+            }
+        } catch(e) {
+            document.getElementById('btnStartUpload').innerText = 'إضافة ونشر 🚀';
+            document.getElementById('btnStartUpload').disabled = false;
+            showToast('❌ حدث خطأ أثناء الحفظ', 'error');
+        }
+    };
 }
 
 // دالة رسم الجدول (النسخة المستقرة والنظيفة + رادار الأخطاء)
@@ -4760,7 +4832,7 @@ function normalizeArabicName(text) {
         .toLowerCase();
 }
 
-// 🚀 محرك المزامنة الآلي (بالمتوازيات + كاشف الأخطاء + فلتر الزمن السحري)
+// 🚀 محرك المزامنة الآلي للدرجات
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
     if (!user) return;
@@ -4780,7 +4852,9 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
 
         const fetchPromises = examsSnap.docs.map(async (examDoc) => {
             let examData = examDoc.data();
-            if (examData.classId !== classId && examData.classId !== 'all') return;
+            
+            // 💡 التعديل السحري هنا: السماح للواجب المخفي بالظهور في كشف الدرجات
+            if (examData.classId !== classId && examData.classId !== 'all' && examData.classId !== 'hidden_homework') return;
 
             const examTitle = examData.title || "امتحان بدون عنوان";
             const resultsSnap = await examDoc.ref.collection('results').get();
@@ -4788,12 +4862,20 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
             resultsSnap.forEach(resDoc => {
                 let resData = resDoc.data();
                 let rawIdentifier = resData.studentIdentifier || resData.studentName || "غير معروف";
-                let identifier = normalizeArabicName(rawIdentifier);
+                
+                let identifier = "غير معروف";
+                if(typeof normalizeArabicName === 'function') {
+                    identifier = normalizeArabicName(rawIdentifier);
+                } else {
+                    identifier = String(rawIdentifier).trim().toLowerCase();
+                }
 
-                let studentIndex = currentStudents.findIndex(s =>
-                    normalizeArabicName(s.id) === identifier ||
-                    normalizeArabicName(s.name) === identifier
-                );
+                let studentIndex = currentStudents.findIndex(s => {
+                    if(typeof normalizeArabicName === 'function') {
+                        return normalizeArabicName(s.id) === identifier || normalizeArabicName(s.name) === identifier;
+                    }
+                    return String(s.id).trim().toLowerCase() === identifier || String(s.name).trim().toLowerCase() === identifier;
+                });
 
                 let formattedScore = resData.score + ' / ' + resData.total;
                 let newRecord = `${examTitle}|${formattedScore}`;
@@ -4801,7 +4883,6 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
                 if (studentIndex > -1) {
                     let student = currentStudents[studentIndex];
 
-                    // 💡 الحماية الذكية: لو الطالب امتحن قبل ما يتضاف للفصل ده، نتجاهل الدرجة!
                     let submittedTime = 0;
                     if (resData.submittedAt) {
                         submittedTime = typeof resData.submittedAt.toMillis === 'function'
@@ -4809,9 +4890,8 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
                             : Date.parse(resData.submittedAt);
                     }
 
-                    // لو عنده تاريخ إضافة، والامتحان ده اتسلم قبل تاريخ إضافته، متسجلوش!
                     if (student.enrolledAt && submittedTime > 0 && submittedTime < student.enrolledAt) {
-                        return; // 🛑 تخطي هذه النتيجة القديمة تماماً لتبدأ ببيانات جديدة
+                        return; 
                     }
 
                     if (!student.examRecords) student.examRecords = {};
@@ -5018,12 +5098,10 @@ async function openPublishOnlineModal() {
     const user = auth.currentUser;
     if (!user) return showToast('يرجى تسجيل الدخول أولاً لنشر الامتحانات', 'error');
 
-    // التأكد من وجود أسئلة في المحرر
     syncTextToDatabase();
     const realQs = questionsDatabase.filter(q => q.type !== 'heading');
     if (realQs.length === 0) return showToast('لا توجد أسئلة لنشرها! يرجى كتابة وتنسيق الامتحان أولاً.', 'error');
 
-    // تهيئة النافذة
     document.getElementById('publishOnlineModal').style.display = 'flex';
     document.getElementById('publishSuccessBox').style.display = 'none';
 
@@ -5032,13 +5110,14 @@ async function openPublishOnlineModal() {
     btnConfirm.innerText = '🚀 تأكيد ونشر الامتحان';
     btnConfirm.disabled = false;
 
-    // التقاط اسم الامتحان من الترويسة (إن وجد)
     let defaultTitle = document.getElementById('hdrCenter') ? document.getElementById('hdrCenter').value : 'امتحان إلكتروني جديد';
     document.getElementById('onlineExamTitle').value = defaultTitle;
 
-    // جلب الفصول من السحابة لوضعها في القائمة المنسدلة
     const selectEl = document.getElementById('onlineExamClassSelect');
     selectEl.innerHTML = '<option value="all">جميع الفصول (عام / مفتوح للكل)</option>';
+    
+    // 💡 التعديل هنا: إضافة خيار الواجب المخفي للقائمة
+    selectEl.innerHTML += '<option value="hidden_homework" style="color: #f59e0b; font-weight: bold;">📝 واجب إلكتروني مخفي (يُضاف بالكود فقط)</option>';
 
     try {
         const docSnap = await db.collection('users').doc(user.uid).get();
@@ -5056,7 +5135,7 @@ async function openPublishOnlineModal() {
     }
 }
 
-// دالة رفع الامتحان للسحابة (محدثة بنظام قائمة المسموح لهم - Guest List)
+// دالة رفع الامتحان للسحابة
 async function publishExamToCloud() {
     const user = auth.currentUser;
     if (!user) return;
@@ -5065,7 +5144,6 @@ async function publishExamToCloud() {
     const classId = document.getElementById('onlineExamClassSelect').value;
     const showResults = document.getElementById('onlineExamShowResults').value === 'yes';
 
-    // ⏰ قراءة وقت انتهاء الامتحان
     const endTimeRaw = document.getElementById('onlineExamEndTime').value;
     if (!endTimeRaw) return showToast('يرجى تحديد موعد إغلاق الامتحان ⏰', 'error');
     const endTimestamp = new Date(endTimeRaw).getTime();
@@ -5088,18 +5166,19 @@ async function publishExamToCloud() {
         btnConfirm.innerText = 'جاري النشر وتجهيز الرابط... ⏳';
         btnConfirm.disabled = true;
 
-        // 💡 السحر هنا: تجهيز "قائمة المدعوين" لو الامتحان مخصص لفصل معين
         let allowedStudentsList = [];
-        if (classId !== 'all') {
+        // 💡 التعديل هنا: لو كان "واجب مخفي" نتركه متاحاً لمن يملك الكود عبر تبويب الواجبات
+        if (classId !== 'all' && classId !== 'hidden_homework') {
             const docSnap = await db.collection('users').doc(user.uid).get();
             if (docSnap.exists) {
                 let classrooms = docSnap.data().classrooms || [];
                 let targetClass = classrooms.find(c => c.id === classId);
                 if (targetClass && targetClass.students) {
                     targetClass.students.forEach(s => {
-                        // بنحط كود الطالب واسمه (متنظف لغوياً) في القائمة المسموح بيها
                         allowedStudentsList.push(String(s.id).trim().toLowerCase());
-                        allowedStudentsList.push(normalizeArabicName(s.name));
+                        if(typeof normalizeArabicName === 'function') {
+                            allowedStudentsList.push(normalizeArabicName(s.name));
+                        }
                     });
                 }
             }
@@ -5114,7 +5193,7 @@ async function publishExamToCloud() {
             showResults: showResults,
             endTime: endTimestamp,
             active: true,
-            allowedStudents: allowedStudentsList, // 💡 حفظ قائمة المسموح لهم في السحابة
+            allowedStudents: allowedStudentsList,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
