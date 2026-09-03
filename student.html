@@ -143,6 +143,19 @@
             .main-content { height: auto; overflow-y: visible; padding: 15px; }
             .timer-display { top: auto; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; padding: 10px 20px; width: max-content; }
         }
+        /* 🛡️ درع منع تحديد النصوص والطباعة */
+.anti-cheat-shield {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}
+
+/* إخفاء المحتوى تماماً لو الطالب حاول يطبع الصفحة Ctrl+P */
+@media print {
+    body {
+        display: none !important;
+    }
+}
     </style>
 </head>
 
@@ -706,6 +719,11 @@ function renderMaterials(containerId, items, color, icon) {
                     return showToast('✋ لقد قمت بتسليم هذا الامتحان مسبقاً!', 'error');
                 }
 
+                // =====================================================
+                // 🛡️ تشغيل درع المراقبة والعلامة المائية لحظة فتح الامتحان
+                // =====================================================
+                activateExamSecurity(); 
+
                 document.getElementById('studentDashboard').style.display = 'none';
                 document.getElementById('examSection').style.display = 'block';
                 document.getElementById('displayExamTitle').innerText = currentExamData.title;
@@ -769,6 +787,11 @@ function renderMaterials(containerId, items, color, icon) {
         async function submitExam(isAuto = false) {
             if (!isAuto && !confirm('هل أنت متأكد من تسليم الإجابات؟ لن تتمكن من التعديل بعد التسليم.')) return;
 
+            // =====================================================
+            // 🏳️ إيقاف درع الحماية والمراقبة فور تأكيد التسليم
+            // =====================================================
+            deactivateExamSecurity(); 
+
             if (timerInterval) {
                 clearInterval(timerInterval); 
                 document.getElementById('timerDisplay').style.display = 'none'; 
@@ -819,7 +842,6 @@ function renderMaterials(containerId, items, color, icon) {
                 resultSec.innerHTML = `<i class='bx bx-error-circle' style="font-size: 80px; color: #ef4444;"></i><h2 style="color: #ef4444;">فشل إرسال النتيجة!</h2><p style="font-weight: bold; color: #475569;">${error.message}</p><button class="btn" onclick="submitExam(true)" style="background: #ef4444; margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>`;
             }
         }
-
         async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
             await db.collection('online_exams').doc(currentExamCode).collection('results').doc(activeStudentId).set({
                 studentIdentifier: activeStudentId,
@@ -844,6 +866,116 @@ function renderMaterials(containerId, items, color, icon) {
                 }
             }
         }
+        // ========================================================
+// 🚨 محرك الحماية ضد الغش (Anti-Cheat Engine)
+// ========================================================
+
+let cheatWarnings = 0;
+let isExamActive = false; // المتغير ده هنخليه true لما الطالب يبدأ يحل
+
+// 1. منع كليك يمين واختصارات لوحة المفاتيح (النسخ واللصق)
+document.addEventListener('contextmenu', event => {
+    if(isExamActive) event.preventDefault();
+});
+
+document.addEventListener('keydown', event => {
+    if (isExamActive) {
+        // منع Ctrl+C, Ctrl+V, Ctrl+P, Ctrl+S
+        if (event.ctrlKey && (event.key === 'c' || event.key === 'v' || event.key === 'p' || event.key === 's')) {
+            event.preventDefault();
+            showToast('⚠️ غير مسموح باستخدام اختصارات لوحة المفاتيح أثناء الامتحان!', 'error');
+        }
+    }
+});
+
+// 2. رادار الخروج من الصفحة (Tab-Switching)
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden && isExamActive) {
+        cheatWarnings++;
+        
+        // إطلاق إنذار مزعج
+        alert(`🚨 تحذير غش! لقد قمت بالخروج من صفحة الامتحان.\nهذا هو الإنذار رقم (${cheatWarnings} من 3). سيتم سحب ورقتك إذا تكرر الأمر.`);
+        
+        // إذا خرج 3 مرات، اسحب الورقة فوراً
+        if (cheatWarnings >= 3) {
+            alert('❌ تم سحب ورقة الامتحان بسبب محاولات الغش المتكررة!');
+            // هنا يمكنك استدعاء دالة تسليم الامتحان الخاصة بك أوتوماتيكياً
+            // مثلاً: submitExamAutomatically();
+            location.reload(); // كإجراء مؤقت يطرده للصفحة الرئيسية
+        }
+    }
+});
+
+// 3. دالة تشغيل الحماية (قم باستدعائها عند بدء الامتحان)
+function activateExamSecurity() {
+    isExamActive = true;
+    cheatWarnings = 0;
+    
+    // إضافة كلاس منع التحديد على جسم الصفحة
+    document.body.classList.add('anti-cheat-shield');
+
+    // 💡 إنشاء العلامة المائية الفاضحة باسم الطالب
+    createDynamicWatermark();
+    
+    showToast('🛡️ تم تفعيل درع المراقبة. يرجى عدم الخروج من الصفحة.', 'info');
+}
+
+// دالة إيقاف الحماية (قم باستدعائها عند تسليم الامتحان)
+function deactivateExamSecurity() {
+    isExamActive = false;
+    document.body.classList.remove('anti-cheat-shield');
+    
+    const wm = document.getElementById('cheatWatermark');
+    if (wm) wm.remove();
+}
+
+// 4. السحر: العلامة المائية الشفافة لردع السكرين شوت
+function createDynamicWatermark() {
+    // نتأكد إن مفيش علامة قديمة
+    let oldWm = document.getElementById('cheatWatermark');
+    if (oldWm) oldWm.remove();
+
+    // جلب بيانات الطالب المخزنة (التي قمنا ببرمجتها مسبقاً)
+    let stuName = localStorage.getItem('mh_student_name') || 'طالب';
+    let stuCode = localStorage.getItem('mh_student_id') || 'Unknown';
+
+    // نأخذ آخر 5 أرقام من الـ UID للتمويه
+    let shortCode = stuCode.substring(stuCode.length - 5); 
+
+    const watermarkText = `${stuName} - ${shortCode}`;
+
+    const wmDiv = document.createElement('div');
+    wmDiv.id = 'cheatWatermark';
+    
+    // تنسيق الـ CSS لجعلها تملأ الشاشة ولا تعيق الضغط (pointer-events: none)
+    wmDiv.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; /* عشان الطالب يقدر يدوس على الإجابات عادي */
+        z-index: 9999;
+        display: flex;
+        flex-wrap: wrap;
+        overflow: hidden;
+        opacity: 0.08; /* شفافة جداً عشان متضايقش عينه بس تظهر في السكرين شوت */
+    `;
+
+    // تكرار الكلمة لتملأ الشاشة
+    for (let i = 0; i < 50; i++) {
+        const span = document.createElement('span');
+        span.innerText = watermarkText;
+        span.style.cssText = `
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            transform: rotate(-30deg);
+            margin: 40px;
+            white-space: nowrap;
+        `;
+        wmDiv.appendChild(span);
+    }
+
+    document.body.appendChild(wmDiv);
+}
     </script>
 </body>
 </html>
