@@ -3086,11 +3086,12 @@ function insertCustomTable() {
 window.runSmartOnboardingTour = function (isForced) {
     const forced = (isForced === true);
 
-    if (!forced && localStorage.getItem('mh_pro_tour_done_v1') === 'yes') {
+    // تغيير اسم المفتاح لضمان ظهور الجولة المحدثة للمستخدمين القدامى
+    if (!forced && localStorage.getItem('mh_pro_tour_done_v3') === 'yes') {
         return;
     }
 
-    localStorage.setItem('mh_pro_tour_done_v1', 'yes');
+    localStorage.setItem('mh_pro_tour_done_v3', 'yes');
 
     if (!document.getElementById('tourDynamicStyles')) {
         const style = document.createElement('style');
@@ -3148,71 +3149,76 @@ window.runSmartOnboardingTour = function (isForced) {
     window.addEventListener('wheel', preventScroll, { passive: false });
     window.addEventListener('touchmove', preventScroll, { passive: false });
 
+    // 💡 المصفوفة الأضخم والأشمل (تضم كل تفصيلة في الموقع)
     const steps = [
         // --- 1. الإعدادات العامة والشريط العلوي ---
-        { selector: '.nav-center h2', title: 'مرحباً في M&H Pro 🚀', text: 'سنأخذك في جولة تفصيلية لتعلم كل تفصيلة في المنصة خطوة بخطوة. (اضغط متابعة)', action: 'next' },
-        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'جرب بنفسك! <b>اضغط فعلياً على الأيقونة</b> لتحويل الموقع للوضع الداكن.', action: 'click' },
-        { selector: '.nav-right', title: 'حفظ أعمالك سحابياً 🔐', text: 'من هنا تسجل دخولك لربط حسابك بالسحابة، ومزامنة مسوداتك وإدارة حسابك.', action: 'next' },
-        { selector: '.btn-ai', title: 'الذكاء الاصطناعي ✨', text: 'مساعدك الذكي! يحلل الـ PDF ويجاوب على أي استفسارات تخص المادة.', action: 'next' },
-        { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود التفعيل وفتح كافة الخصائص الاحترافية اللامحدودة.', action: 'next' },
+        { selector: '.nav-center h2', title: 'مرحباً في M&H Pro 🚀', text: 'أهلاً بك في منصتك الاحترافية! <b>💡 معلومة هامة جداً: الموقع يعمل بالكامل بدون إنترنت (Offline) بعد فتحه لأول مرة!</b> سنأخذك في جولة تفصيلية شاملة لكل صغيرة وكبيرة. (اضغط متابعة)', action: 'next' },
+        { selector: '.theme-toggle', title: 'الوضع الليلي/النهاري 🌙', text: 'لراحة عينيك! <b>اضغط فعلياً على الأيقونة</b> لتحويل الموقع للوضع الداكن.', action: 'click' },
+        { selector: '.nav-right', title: 'نظام الحسابات السحابي 🔐', text: 'سجل دخولك من هنا لمزامنة أعمالك في السحابة، وإدارة عدد أجهزتك النشطة، والاطلاع على سجل مستنداتك.', action: 'next' },
+        { selector: '.btn-ai', title: 'المساعد الذكي ✨', text: 'شات الذكاء الاصطناعي! يحلل الملفات (PDF/صور)، يولد الأسئلة، ويقوم بتنسيقها وإدراجها بضغطة زر.', action: 'next' },
+        { selector: '.btn-vip', title: 'ترقية الحساب 👑', text: 'لإدخال كود الـ VIP وفتح خصائص تصدير النماذج المتعددة والبابل شيت بلا حدود.', action: 'next' },
 
         // --- 2. القسم الأول (بنك الأسئلة) ---
-        { selector: '#btnTabQuestions', title: 'القسم الأول: بنك الأسئلة 📝', text: 'أولاً سنشرح قسم الامتحانات. <b>اضغط على هذا التبويب</b> للبدء.', action: 'click' },
-        { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا مسحت شيئاً بالخطأ في المحرر، هذه الأزرار تعيده فوراً.', action: 'next' },
+        { selector: '#btnTabQuestions', title: 'القسم الأول: بنك الأسئلة 📝', text: 'هنا يتم هندسة الامتحانات وبناء بنوك الأسئلة. <b>اضغط على التبويب</b> للبدء.', action: 'click' },
+        { selector: '.f-undo-redo-group', title: 'التراجع والإعادة ↩️', text: 'إذا حذفت شيئاً بالخطأ، هذه الأزرار تعيده لك فوراً في جزء من الثانية.', action: 'next' },
+        
+        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط هنا</b> لاختيار لغة وتنسيق كتابة الامتحان.', action: 'click' },
+        { selector: '#systemMenu button:nth-child(2)', title: 'نظام اللغات (LTR) 🇬🇧', text: 'يقلب المحرر لليسار ويدعم التنسيق الأجنبي.', action: 'next', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(3)', title: 'النظام العلمي ⚛️', text: 'يفتح شريط أدوات مخصص للمعادلات والرياضيات.', action: 'next', forceOpen: 'systemMenu' },
+        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'الآن <b>اضغط هنا</b> للعودة للنظام العربي المطور.', action: 'click', forceOpen: 'systemMenu' },
 
-        // 💡 التعديل هنا: إزالة الإجبار على الفتح حتى يدوس المستخدم بنفسه
-        { selector: '.sys-btn', title: 'أنظمة التنسيق ⚙️', text: '<b>اضغط على الزر</b> لفتح قائمة لغات الكتابة المتاحة.', action: 'click' },
-        { selector: '#systemMenu button:nth-child(2)', title: 'نظام اللغات 🇬🇧', text: 'يقلب المحرر لليسار (LTR) للمواد الأجنبية.', action: 'next', forceOpen: 'systemMenu' },
-        { selector: '#systemMenu button:nth-child(3)', title: 'النظام العلمي ⚛️', text: 'يفتح أدوات لكتابة المعادلات والرموز الرياضية.', action: 'next', forceOpen: 'systemMenu' },
-        { selector: '#systemMenu button:nth-child(1)', title: 'النظام العربي 🇸🇦', text: 'الآن <b>اضغط هنا</b> لتفعيل النظام العربي.', action: 'click', forceOpen: 'systemMenu' },
+        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية للبنك.', action: 'click' },
+        { selector: '#smartToolsMenu button:nth-child(1)', title: 'تحليل البنك 📊', text: 'يعرض رسوماً بيانية توضح عدد أنواع الأسئلة في امتحانك الحالي.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(2)', title: 'خلط شامل 🔀', text: 'يخلط الأسئلة والخيارات عشوائياً لإنشاء نماذج مختلفة ومنع الغش.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(4)', title: 'الأرشيف السحابي ☁️', text: 'يحفظ الامتحان كاملاً كمسودة في حسابك السحابي للعودة إليه لاحقاً.', action: 'next', forceOpen: 'smartToolsMenu' },
+        { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي ✨', text: '<b>اضغط هنا</b> لترتيب الأسئلة، ترقيمها آلياً، واستخراج نموذج الإجابات.', action: 'click', forceOpen: 'smartToolsMenu' },
 
-        { selector: '.tools-btn', title: 'العمليات الذكية 🪄', text: '<b>اضغط هنا</b> لفتح قائمة الأدوات السحرية.', action: 'click' },
-        { selector: '#smartToolsMenu button:nth-child(1)', title: 'تحليل البنك 📊', text: 'يعرض إحصائية لعدد أنواع الأسئلة التي كتبتها.', action: 'next', forceOpen: 'smartToolsMenu' },
-        { selector: '#smartToolsMenu button:nth-child(2)', title: 'خلط شامل 🔀', text: 'يخلط ترتيب الأسئلة والخيارات لمنع الغش بضغطة زر.', action: 'next', forceOpen: 'smartToolsMenu' },
-        { selector: '#smartToolsMenu button:nth-child(4)', title: 'الأرشيف السحابي ☁️', text: 'لحفظ واسترجاع مسوداتك في السحابة بأمان.', action: 'next', forceOpen: 'smartToolsMenu' },
-        { selector: '#smartToolsMenu button:nth-child(3)', title: 'التنسيق الذكي ✨', text: 'الآن <b>اضغط هنا!</b> لينظف أسئلتك ويستخرج الإجابات آلياً.', action: 'click', forceOpen: 'smartToolsMenu' },
-
-        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح قائمة القوالب الجاهزة.', action: 'click' },
-        { selector: '#insertMenu button:nth-child(2)', title: 'سؤال صح/خطأ ✅', text: 'يرمي لك قالب جاهز لسؤال الصواب والخطأ.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(3)', title: 'سؤال مقالي 📝', text: 'يرمي لك قالب للأسئلة المقالية.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(4)', title: 'استخراج نص (OCR) 📄', text: 'ارفع صورة وسيحولها النظام لنص مكتوب فوراً.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '.insert-btn', title: 'أدوات الإدراج ➕', text: '<b>اضغط هنا</b> لفتح القوالب والأدوات المتقدمة.', action: 'click' },
+        { selector: '#insertMenu button:nth-child(2)', title: 'قالب صح/خطأ ✅', text: 'يُدرج سؤال صواب وخطأ جاهز للكتابة.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(3)', title: 'قالب مقالي 📝', text: 'يُدرج سؤال مقالي مع مساحة للإجابة.', action: 'next', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(4)', title: 'استخراج نص (OCR) 📄', text: 'ميزة جبارة! ارفع صورة تحتوي على نص وسيحولها النظام لنص قابل للتعديل.', action: 'next', forceOpen: 'insertMenu' },
         { selector: '#insertMenu button:nth-child(6)', title: 'إدراج صورة 🖼️', text: 'لإرفاق صورة توضيحية داخل السؤال.', action: 'next', forceOpen: 'insertMenu' },
-        { selector: '#insertMenu button:nth-child(1)', title: 'سؤال اختياري 🔘', text: 'الآن <b>اضغط هنا</b> لإدراج قالب سؤال اختياري وجرب.', action: 'click', forceOpen: 'insertMenu' },
+        { selector: '#insertMenu button:nth-child(1)', title: 'قالب اختياري 🔘', text: 'الآن <b>اضغط هنا</b> لإدراج سؤال MCQ للمتابعة.', action: 'click', forceOpen: 'insertMenu' },
 
-        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على الإملاء الصوتي، التنسيق، والألوان.', action: 'next' },
-        { selector: '#questionsInput', title: 'مساحة العمل الأساسية 📝', text: 'هنا تكتب أسئلتك. ضع الخيارات تحت بعضها، وتضع [✓] بجوار الخيار الصحيح.', action: 'next' },
-        { selector: '.grid-layout > .form-group:nth-child(2) .editor-toolbar', title: 'شريط مفتاح الإجابات 🛠️', text: 'لتنسيق صفحة نموذج الإجابة بشكل مستقل.', action: 'next' },
+        { selector: '.grid-layout > .form-group:nth-child(1) .editor-toolbar', title: 'شريط أدوات الأسئلة 🛠️', text: 'يحتوي على أدوات التنسيق (تكبير، تلوين، محاذاة).', action: 'next' },
+        { selector: '.btn-voice', title: 'الإملاء الصوتي 🎙️', text: 'تعبت من الكتابة؟ اضغط هنا وتحدث، وسيقوم النظام بالكتابة نيابة عنك بدقة عالية!', action: 'next' },
+        { selector: '#questionsInput', title: 'محرر الأسئلة 📝', text: 'هنا تكتب أسئلتك. تضع الخيارات تحت بعضها، وتضع [✓] بجوار الخيار الصحيح للتعرف عليه آلياً.', action: 'next' },
         { selector: '#answersInput', title: 'مفتاح الإجابات 🔑', text: 'يتولد تلقائياً هنا بعد ضغط (التنسيق الذكي)، أو يُكتب يدوياً.', action: 'next' },
 
-        // 💡 التعديل هنا: إزالة الإجبار ليضطر المستخدم للضغط أولاً
-        { selector: '.dock-item[onclick*="generalSettingsPanel"]', title: 'التنسيق العام 🎨', text: 'هذا الشريط الجانبي يهندس الورقة. <b>اضغط هنا</b> لفتح التنسيق العام.', action: 'click' },
-        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: 'من هنا تغير الألوان والعلامة المائية. <b>اضغط X</b> للإغلاق.', action: 'click', forceOpenPanel: 'generalSettingsPanel' },
-        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: 'لضبط ديباجة الامتحان (الوزارة، المادة، الزمن).', action: 'next' },
-        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في مقاسات وألوان الأسئلة وطريقة عرضها (أفقي/عمودي).', action: 'next' },
-        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: 'لدمج بابل شيت متطور أعلى ورقة الأسئلة مباشرة.', action: 'next' },
-        { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: 'لإعداد أشكال ترقيم النماذج (A, B, C) وأماكنها.', action: 'next' },
-        { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: 'لتحديد شكل وحجم الدوائر والأعمدة للورقة المستقلة.', action: 'next' },
-        { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص بيانات الطالب والباركود للورقة المستقلة.', action: 'next' },
+        // --- 3. الشريط الجانبي الفائق (هندسة الورقة) ---
+        { selector: '.dock-item[onclick*="generalSettingsPanel"]', title: 'التنسيق العام 🎨', text: '<b>اضغط هنا</b> لفتح لوحة التنسيق العام لورقة الامتحان.', action: 'click' },
+        { selector: '#generalSettingsPanel', title: 'لوحة التنسيق', text: 'من هنا تتحكم في نوع الخط، لون النصوص، لون الإطار الخارجي، والعلامة المائية الشفافة لحماية مذكرتك.', action: 'next', forceOpenPanel: 'generalSettingsPanel' },
+        { selector: '#generalSettingsPanel .close-panel-btn', title: 'إغلاق اللوحة ✖️', text: '<b>اضغط X</b> للإغلاق ومتابعة الجولة.', action: 'click', forceOpenPanel: 'generalSettingsPanel' },
 
-        { selector: '.btn-dock-danger', title: 'مسح الكل 🗑️', text: '<b>اضغط هنا</b> لفتح نافذة مسح المشروع والبدء من جديد.', action: 'click' },
-        { selector: '#confirmModal .modal-content', title: 'احترس! ✖️', text: '⚠️ <b>تنبيه هام جداً:</b> الرجاء الضغط فعلياً على زر <b>"إلغاء"</b> بالأسفل لكي لا تفقد عملك وتقف الجولة!', action: 'next', forceOpenModal: 'confirmModal' },
-        { selector: '#confirmModal button:last-child', title: 'إلغاء الإجراء', text: '<b>اضغط على "إلغاء" هنا</b> للمتابعة بأمان.', action: 'click', forceOpenModal: 'confirmModal' },
+        { selector: '.dock-item[onclick*="examSettingsPanel"]', title: 'الترويسة العلوية 🏛️', text: 'لضبط ديباجة الامتحان (اسم الوزارة، المادة، والزمن) أعلى الصفحة.', action: 'next' },
+        { selector: '.dock-item[onclick*="questionSettingsPanel"]', title: 'بنيوية الأسئلة 📝', text: 'للتحكم في عرض الخيارات (أفقية/عمودية/شبكة) وتلوين الإجابة الصحيحة.', action: 'next' },
+        { selector: '.dock-item[onclick*="compactBubblePanel"]', title: 'البابل شيت المضغوط 📄', text: 'لدمج نموذج بابل شيت متطور أعلى ورقة الأسئلة مباشرة توفيراً للورق.', action: 'next' },
+        { selector: '.dock-item[onclick*="multiModelSettingsPanel"]', title: 'النماذج المتعددة 🔀', text: 'لإعداد أشكال ترقيم النماذج (A, B, C) وتحديد مكان طباعة الرمز.', action: 'next' },
+        { selector: '.dock-item[onclick*="bubbleSettingsPanel"]', title: 'تنسيقات البابل شيت ⭕', text: 'لتحديد شكل الدوائر (دائرة/مربع/بيضاوي) وحجمها وعدد الأعمدة للورقة المستقلة.', action: 'next' },
+        { selector: '.dock-item[onclick*="bubbleHeaderSettingsPanel"]', title: 'ترويسة البابل شيت 📋', text: 'لتخصيص بيانات الطالب والباركود وملاحظات التظليل للورقة المستقلة.', action: 'next' },
+        { selector: '.btn-dock-danger', title: 'مسح وتهيئة 🗑️', text: 'لمسح كل شيء والبدء في امتحان جديد كلياً.', action: 'next' },
 
-        { selector: '#questionActionButtons', title: 'منصة التصدير 🖨️', text: 'من هنا تطبع عملك بالصيغ المتاحة (طالب، معلم، نماذج متعددة).', action: 'next' },
+        // --- 4. التصدير والطباعة ---
+        { selector: '#questionActionButtons', title: 'منصة التصدير 🖨️', text: 'الأزرار السفلية تمكنك من الاستخراج بخيارات متعددة.', action: 'next' },
+        { selector: '.btn-pdf-student', title: 'نسخة الطالب', text: 'تطبع الورقة بدون الإجابات.', action: 'next' },
+        { selector: '.btn-pdf-teacher', title: 'نموذج الإجابة', text: 'تطبع الورقة مبرزة الإجابات الصحيحة.', action: 'next' },
+        { selector: '.btn-pdf-multi', title: 'النماذج المتعددة 🔀', text: 'تولد لك النماذج (A, B, C, D) مخلوطة ومجهزة للتصحيح بالكاميرا.', action: 'next' },
+        { selector: '.btn-json-export', title: 'تصدير / استيراد 💾', text: 'لحفظ الامتحان كملف JSON لتبادله مع زملائك أو الاحتفاظ به كنسخة احتياطية.', action: 'next' },
 
-        // --- 3. القسم الثاني (فصولي وطلابي) ---
-        { selector: '#btnTabClassrooms', title: 'القسم الثاني: فصولي الافتراضية 👨‍🏫', text: 'انتهينا من الأسئلة! <b>اضغط هنا</b> لفتح لوحة إدارة الطلاب.', action: 'click' },
-        { selector: 'button[onclick="generateFromLessonPrompt()"]', title: 'توليد ذكي للأسئلة 🧠', text: 'أداة سحرية! اكتب اسم الدرس، وسيقوم الـ AI بتوليد أسئلته ونقلك للمحرر فوراً.', action: 'next' },
-        { selector: 'button[onclick="createNewClassroom()"]', title: 'إنشاء فصل جديد ➕', text: 'لفتح مجموعات أو فصول دراسية للطلاب.', action: 'next' },
-        { selector: '#lmsTotalStudents', title: 'عداد الطلاب 🎓', text: 'يعرض إجمالي طلابك. الباقة المجانية تسمح بـ 30 طالباً כحد أقصى.', action: 'next' },
-        { selector: '#classroomsGrid', title: 'شبكة الفصول 🏫', text: 'هنا تظهر فصولك. يمكنك الدخول إليها لإضافة الطلاب وحذفهم أو إضافة درجاتهم يدوياً.', action: 'next' },
+        // --- 5. القسم الثاني (فصولي وطلابي LMS) ---
+        { selector: '#btnTabClassrooms', title: 'القسم الثاني: فصولي (LMS) 👨‍🏫', text: 'هنا المنظومة السحابية المتكاملة! <b>اضغط هنا</b> لفتح لوحة إدارة الفصول.', action: 'click' },
+        { selector: 'button[onclick="generateFromLessonPrompt()"]', title: 'توليد ذكي من درس 🧠', text: 'اكتب اسم الدرس وسيقوم الذكاء الاصطناعي بتوليد أسئلته فوراً ونقلك للمحرر.', action: 'next' },
+        { selector: 'button[onclick="openPublishOnlineModal()"]', title: 'نشر امتحان أونلاين 🌐', text: 'لرفع الامتحان للطلاب. 💡 الجديد: خيار (الواجب المخفي) ليكون واجباً سرياً بالكود فقط.', action: 'next' },
+        { selector: 'button[onclick="openManageExamsModal()"]', title: 'إدارة الامتحانات ⚙️', text: 'لتمديد أوقات الامتحانات المنشورة، مسحها، وتحديث الكشوفات بلمسة.', action: 'next' },
+        { selector: 'button[onclick="createNewClassroom()"]', title: 'إنشاء فصل جديد ➕', text: 'افتح فصلك، وقم بتوليد أكواد (VIP) للطلاب بصلاحية أيام محددة للبيع.', action: 'next' },
+        { selector: '#classroomsGrid', title: 'شبكة الفصول 🏫', text: 'ادخل لفصولك من هنا لرفع الملازم كروابط درايف/يوتيوب (ستتحول لروابط تحميل مباشرة للطالب)، وإدارة الدرجات والحسابات.', action: 'next' },
 
-        // --- 4. القسم الثالث (محرر النصوص) ---
-        { selector: '#btnTabText', title: 'القسم الثالث: محرر الملازم 📄', text: 'القسم الأخير! <b>اضغط هنا</b> لفتح محرر المستندات الحر.', action: 'click' },
-        { selector: '#textTab .btn-icon', title: 'تراجع وإعادة ↩️', text: 'أزرار مخصصة للتحكم في أخطاء الكتابة داخل المحرر الحر.', action: 'next' },
-        { selector: '#textTab .editor-toolbar', title: 'أدوات التنسيق الشاملة 🛠️', text: 'لإدراج الجداول، الصور، والمعادلات وتنسيق المذكرات بحرية تامة.', action: 'next' },
-        { selector: '#generalTextInput', title: 'ورقة العمل الحرة 📝', text: 'مساحتك الحرة لكتابة وتأليف أي ملازم أو أوراق عمل لا تعتمد على نظام البابل شيت.', action: 'next' },
-        { selector: '#textActionButtons', title: 'الطباعة 🖨️', text: 'لطباعة الملازم والمستندات الحرة فور الانتهاء منها.', action: 'next' }
+        // --- 6. القسم الأخير (محرر النصوص) ---
+        { selector: '#btnTabText', title: 'القسم الثالث: محرر المستندات 📄', text: 'مساحتك الحرة! <b>اضغط هنا</b> لفتح المحرر.', action: 'click' },
+        { selector: '#textTab .editor-toolbar', title: 'أدوات التنسيق الشاملة 🛠️', text: 'محرر يشبه Word لكتابة الملازم والمذكرات الحرة وتنسيقها براحة تامة.', action: 'next' },
+        { selector: 'button[onclick="insertTable()"]', title: 'الجداول 📊', text: 'لإدراج جداول منسقة بلمسة واحدة.', action: 'next' },
+        { selector: 'button[onclick="insertMathEquation()"]', title: 'معادلات LaTeX ∑', text: 'لكتابة أقوى المعادلات الرياضية المعقدة بسهولة فائقة.', action: 'next' },
+        { selector: '#textActionButtons', title: 'طباعة المستند 🖨️', text: 'لطباعة أو تصدير মذكرتك النهائية كملف PDF جاهز للنشر.', action: 'next' }
     ];
 
     let currentStepIndex = 0;
@@ -3227,7 +3233,7 @@ window.runSmartOnboardingTour = function (isForced) {
         window.removeEventListener('wheel', preventScroll);
         window.removeEventListener('touchmove', preventScroll);
         if (clickListener) document.body.removeEventListener('click', clickListener, true);
-        localStorage.setItem('mh_pro_tour_done_v1', 'yes'); // تسجيل الإغلاق
+        localStorage.setItem('mh_pro_tour_done_v3', 'yes'); // تسجيل الإغلاق بالنسخة الجديدة
     };
 
     function endTour() {
@@ -3259,7 +3265,6 @@ window.runSmartOnboardingTour = function (isForced) {
         let tooltipTop = rect.bottom + padding + 15;
         let tooltipLeft = rect.left + (rect.width / 2) - 160;
 
-        // التجاوب الذكي مع الأطراف
         if (rect.right > window.innerWidth - 120) {
             tooltipLeft = rect.left - 340;
         }
@@ -3303,7 +3308,6 @@ window.runSmartOnboardingTour = function (isForced) {
         function findTarget() {
             currentTarget = document.querySelector(step.selector);
 
-            // تجاوز ذكي للعناصر المخفية
             if (currentTarget && window.getComputedStyle(currentTarget).display === 'none') {
                 currentTarget = null;
             }
@@ -3314,7 +3318,6 @@ window.runSmartOnboardingTour = function (isForced) {
                 return;
             }
 
-            // لو ملقاش العنصر بعد كل المحاولات يتخطى للخطوة اللي بعدها
             if (!currentTarget) {
                 currentStepIndex++;
                 processStep();
@@ -3355,7 +3358,7 @@ window.runSmartOnboardingTour = function (isForced) {
                 document.body.addEventListener('click', clickListener, true);
             } else {
                 document.getElementById('tourNextBtn').onclick = (e) => {
-                    e.stopPropagation(); // منع الإغلاق العشوائي للقوائم
+                    e.stopPropagation(); 
                     currentStepIndex++;
                     processStep();
                 };
@@ -3366,6 +3369,22 @@ window.runSmartOnboardingTour = function (isForced) {
 
     setTimeout(processStep, 500);
 };
+
+function initTourSetup() {
+    setTimeout(() => {
+        if (typeof window.runSmartOnboardingTour === 'function') {
+            window.runSmartOnboardingTour(false);
+        }
+    }, 1500);
+}
+
+if (document.readyState === 'complete') {
+    initTourSetup();
+} else {
+    window.addEventListener('load', initTourSetup);
+}
+
+window.runSmartOnboardingTour = runSmartOnboardingTour;
 
 function initTourSetup() {
     setTimeout(() => {
