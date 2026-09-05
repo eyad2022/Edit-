@@ -41,7 +41,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-
+db.settings({
+    experimentalForceLongPolling: true
+});
 // =====================================================================
 // 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب) - نسخة مصححة
 // =====================================================================
@@ -4851,7 +4853,7 @@ function normalizeArabicName(text) {
         .toLowerCase();
 }
 
-// 🚀 محرك المزامنة الآلي للدرجات
+// 🚀 محرك المزامنة السريع جداً للدرجات (بدون طلبات زائدة للسيرفر)
 async function syncOnlineScores(classId, classrooms, targetClass) {
     const user = auth.currentUser;
     if (!user) return;
@@ -4860,22 +4862,23 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         let refreshBtn = document.getElementById('btnRefreshScores');
         if (refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> جاري السحب...";
 
+        // 🚀 السحر هنا: نطلب من السيرفر "امتحانات هذا الفصل فقط" + "الامتحانات العامة" + "الواجبات المخفية"!
+        // هذا يمنع تحميل مئات الامتحانات غير المرتبطة بالفصل الحالي.
         const examsSnap = await db.collection('online_exams')
             .where('teacherId', '==', user.uid)
+            .where('classId', 'in', [classId, 'all', 'hidden_homework'])
             .get();
 
         let updated = false;
         let targetIndex = classrooms.findIndex(c => c.id === classId);
-        let currentStudents = classrooms[targetIndex].students;
+        let currentStudents = classrooms[targetIndex].students || [];
         let unlinkedResults = [];
 
         const fetchPromises = examsSnap.docs.map(async (examDoc) => {
             let examData = examDoc.data();
-            
-            // 💡 التعديل السحري هنا: السماح للواجب المخفي بالظهور في كشف الدرجات
-            if (examData.classId !== classId && examData.classId !== 'all' && examData.classId !== 'hidden_homework') return;
-
             const examTitle = examData.title || "امتحان بدون عنوان";
+            
+            // جلب نتائج هذا الامتحان المخصص فقط
             const resultsSnap = await examDoc.ref.collection('results').get();
 
             resultsSnap.forEach(resDoc => {
@@ -4940,6 +4943,11 @@ async function syncOnlineScores(classId, classrooms, targetClass) {
         console.error("خطأ في المزامنة:", e);
         let refreshBtn = document.getElementById('btnRefreshScores');
         if (refreshBtn) refreshBtn.innerHTML = "<i class='bx bx-refresh'></i> تحديث الدرجات";
+        
+        // 💡 تنبيه أمني للـ Index
+        if (e.message && e.message.includes('requires an index')) {
+            showToast("⚠️ السيرفر يحتاج لبناء فهرس (Index) ليصبح أسرع. افتح الـ Console واضغط على الرابط.", "error");
+        }
     }
 }
 // إضافة طالب (بمراقبة الباقة + تسجيل لحظة الانضمام)
@@ -5272,7 +5280,7 @@ function forceRefreshExams() {
     openManageExamsModal();
 }
 
-// 3. دالة فتح المركز (العرض الفوري من الذاكرة + التحديث الخلفي)
+// 3. دالة فتح المركز (معالجة الاتصال المباشر والتحقق من الحساب)
 async function openManageExamsModal() {
     const user = auth.currentUser;
     if (!user) return showToast('يرجى تسجيل الدخول أولاً', 'error');
@@ -5280,35 +5288,40 @@ async function openManageExamsModal() {
     document.getElementById('manageExamsModal').style.display = 'flex';
     const listDiv = document.getElementById('manageExamsList');
 
-    // العرض الفوري من الذاكرة إذا كانت موجودة
-    if (window.teacherExamsCache) {
-        renderExamsListUI(window.teacherExamsCache);
-    } else {
-        listDiv.innerHTML = '<div style="text-align: center; padding: 30px;"><i class="bx bx-loader-alt bx-spin" style="font-size: 40px; color: #3b82f6;"></i><br><strong style="color: #64748b;">جاري جلب الامتحانات...</strong></div>';
-    }
+    listDiv.innerHTML = '<div style="text-align: center; padding: 30px;"><i class="bx bx-loader-alt bx-spin" style="font-size: 40px; color: #3b82f6;"></i><br><strong style="color: #64748b;">جاري جلب الامتحانات من السيرفر مباشرة...</strong></div>';
 
-    // الجلب من السيرفر في الخلفية لتحديث الذاكرة
     try {
-        const examsSnap = await db.collection('online_exams').where('teacherId', '==', user.uid).get();
+        // جلب امتحانات المعلم الحالي
+        const examsSnap = await db.collection('online_exams')
+            .where('teacherId', '==', user.uid)
+            .get();
 
         let exams = [];
         examsSnap.forEach(doc => exams.push({ id: doc.id, ...doc.data() }));
+
+        // فحص ذكي: إذا كانت النتيجة صفر، نتأكد هل المشكلة في كود الحساب UID؟
+        if (exams.length === 0) {
+            const allExamsCheck = await db.collection('online_exams').limit(5).get();
+            if (!allExamsCheck.empty) {
+                console.warn("⚠️ تنبيه: توجد امتحانات في قاعدة البيانات ولكنها مسجلة بحساب UID مختلف عن حسابك الحالي!");
+                console.log("معرف حسابك الحالي (Current UID):", user.uid);
+                allExamsCheck.forEach(d => console.log(`الامتحان ${d.id} مسجل للمدرب:`, d.data().teacherId));
+            }
+        }
+
+        // ترتيب الامتحانات بالأحدث
         exams.sort((a, b) => {
-            let tA = a.createdAt ? (typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : 0) : 0;
-            let tB = b.createdAt ? (typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : 0) : 0;
+            let tA = a.createdAt ? (typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : Date.parse(a.createdAt)) : 0;
+            let tB = b.createdAt ? (typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : Date.parse(b.createdAt)) : 0;
             return tB - tA;
         });
 
-        // تحديث الذاكرة السريعة
         window.teacherExamsCache = exams;
-        
-        // إعادة رسم القائمة أوتوماتيكياً بأحدث بيانات
         renderExamsListUI(exams);
 
     } catch (e) {
-        if (!window.teacherExamsCache) {
-            listDiv.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">خطأ: ${e.message}</div>`;
-        }
+        console.error("Fetch error:", e);
+        listDiv.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">خطأ في الاتصال: ${e.message}</div>`;
     }
 }
 
