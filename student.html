@@ -143,6 +143,7 @@
             .main-content { height: auto; overflow-y: visible; padding: 15px; }
             .timer-display { top: auto; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; padding: 10px 20px; width: max-content; }
         }
+        
         /* 🛡️ درع منع تحديد النصوص والطباعة */
         .anti-cheat-shield {
             -webkit-user-select: none; /* Safari */
@@ -161,8 +162,14 @@
 
 <body>
 
+    <!-- 🌟 شاشة التحميل الابتدائية (تمنع وميض صفحة الدخول) -->
+    <div id="initialLoader" style="position: fixed; inset: 0; background: #f1f5f9; z-index: 99999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s opacity;">
+        <i class='bx bx-loader-alt bx-spin' style="font-size: 70px; color: var(--primary-color);"></i>
+        <h3 style="color: #475569; margin-top: 15px; font-weight: 900;">جاري تجهيز بيئة التعلم...</h3>
+    </div>
+
     <!-- 1️⃣ شاشة الدخول والتسجيل (بنظام الحسابات والأكواد) -->
-    <div id="authScreen">
+    <div id="authScreen" style="display: none;">
         <div class="auth-box">
             <i class='bx bxs-graduation auth-icon' style="font-size: 60px; color: var(--primary-color); margin-bottom: 10px;"></i>
             <h2 style="margin-top: 0; color: #1e293b;">بوابة الطالب الذكية</h2>
@@ -362,16 +369,16 @@
             localStorage.setItem('mh_stu_device_id', localStudentDeviceId);
         }
 
-        // 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية (مُصحح لحماية المعلمين + طرد فوري)
+        // 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // 🛡️ الدرع الواقي: ننتظر ثانيتين لتفادي التعارض (Race Condition) عند إنشاء حساب مدرس جديد في تاب أخرى
+                // 🛡️ الدرع الواقي: ننتظر ثانيتين لتفادي التعارض (Race Condition)
                 setTimeout(async () => {
                     try {
                         // 1. هل هذا حساب معلم أو مدير؟
                         const teacherDoc = await db.collection('users').doc(user.uid).get();
                         if (teacherDoc.exists) {
-                            // لو معلم فاتح صفحة الطالب، نمنعه من الدخول بهدوء (مستحيل نحذف حسابه!)
+                            document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
                             document.getElementById('studentDashboard').style.display = 'none';
                             if(document.getElementById('renewalScreen')) document.getElementById('renewalScreen').style.display = 'none';
                             
@@ -382,7 +389,7 @@
                                 <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">أنت مسجل دخول حالياً بحساب (معلم / إدارة). يرجى الذهاب لصفحة المعلم، أو تسجيل الخروج من هنا.</p>
                                 <button class="btn" onclick="logoutStudent()" style="background: #ef4444;">تسجيل خروج للعودة</button>
                             `;
-                            return; // توقف هنا تماماً
+                            return; 
                         }
 
                         // 2. إذا لم يكن معلماً، نتحقق هل هو طالب؟
@@ -390,8 +397,8 @@
                         
                         // 🚨 3. الانتحار الذاتي للطالب: لو مش موجود في الطلاب ولا المعلمين!
                         if (!stuDoc.exists) {
+                            document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
                             showToast('⚠️ تم إلغاء وحذف حسابك من قبل المعلم!', 'error');
-                            // الطالب اتمسح من المدرس، يقوم السيستم يمسح إيميله بالكامل عشان يعرف يسجل تاني بعدين
                             await user.delete().catch(e => console.warn(e));
                             auth.signOut();
                             localStorage.clear();
@@ -403,6 +410,7 @@
                         
                         // 🛑 4. فحص الصلاحية وتاريخ الانتهاء للطالب
                         if (data.expiryDate && Date.now() > data.expiryDate) {
+                            document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
                             document.getElementById('authScreen').style.display = 'none';
                             document.getElementById('studentDashboard').style.display = 'none';
                             document.getElementById('renewalScreen').style.display = 'flex';
@@ -413,6 +421,7 @@
                         let devices = data.devices || [];
                         if (!devices.includes(localStudentDeviceId)) {
                             if (devices.length >= 2) {
+                                document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
                                 let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (جهازين فقط).\n\n- اضغط [إلغاء] لتسجيل الخروج من جهازك القديم.\n- اضغط [موافق] لتصفير الأجهزة وطرد أجهزتك السابقة.");
                                 if (resetConfirm) {
                                     devices = [localStudentDeviceId];
@@ -428,6 +437,7 @@
                         }
 
                         // فتح المنصة للطالب بأمان
+                        document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
                         document.getElementById('renewalScreen').style.display = 'none';
                         document.getElementById('authScreen').style.display = 'none';
                         document.getElementById('studentDashboard').style.display = 'flex';
@@ -451,12 +461,8 @@
                         db.collection('students').doc(user.uid).onSnapshot((snap) => {
                             if (snap.exists) {
                                 let liveDevices = snap.data().devices || [];
-                                
-                                // لو الجهاز الحالي اتمسح من الداتابيز (بسبب إن الطالب داس "موافق" من جهاز تاني)
                                 if (liveDevices.length > 0 && !liveDevices.includes(localStudentDeviceId)) {
                                     alert('⚠️ تم تسجيل خروجك إجبارياً لأنك قمت بفتح حسابك من جهاز آخر وتخطيت الحد الأقصى للأجهزة!');
-                                    
-                                    // مسح البيانات وتسجيل الخروج الفوري
                                     auth.signOut().then(() => {
                                         localStorage.clear();
                                         location.reload();
@@ -465,12 +471,16 @@
                             }
                         });
                         
-                    } catch(e) { console.error(e); }
+                    } catch(e) { 
+                        console.error(e); 
+                        document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                    }
                 }, 2000); 
             } else {
                 // حالة تسجيل الخروج
+                document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
                 if (document.querySelector('#authScreen .auth-box').innerHTML.includes('أنت في صفحة الطلاب')) {
-                    location.reload(); // إعادة تحميل الصفحة لترجع شاشة الدخول الأصلية
+                    location.reload(); 
                 } else {
                     document.getElementById('authScreen').style.display = 'flex';
                     document.getElementById('studentDashboard').style.display = 'none';
@@ -491,7 +501,7 @@
             } catch(e) { showToast('❌ البريد أو كلمة المرور غير صحيحة', 'error'); }
         }
 
-        // 💡 تفعيل حساب طالب جديد (محدث لدعم بصمة الأجهزة)
+        // 💡 تفعيل حساب طالب جديد
         async function studentRegister() {
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
@@ -524,11 +534,10 @@
 
                 await actDoc.ref.update({ used: true, usedBy: studentUid, usedAt: firebase.firestore.FieldValue.serverTimestamp() });
 
-                // 💡 الإضافة هنا: سطر devices لحفظ بصمة الجهاز الأول للطالب
                 await db.collection('students').doc(studentUid).set({
                     name: name, email: email, teacherId: teacherId, classId: classId, classCode: classCode,
                     expiryDate: expiryDate, 
-                    devices: [localStudentDeviceId], // 👈 تسجيل بصمة الجهاز
+                    devices: [localStudentDeviceId], 
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -642,7 +651,6 @@
                             btnHtml = `<button disabled style="background: #fef2f2; color: #ef4444; border: 1px solid #ef4444; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-time-five'></i> منتهي</button>`;
                             cardStyle = 'border-right: 5px solid #ef4444; opacity: 0.8; background: #fef2f2;';
                         } else {
-                            // 🚀 تم إصلاح الـ ID هنا لتعمل كلمة (جاري التحميل) بنجاح
                             btnHtml = `<button id="btn-exam-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
                             cardStyle = 'border-right: 5px solid var(--primary-color);';
                             pendingResultChecks.push(doc.id); 
@@ -699,7 +707,6 @@
                 } else {
                     let directUrl = item.url;
                     
-                    // 🪄 السحر هنا: تحويل رابط جوجل درايف العادي إلى رابط تحميل مباشر (Direct Download)
                     if (directUrl.includes('drive.google.com/file/d/')) {
                         const fileIdMatch = directUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                         if (fileIdMatch && fileIdMatch[1]) {
@@ -744,8 +751,7 @@
             }
 
             try {
-                // 🚀 السحر هنا: نطلب من السيرفر (بيانات الامتحان) و (نتيجة الطالب) في نفس اللحظة (Parallel Fetching)
-                // ده هيوفر نص الوقت بالظبط بدل ما كان بيستنى كل واحدة تخلص لوحدها
+                // الجلب المتوازي لبيانات الامتحان ونتيجة الطالب
                 const [docSnap, resultSnap] = await Promise.all([
                     db.collection('online_exams').doc(examCode).get(),
                     db.collection('online_exams').doc(examCode).collection('results').doc(activeStudentId).get()
@@ -771,7 +777,6 @@
                 // التأكد من أن الطالب لم يمتحن بعد
                 if (resultSnap.exists) {
                     if(btn) { 
-                        // نقلب الزرار لـ "تم الامتحان" عشان ميتلخبطش
                         btn.innerHTML = `<i class='bx bx-check-double'></i> تم الامتحان`;
                         btn.style.background = '#f1f5f9'; btn.style.color = '#10b981'; btn.style.border = '1px solid #10b981';
                     }
@@ -932,7 +937,7 @@
         // ========================================================
 
         let cheatWarnings = 0;
-        let isExamActive = false; // المتغير ده هنخليه true لما الطالب يبدأ يحل
+        let isExamActive = false; 
 
         // 1. منع كليك يمين واختصارات لوحة المفاتيح (النسخ واللصق)
         document.addEventListener('contextmenu', event => {
@@ -941,7 +946,6 @@
 
         document.addEventListener('keydown', event => {
             if (isExamActive) {
-                // منع Ctrl+C, Ctrl+V, Ctrl+P, Ctrl+S
                 if (event.ctrlKey && (event.key === 'c' || event.key === 'v' || event.key === 'p' || event.key === 's')) {
                     event.preventDefault();
                     showToast('⚠️ غير مسموح باستخدام اختصارات لوحة المفاتيح أثناء الامتحان!', 'error');
@@ -954,34 +958,28 @@
             if (document.hidden && isExamActive) {
                 cheatWarnings++;
                 
-                // إطلاق إنذار مزعج
                 alert(`🚨 تحذير غش! لقد قمت بالخروج من صفحة الامتحان.\nهذا هو الإنذار رقم (${cheatWarnings} من 3). سيتم سحب ورقتك إذا تكرر الأمر.`);
                 
-                // إذا خرج 3 مرات، اسحب الورقة فورا
+                // سحب الورقة إجبارياً بعد 3 محاولات
                 if (cheatWarnings >= 3) {
                     alert('❌ تم سحب ورقة الامتحان بسبب محاولات الغش المتكررة!');
-                    
-                    // 🚀 السحر هنا: استدعاء دالة تسليم الامتحان الخاصة بك أوتوماتيكياً وإجبارياً
                     submitExam(true); 
                 }
             }
         });
 
-        // 3. دالة تشغيل الحماية (قم باستدعائها عند بدء الامتحان)
+        // 3. دالة تشغيل الحماية 
         function activateExamSecurity() {
             isExamActive = true;
             cheatWarnings = 0;
             
-            // إضافة كلاس منع التحديد على جسم الصفحة
             document.body.classList.add('anti-cheat-shield');
-
-            // 💡 إنشاء العلامة المائية الفاضحة باسم الطالب
             createDynamicWatermark();
             
             showToast('🛡️ تم تفعيل درع المراقبة. يرجى عدم الخروج من الصفحة.', 'info');
         }
 
-        // دالة إيقاف الحماية (قم باستدعائها عند تسليم الامتحان)
+        // دالة إيقاف الحماية 
         function deactivateExamSecurity() {
             isExamActive = false;
             document.body.classList.remove('anti-cheat-shield');
@@ -992,15 +990,12 @@
 
         // 4. السحر: العلامة المائية الشفافة لردع السكرين شوت
         function createDynamicWatermark() {
-            // نتأكد إن مفيش علامة قديمة
             let oldWm = document.getElementById('cheatWatermark');
             if (oldWm) oldWm.remove();
 
-            // جلب بيانات الطالب المخزنة (التي قمنا ببرمجتها مسبقاً)
             let stuName = localStorage.getItem('mh_student_name') || 'طالب';
             let stuCode = localStorage.getItem('mh_student_id') || 'Unknown';
 
-            // نأخذ آخر 5 أرقام من الـ UID للتمويه
             let shortCode = stuCode.substring(stuCode.length - 5); 
 
             const watermarkText = `${stuName} - ${shortCode}`;
@@ -1008,19 +1003,17 @@
             const wmDiv = document.createElement('div');
             wmDiv.id = 'cheatWatermark';
             
-            // تنسيق الـ CSS لجعلها تملأ الشاشة ولا تعيق الضغط (pointer-events: none)
             wmDiv.style.cssText = `
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
-                pointer-events: none; /* عشان الطالب يقدر يدوس على الإجابات عادي */
+                pointer-events: none; 
                 z-index: 9999;
                 display: flex;
                 flex-wrap: wrap;
                 overflow: hidden;
-                opacity: 0.08; /* شفافة جداً عشان متضايقش عينه بس تظهر في السكرين شوت */
+                opacity: 0.08; 
             `;
 
-            // تكرار الكلمة لتملأ الشاشة
             for (let i = 0; i < 50; i++) {
                 const span = document.createElement('span');
                 span.innerText = watermarkText;
