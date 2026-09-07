@@ -361,7 +361,7 @@
             localStorage.setItem('mh_stu_device_id', localStudentDeviceId);
         }
 
-// 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية (مُصحح لحماية المعلمين)
+// 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية (مُصحح لحماية المعلمين + طرد فوري)
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 // 🛡️ الدرع الواقي: ننتظر ثانيتين لتفادي التعارض (Race Condition) عند إنشاء حساب مدرس جديد في تاب أخرى
@@ -444,6 +444,26 @@
                         
                         initDashboard();
                         
+                        // =====================================================
+                        // 🚀 6. الرادار المباشر لطرد الأجهزة القديمة فوراً (Real-time Kick-out)
+                        // =====================================================
+                        db.collection('students').doc(user.uid).onSnapshot((snap) => {
+                            if (snap.exists) {
+                                let liveDevices = snap.data().devices || [];
+                                
+                                // لو الجهاز الحالي اتمسح من الداتابيز (بسبب إن الطالب داس "موافق" من جهاز تاني)
+                                if (liveDevices.length > 0 && !liveDevices.includes(localStudentDeviceId)) {
+                                    alert('⚠️ تم تسجيل خروجك إجبارياً لأنك قمت بفتح حسابك من جهاز آخر وتخطيت الحد الأقصى للأجهزة!');
+                                    
+                                    // مسح البيانات وتسجيل الخروج الفوري
+                                    auth.signOut().then(() => {
+                                        localStorage.clear();
+                                        location.reload();
+                                    });
+                                }
+                            }
+                        });
+                        
                     } catch(e) { console.error(e); }
                 }, 2000); // 👈 (الثانيتين) السحرية اللي بتدي فرصة لصفحة المدرس تحفظ البيانات وتمنع الحذف!
             } else {
@@ -457,6 +477,7 @@
                 }
             }
         });
+
         async function studentLogin() {
             const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
