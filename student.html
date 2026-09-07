@@ -144,18 +144,18 @@
             .timer-display { top: auto; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; padding: 10px 20px; width: max-content; }
         }
         /* 🛡️ درع منع تحديد النصوص والطباعة */
-.anti-cheat-shield {
-    -webkit-user-select: none; /* Safari */
-    -ms-user-select: none; /* IE 10 and IE 11 */
-    user-select: none; /* Standard syntax */
-}
+        .anti-cheat-shield {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
 
-/* إخفاء المحتوى تماماً لو الطالب حاول يطبع الصفحة Ctrl+P */
-@media print {
-    body {
-        display: none !important;
-    }
-}
+        /* إخفاء المحتوى تماماً لو الطالب حاول يطبع الصفحة Ctrl+P */
+        @media print {
+            body {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -332,7 +332,8 @@
             document.getElementById('tabLogin').style.cssText = mode === 'login' ? 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;' : 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;';
             document.getElementById('tabRegister').style.cssText = mode === 'register' ? 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;' : 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;';
         }
-// ==========================================
+
+        // ==========================================
         // 🛡️ نظام بصمة الأجهزة للطالب (جهازين كحد أقصى)
         // ==========================================
         function generateStudentFingerprint() {
@@ -361,7 +362,7 @@
             localStorage.setItem('mh_stu_device_id', localStudentDeviceId);
         }
 
-// 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية (مُصحح لحماية المعلمين + طرد فوري)
+        // 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية (مُصحح لحماية المعلمين + طرد فوري)
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 // 🛡️ الدرع الواقي: ننتظر ثانيتين لتفادي التعارض (Race Condition) عند إنشاء حساب مدرس جديد في تاب أخرى
@@ -465,7 +466,7 @@
                         });
                         
                     } catch(e) { console.error(e); }
-                }, 2000); // 👈 (الثانيتين) السحرية اللي بتدي فرصة لصفحة المدرس تحفظ البيانات وتمنع الحذف!
+                }, 2000); 
             } else {
                 // حالة تسجيل الخروج
                 if (document.querySelector('#authScreen .auth-box').innerHTML.includes('أنت في صفحة الطلاب')) {
@@ -490,70 +491,71 @@
             } catch(e) { showToast('❌ البريد أو كلمة المرور غير صحيحة', 'error'); }
         }
 
-// 💡 تفعيل حساب طالب جديد (محدث لدعم بصمة الأجهزة)
-async function studentRegister() {
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const pass = document.getElementById('regPass').value.trim();
-    const classCode = document.getElementById('regClassCode').value.trim().toUpperCase();
-    const actCode = document.getElementById('regActivationCode').value.trim().toUpperCase();
+        // 💡 تفعيل حساب طالب جديد (محدث لدعم بصمة الأجهزة)
+        async function studentRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPass').value.trim();
+            const classCode = document.getElementById('regClassCode').value.trim().toUpperCase();
+            const actCode = document.getElementById('regActivationCode').value.trim().toUpperCase();
 
-    if(!name || !email || !pass || !classCode || !actCode) return showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+            if(!name || !email || !pass || !classCode || !actCode) return showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
 
-    try {
-        showToast('جاري التحقق من الأكواد...', 'info');
-        
-        const codeDoc = await db.collection('class_codes').doc(classCode).get();
-        if (!codeDoc.exists) return showToast('❌ كود الفصل غير صحيح!', 'error');
-        const { teacherId, classId } = codeDoc.data();
+            try {
+                showToast('جاري التحقق من الأكواد...', 'info');
+                
+                const codeDoc = await db.collection('class_codes').doc(classCode).get();
+                if (!codeDoc.exists) return showToast('❌ كود الفصل غير صحيح!', 'error');
+                const { teacherId, classId } = codeDoc.data();
 
-        const actDoc = await db.collection('student_codes').doc(actCode).get();
-        if (!actDoc.exists) return showToast('❌ كود التفعيل غير صحيح!', 'error');
-        const actData = actDoc.data();
-        if (actData.used) return showToast('❌ كود التفعيل هذا تم استخدامه من قبل!', 'error');
-        if (actData.teacherId !== teacherId) return showToast('❌ كود التفعيل هذا غير صالح لهذا الفصل!', 'error');
+                const actDoc = await db.collection('student_codes').doc(actCode).get();
+                if (!actDoc.exists) return showToast('❌ كود التفعيل غير صحيح!', 'error');
+                const actData = actDoc.data();
+                if (actData.used) return showToast('❌ كود التفعيل هذا تم استخدامه من قبل!', 'error');
+                if (actData.teacherId !== teacherId) return showToast('❌ كود التفعيل هذا غير صالح لهذا الفصل!', 'error');
 
-        showToast('الأكواد سليمة، جاري إنشاء الحساب...', 'info');
+                showToast('الأكواد سليمة، جاري إنشاء الحساب...', 'info');
 
-        const validityDays = actData.validityDays || 30; 
-        const expiryDate = Date.now() + (validityDays * 24 * 60 * 60 * 1000);
+                const validityDays = actData.validityDays || 30; 
+                const expiryDate = Date.now() + (validityDays * 24 * 60 * 60 * 1000);
 
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        const studentUid = cred.user.uid;
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                const studentUid = cred.user.uid;
 
-        await actDoc.ref.update({ used: true, usedBy: studentUid, usedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                await actDoc.ref.update({ used: true, usedBy: studentUid, usedAt: firebase.firestore.FieldValue.serverTimestamp() });
 
-        // 💡 الإضافة هنا: سطر devices لحفظ بصمة الجهاز الأول للطالب
-        await db.collection('students').doc(studentUid).set({
-            name: name, email: email, teacherId: teacherId, classId: classId, classCode: classCode,
-            expiryDate: expiryDate, 
-            devices: [localStudentDeviceId], // 👈 تسجيل بصمة الجهاز
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+                // 💡 الإضافة هنا: سطر devices لحفظ بصمة الجهاز الأول للطالب
+                await db.collection('students').doc(studentUid).set({
+                    name: name, email: email, teacherId: teacherId, classId: classId, classCode: classCode,
+                    expiryDate: expiryDate, 
+                    devices: [localStudentDeviceId], // 👈 تسجيل بصمة الجهاز
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
 
-        const teacherRef = db.collection('users').doc(teacherId);
-        const teacherSnap = await teacherRef.get();
-        if(teacherSnap.exists) {
-            let classrooms = teacherSnap.data().classrooms;
-            let classIdx = classrooms.findIndex(c => c.id === classId);
-            if(classIdx > -1) {
-                classrooms[classIdx].students.push({ id: studentUid, name: name, lastScore: null, enrolledAt: Date.now() });
-                await teacherRef.update({ classrooms: classrooms });
+                const teacherRef = db.collection('users').doc(teacherId);
+                const teacherSnap = await teacherRef.get();
+                if(teacherSnap.exists) {
+                    let classrooms = teacherSnap.data().classrooms;
+                    let classIdx = classrooms.findIndex(c => c.id === classId);
+                    if(classIdx > -1) {
+                        classrooms[classIdx].students.push({ id: studentUid, name: name, lastScore: null, enrolledAt: Date.now() });
+                        await teacherRef.update({ classrooms: classrooms });
+                    }
+                }
+                
+                showToast('✅ تم إنشاء الحساب والانضمام للفصل بنجاح!', 'success');
+                
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+
+            } catch(e) {
+                if (e.code === 'auth/email-already-in-use') showToast('❌ هذا البريد مسجل مسبقاً! قم بتسجيل الدخول بدلاً من إنشاء حساب جديد.', 'error');
+                else if (e.code === 'auth/weak-password') showToast('❌ كلمة المرور ضعيفة جداً.', 'error');
+                else showToast('❌ خطأ: ' + e.message, 'error');
             }
         }
-        
-        showToast('✅ تم إنشاء الحساب والانضمام للفصل بنجاح!', 'success');
-        
-        setTimeout(() => {
-            location.reload();
-        }, 1500);
 
-    } catch(e) {
-        if (e.code === 'auth/email-already-in-use') showToast('❌ هذا البريد مسجل مسبقاً! قم بتسجيل الدخول بدلاً من إنشاء حساب جديد.', 'error');
-        else if (e.code === 'auth/weak-password') showToast('❌ كلمة المرور ضعيفة جداً.', 'error');
-        else showToast('❌ خطأ: ' + e.message, 'error');
-    }
-}
         async function renewSubscription() {
             const newCode = document.getElementById('renewalCodeInput').value.trim().toUpperCase();
             if (!newCode) return showToast('يرجى إدخال كود التفعيل الجديد', 'error');
@@ -599,12 +601,12 @@ async function studentRegister() {
         // 📚 لوحة التحكم والمواد والامتحانات
         // ==========================================
 
-                async function initDashboard() {
+        async function initDashboard() {
             if (!myStudentId || !myTeacherId) return; 
             document.getElementById('displayStuName').innerText = myName;
 
             try {
-                // 🚀 تحسين 1: الجلب المتوازي (Parallel Fetching) لبيانات المدرس والامتحانات في نفس اللحظة لتقليل وقت التحميل للنصف
+                // الجلب المتوازي لبيانات المدرس والامتحانات
                 const [teacherSnap, examsSnap] = await Promise.all([
                     db.collection('users').doc(myTeacherId).get(),
                     db.collection('online_exams').where('teacherId', '==', myTeacherId).get()
@@ -625,11 +627,10 @@ async function studentRegister() {
 
                 // --- 2. عرض الامتحانات (فورياً) ---
                 let examsHtml = '';
-                let pendingResultChecks = []; // مصفوفة لتخزين الامتحانات التي تحتاج فحصاً في الخلفية
+                let pendingResultChecks = []; 
 
                 examsSnap.docs.forEach(doc => {
                     let exam = doc.data();
-                    // فلترة الامتحانات لتناسب فصل الطالب أو العامة
                     if ((exam.classId === myClassId || exam.classId === 'all') && exam.active) {
                         let now = Date.now();
                         let isExpired = exam.endTime && now > exam.endTime;
@@ -641,10 +642,10 @@ async function studentRegister() {
                             btnHtml = `<button disabled style="background: #fef2f2; color: #ef4444; border: 1px solid #ef4444; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-time-five'></i> منتهي</button>`;
                             cardStyle = 'border-right: 5px solid #ef4444; opacity: 0.8; background: #fef2f2;';
                         } else {
-                            // 🚀 تحسين 2: عرض زر "بدء" فوراً، وتأجيل فحص التسليم للخلفية
-                            btnHtml = `<button id="btn-exam-action-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
+                            // 🚀 تم إصلاح الـ ID هنا لتعمل كلمة (جاري التحميل) بنجاح
+                            btnHtml = `<button id="btn-exam-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
                             cardStyle = 'border-right: 5px solid var(--primary-color);';
-                            pendingResultChecks.push(doc.id); // أضف الامتحان للفحص الخلفي
+                            pendingResultChecks.push(doc.id); 
                         }
 
                         examsHtml += `
@@ -658,16 +659,13 @@ async function studentRegister() {
                     }
                 });
 
-                // طباعة الامتحانات على الشاشة فوراً
                 document.getElementById('examsList').innerHTML = examsHtml || '<p style="color:#94a3b8; text-align: center;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
 
-                // --- 3. الفحص الصامت في الخلفية (Background Checking) ---
-                // 🚀 تحسين 3: المتصفح سيسأل السيرفر بهدوء بدون تجميد الشاشة
+                // --- 3. الفحص الصامت في الخلفية ---
                 pendingResultChecks.forEach(async (examId) => {
                     try {
                         const res = await db.collection('online_exams').doc(examId).collection('results').doc(myStudentId).get();
                         if (res.exists) {
-                            // إذا كان الطالب قد امتحن، يتم تغيير شكل الزر والبطاقة بنعومة
                             const btnContainer = document.getElementById(`exam-btn-container-${examId}`);
                             const card = document.getElementById(`exam-card-${examId}`);
                             if (btnContainer && card) {
@@ -677,7 +675,7 @@ async function studentRegister() {
                                 card.style.background = '#f8fafc';
                             }
                         }
-                    } catch(e) { console.error("خطأ في فحص النتيجة:", e); }
+                    } catch(e) {}
                 });
 
             } catch (e) { 
@@ -686,8 +684,7 @@ async function studentRegister() {
             }
         }
 
-
-function renderMaterials(containerId, items, color, icon) {
+        function renderMaterials(containerId, items, color, icon) {
             const container = document.getElementById(containerId);
             if (items.length === 0) {
                 container.innerHTML = `<p style="color: #94a3b8; text-align: center; width: 100%; font-size: 13px;">لا توجد مواد مرفوعة في هذا القسم حالياً.</p>`;
@@ -731,19 +728,29 @@ function renderMaterials(containerId, items, color, icon) {
             container.innerHTML = html;
         }
 
+        // ==========================================
+        // 🚀 دالة بدء الامتحان (مُحسنة لجلب البيانات في نفس اللحظة)
+        // ==========================================
         async function startDashboardExam(examCode) {
             activeStudentId = myStudentId; 
             const btnId = 'btn-exam-' + examCode;
             const btn = document.getElementById(btnId);
             const originalText = btn ? btn.innerHTML : '';
             
+            // إظهار جاري التحميل فوراً
             if(btn) {
                 btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> جاري التحميل...';
                 btn.style.opacity = '0.7'; btn.style.cursor = 'not-allowed'; btn.disabled = true;
             }
 
             try {
-                const docSnap = await db.collection('online_exams').doc(examCode).get();
+                // 🚀 السحر هنا: نطلب من السيرفر (بيانات الامتحان) و (نتيجة الطالب) في نفس اللحظة (Parallel Fetching)
+                // ده هيوفر نص الوقت بالظبط بدل ما كان بيستنى كل واحدة تخلص لوحدها
+                const [docSnap, resultSnap] = await Promise.all([
+                    db.collection('online_exams').doc(examCode).get(),
+                    db.collection('online_exams').doc(examCode).collection('results').doc(activeStudentId).get()
+                ]);
+
                 if (!docSnap.exists) {
                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
                     return showToast('❌ كود الامتحان غير صحيح!', 'error');
@@ -761,14 +768,18 @@ function renderMaterials(containerId, items, color, icon) {
                     return showToast('⚠️ هذا الامتحان مغلق حالياً.', 'error');
                 }
 
-                const resultSnap = await db.collection('online_exams').doc(examCode).collection('results').doc(activeStudentId).get();
+                // التأكد من أن الطالب لم يمتحن بعد
                 if (resultSnap.exists) {
-                    if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+                    if(btn) { 
+                        // نقلب الزرار لـ "تم الامتحان" عشان ميتلخبطش
+                        btn.innerHTML = `<i class='bx bx-check-double'></i> تم الامتحان`;
+                        btn.style.background = '#f1f5f9'; btn.style.color = '#10b981'; btn.style.border = '1px solid #10b981';
+                    }
                     return showToast('✋ لقد قمت بتسليم هذا الامتحان مسبقاً!', 'error');
                 }
 
                 // =====================================================
-                // 🛡️ تشغيل درع المراقبة والعلامة المائية لحظة فتح الامتحان
+                // 🛡️ تشغيل درع المراقبة والعلامة المائية
                 // =====================================================
                 activateExamSecurity(); 
 
@@ -890,6 +901,7 @@ function renderMaterials(containerId, items, color, icon) {
                 resultSec.innerHTML = `<i class='bx bx-error-circle' style="font-size: 80px; color: #ef4444;"></i><h2 style="color: #ef4444;">فشل إرسال النتيجة!</h2><p style="font-weight: bold; color: #475569;">${error.message}</p><button class="btn" onclick="submitExam(true)" style="background: #ef4444; margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>`;
             }
         }
+
         async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
             await db.collection('online_exams').doc(currentExamCode).collection('results').doc(activeStudentId).set({
                 studentIdentifier: activeStudentId,
@@ -914,117 +926,117 @@ function renderMaterials(containerId, items, color, icon) {
                 }
             }
         }
+
         // ========================================================
-// 🚨 محرك الحماية ضد الغش (Anti-Cheat Engine)
-// ========================================================
+        // 🚨 محرك الحماية ضد الغش (Anti-Cheat Engine)
+        // ========================================================
 
-let cheatWarnings = 0;
-let isExamActive = false; // المتغير ده هنخليه true لما الطالب يبدأ يحل
+        let cheatWarnings = 0;
+        let isExamActive = false; // المتغير ده هنخليه true لما الطالب يبدأ يحل
 
-// 1. منع كليك يمين واختصارات لوحة المفاتيح (النسخ واللصق)
-document.addEventListener('contextmenu', event => {
-    if(isExamActive) event.preventDefault();
-});
+        // 1. منع كليك يمين واختصارات لوحة المفاتيح (النسخ واللصق)
+        document.addEventListener('contextmenu', event => {
+            if(isExamActive) event.preventDefault();
+        });
 
-document.addEventListener('keydown', event => {
-    if (isExamActive) {
-        // منع Ctrl+C, Ctrl+V, Ctrl+P, Ctrl+S
-        if (event.ctrlKey && (event.key === 'c' || event.key === 'v' || event.key === 'p' || event.key === 's')) {
-            event.preventDefault();
-            showToast('⚠️ غير مسموح باستخدام اختصارات لوحة المفاتيح أثناء الامتحان!', 'error');
-        }
-    }
-});
+        document.addEventListener('keydown', event => {
+            if (isExamActive) {
+                // منع Ctrl+C, Ctrl+V, Ctrl+P, Ctrl+S
+                if (event.ctrlKey && (event.key === 'c' || event.key === 'v' || event.key === 'p' || event.key === 's')) {
+                    event.preventDefault();
+                    showToast('⚠️ غير مسموح باستخدام اختصارات لوحة المفاتيح أثناء الامتحان!', 'error');
+                }
+            }
+        });
 
-// 2. رادار الخروج من الصفحة (Tab-Switching)
-document.addEventListener("visibilitychange", () => {
-    if (document.hidden && isExamActive) {
-        cheatWarnings++;
-        
-        // إطلاق إنذار مزعج
-        alert(`🚨 تحذير غش! لقد قمت بالخروج من صفحة الامتحان.\nهذا هو الإنذار رقم (${cheatWarnings} من 3). سيتم سحب ورقتك إذا تكرر الأمر.`);
-        
-        // إذا خرج 3 مرات، اسحب الورقة فورا
-        if (cheatWarnings >= 3) {
-            alert('❌ تم سحب ورقة الامتحان بسبب محاولات الغش المتكررة!');
+        // 2. رادار الخروج من الصفحة (Tab-Switching)
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden && isExamActive) {
+                cheatWarnings++;
+                
+                // إطلاق إنذار مزعج
+                alert(`🚨 تحذير غش! لقد قمت بالخروج من صفحة الامتحان.\nهذا هو الإنذار رقم (${cheatWarnings} من 3). سيتم سحب ورقتك إذا تكرر الأمر.`);
+                
+                // إذا خرج 3 مرات، اسحب الورقة فورا
+                if (cheatWarnings >= 3) {
+                    alert('❌ تم سحب ورقة الامتحان بسبب محاولات الغش المتكررة!');
+                    
+                    // 🚀 السحر هنا: استدعاء دالة تسليم الامتحان الخاصة بك أوتوماتيكياً وإجبارياً
+                    submitExam(true); 
+                }
+            }
+        });
+
+        // 3. دالة تشغيل الحماية (قم باستدعائها عند بدء الامتحان)
+        function activateExamSecurity() {
+            isExamActive = true;
+            cheatWarnings = 0;
             
-            // 🚀 السحر هنا: استدعاء دالة تسليم الامتحان الخاصة بك أوتوماتيكياً وإجبارياً
-            submitExam(true); 
+            // إضافة كلاس منع التحديد على جسم الصفحة
+            document.body.classList.add('anti-cheat-shield');
+
+            // 💡 إنشاء العلامة المائية الفاضحة باسم الطالب
+            createDynamicWatermark();
+            
+            showToast('🛡️ تم تفعيل درع المراقبة. يرجى عدم الخروج من الصفحة.', 'info');
         }
-    }
-});
 
+        // دالة إيقاف الحماية (قم باستدعائها عند تسليم الامتحان)
+        function deactivateExamSecurity() {
+            isExamActive = false;
+            document.body.classList.remove('anti-cheat-shield');
+            
+            const wm = document.getElementById('cheatWatermark');
+            if (wm) wm.remove();
+        }
 
-// 3. دالة تشغيل الحماية (قم باستدعائها عند بدء الامتحان)
-function activateExamSecurity() {
-    isExamActive = true;
-    cheatWarnings = 0;
-    
-    // إضافة كلاس منع التحديد على جسم الصفحة
-    document.body.classList.add('anti-cheat-shield');
+        // 4. السحر: العلامة المائية الشفافة لردع السكرين شوت
+        function createDynamicWatermark() {
+            // نتأكد إن مفيش علامة قديمة
+            let oldWm = document.getElementById('cheatWatermark');
+            if (oldWm) oldWm.remove();
 
-    // 💡 إنشاء العلامة المائية الفاضحة باسم الطالب
-    createDynamicWatermark();
-    
-    showToast('🛡️ تم تفعيل درع المراقبة. يرجى عدم الخروج من الصفحة.', 'info');
-}
+            // جلب بيانات الطالب المخزنة (التي قمنا ببرمجتها مسبقاً)
+            let stuName = localStorage.getItem('mh_student_name') || 'طالب';
+            let stuCode = localStorage.getItem('mh_student_id') || 'Unknown';
 
-// دالة إيقاف الحماية (قم باستدعائها عند تسليم الامتحان)
-function deactivateExamSecurity() {
-    isExamActive = false;
-    document.body.classList.remove('anti-cheat-shield');
-    
-    const wm = document.getElementById('cheatWatermark');
-    if (wm) wm.remove();
-}
+            // نأخذ آخر 5 أرقام من الـ UID للتمويه
+            let shortCode = stuCode.substring(stuCode.length - 5); 
 
-// 4. السحر: العلامة المائية الشفافة لردع السكرين شوت
-function createDynamicWatermark() {
-    // نتأكد إن مفيش علامة قديمة
-    let oldWm = document.getElementById('cheatWatermark');
-    if (oldWm) oldWm.remove();
+            const watermarkText = `${stuName} - ${shortCode}`;
 
-    // جلب بيانات الطالب المخزنة (التي قمنا ببرمجتها مسبقاً)
-    let stuName = localStorage.getItem('mh_student_name') || 'طالب';
-    let stuCode = localStorage.getItem('mh_student_id') || 'Unknown';
+            const wmDiv = document.createElement('div');
+            wmDiv.id = 'cheatWatermark';
+            
+            // تنسيق الـ CSS لجعلها تملأ الشاشة ولا تعيق الضغط (pointer-events: none)
+            wmDiv.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                pointer-events: none; /* عشان الطالب يقدر يدوس على الإجابات عادي */
+                z-index: 9999;
+                display: flex;
+                flex-wrap: wrap;
+                overflow: hidden;
+                opacity: 0.08; /* شفافة جداً عشان متضايقش عينه بس تظهر في السكرين شوت */
+            `;
 
-    // نأخذ آخر 5 أرقام من الـ UID للتمويه
-    let shortCode = stuCode.substring(stuCode.length - 5); 
+            // تكرار الكلمة لتملأ الشاشة
+            for (let i = 0; i < 50; i++) {
+                const span = document.createElement('span');
+                span.innerText = watermarkText;
+                span.style.cssText = `
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #000;
+                    transform: rotate(-30deg);
+                    margin: 40px;
+                    white-space: nowrap;
+                `;
+                wmDiv.appendChild(span);
+            }
 
-    const watermarkText = `${stuName} - ${shortCode}`;
-
-    const wmDiv = document.createElement('div');
-    wmDiv.id = 'cheatWatermark';
-    
-    // تنسيق الـ CSS لجعلها تملأ الشاشة ولا تعيق الضغط (pointer-events: none)
-    wmDiv.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        pointer-events: none; /* عشان الطالب يقدر يدوس على الإجابات عادي */
-        z-index: 9999;
-        display: flex;
-        flex-wrap: wrap;
-        overflow: hidden;
-        opacity: 0.08; /* شفافة جداً عشان متضايقش عينه بس تظهر في السكرين شوت */
-    `;
-
-    // تكرار الكلمة لتملأ الشاشة
-    for (let i = 0; i < 50; i++) {
-        const span = document.createElement('span');
-        span.innerText = watermarkText;
-        span.style.cssText = `
-            font-size: 24px;
-            font-weight: bold;
-            color: #000;
-            transform: rotate(-30deg);
-            margin: 40px;
-            white-space: nowrap;
-        `;
-        wmDiv.appendChild(span);
-    }
-
-    document.body.appendChild(wmDiv);
-}
+            document.body.appendChild(wmDiv);
+        }
     </script>
 </body>
 </html>
