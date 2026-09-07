@@ -578,66 +578,93 @@ async function studentRegister() {
         // 📚 لوحة التحكم والمواد والامتحانات
         // ==========================================
 
-        async function initDashboard() {
+                async function initDashboard() {
             if (!myStudentId || !myTeacherId) return; 
             document.getElementById('displayStuName').innerText = myName;
 
             try {
-                const teacherSnap = await db.collection('users').doc(myTeacherId).get();
-                let classrooms = teacherSnap.data().classrooms;
-                let myClass = classrooms.find(c => c.id === myClassId);
+                // 🚀 تحسين 1: الجلب المتوازي (Parallel Fetching) لبيانات المدرس والامتحانات في نفس اللحظة لتقليل وقت التحميل للنصف
+                const [teacherSnap, examsSnap] = await Promise.all([
+                    db.collection('users').doc(myTeacherId).get(),
+                    db.collection('online_exams').where('teacherId', '==', myTeacherId).get()
+                ]);
                 
-                if(document.getElementById('displayClassName')) document.getElementById('displayClassName').innerText = myClass.name;
+                // --- 1. عرض المواد والواجبات ---
+                if (teacherSnap.exists) {
+                    let classrooms = teacherSnap.data().classrooms || [];
+                    let myClass = classrooms.find(c => c.id === myClassId);
+                    
+                    if (myClass) {
+                        if(document.getElementById('displayClassName')) document.getElementById('displayClassName').innerText = myClass.name;
+                        renderMaterials('pdfsList', myClass.materials?.pdfs || [], '#ef4444', 'bxs-file-pdf');
+                        renderMaterials('videosList', myClass.materials?.videos || [], '#3b82f6', 'bx-video');
+                        renderMaterials('homeworkList', myClass.materials?.homework || [], '#f59e0b', 'bx-edit');
+                    }
+                }
 
-                renderMaterials('pdfsList', myClass.materials?.pdfs || [], '#ef4444', 'bxs-file-pdf');
-                renderMaterials('videosList', myClass.materials?.videos || [], '#3b82f6', 'bx-video');
-                renderMaterials('homeworkList', myClass.materials?.homework || [], '#f59e0b', 'bx-edit');
+                // --- 2. عرض الامتحانات (فورياً) ---
+                let examsHtml = '';
+                let pendingResultChecks = []; // مصفوفة لتخزين الامتحانات التي تحتاج فحصاً في الخلفية
 
-                const examsSnap = await db.collection('online_exams').where('teacherId', '==', myTeacherId).get();
-                
-                const examPromises = examsSnap.docs.map(async (doc) => {
+                examsSnap.docs.forEach(doc => {
                     let exam = doc.data();
+                    // فلترة الامتحانات لتناسب فصل الطالب أو العامة
                     if ((exam.classId === myClassId || exam.classId === 'all') && exam.active) {
-                        
-                        let isSubmitted = false;
-                        try {
-                            const res = await db.collection('online_exams').doc(doc.id).collection('results').doc(myStudentId).get();
-                            if (res.exists) isSubmitted = true;
-                        } catch(e) {}
-
                         let now = Date.now();
                         let isExpired = exam.endTime && now > exam.endTime;
 
-                        let btnHtml = ''; let cardStyle = '';
-                        if (isSubmitted) {
-                            btnHtml = `<button disabled style="background: #f1f5f9; color: #10b981; border: 1px solid #10b981; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-check-double'></i> تم الامتحان</button>`;
-                            cardStyle = 'border-right: 5px solid #10b981; opacity: 0.9; background: #f8fafc;';
-                        } else if (isExpired) {
+                        let btnHtml = ''; 
+                        let cardStyle = '';
+
+                        if (isExpired) {
                             btnHtml = `<button disabled style="background: #fef2f2; color: #ef4444; border: 1px solid #ef4444; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-time-five'></i> منتهي</button>`;
                             cardStyle = 'border-right: 5px solid #ef4444; opacity: 0.8; background: #fef2f2;';
                         } else {
-                            btnHtml = `<button id="btn-exam-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
+                            // 🚀 تحسين 2: عرض زر "بدء" فوراً، وتأجيل فحص التسليم للخلفية
+                            btnHtml = `<button id="btn-exam-action-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
                             cardStyle = 'border-right: 5px solid var(--primary-color);';
+                            pendingResultChecks.push(doc.id); // أضف الامتحان للفحص الخلفي
                         }
 
-                        return `
-                        <div class="material-card" style="${cardStyle} width: 100%; max-width: 100%;">
+                        examsHtml += `
+                        <div class="material-card" id="exam-card-${doc.id}" style="${cardStyle} width: 100%; max-width: 100%;">
                             <div>
                                 <h3 style="margin: 0 0 5px 0; color: #1e293b;">${exam.title}</h3>
                                 <span style="font-size: 13px; color: #64748b;">${exam.endTime ? '⏱️ ينتهي: ' + new Date(exam.endTime).toLocaleString('ar-EG') : 'مفتوح دائماً'}</span>
                             </div>
-                            ${btnHtml}
+                            <div id="exam-btn-container-${doc.id}">${btnHtml}</div>
                         </div>`;
                     }
-                    return ''; 
                 });
 
-                const examsHtmlArray = await Promise.all(examPromises);
-                const finalExamsHtml = examsHtmlArray.join('');
-                document.getElementById('examsList').innerHTML = finalExamsHtml || '<p style="color:#94a3b8; text-align: center;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
+                // طباعة الامتحانات على الشاشة فوراً
+                document.getElementById('examsList').innerHTML = examsHtml || '<p style="color:#94a3b8; text-align: center;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
 
-            } catch (e) { console.error(e); }
+                // --- 3. الفحص الصامت في الخلفية (Background Checking) ---
+                // 🚀 تحسين 3: المتصفح سيسأل السيرفر بهدوء بدون تجميد الشاشة
+                pendingResultChecks.forEach(async (examId) => {
+                    try {
+                        const res = await db.collection('online_exams').doc(examId).collection('results').doc(myStudentId).get();
+                        if (res.exists) {
+                            // إذا كان الطالب قد امتحن، يتم تغيير شكل الزر والبطاقة بنعومة
+                            const btnContainer = document.getElementById(`exam-btn-container-${examId}`);
+                            const card = document.getElementById(`exam-card-${examId}`);
+                            if (btnContainer && card) {
+                                btnContainer.innerHTML = `<button disabled style="background: #f1f5f9; color: #10b981; border: 1px solid #10b981; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-check-double'></i> تم الامتحان</button>`;
+                                card.style.borderRight = '5px solid #10b981';
+                                card.style.opacity = '0.9';
+                                card.style.background = '#f8fafc';
+                            }
+                        }
+                    } catch(e) { console.error("خطأ في فحص النتيجة:", e); }
+                });
+
+            } catch (e) { 
+                console.error(e); 
+                document.getElementById('examsList').innerHTML = '<p style="color:#ef4444; text-align: center;">حدث خطأ في جلب البيانات.</p>';
+            }
         }
+
 
 function renderMaterials(containerId, items, color, icon) {
             const container = document.getElementById(containerId);
