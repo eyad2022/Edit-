@@ -182,7 +182,13 @@
             <!-- نموذج تسجيل الدخول (للطالب القديم) -->
             <div id="loginFormSection">
                 <input type="email" id="loginEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
-                <input type="password" id="loginPass" class="ui-input" placeholder="كلمة المرور">
+                <div style="position: relative;">
+                    <input type="password" id="loginPass" class="ui-input" placeholder="كلمة المرور">
+                    <i class='bx bx-show toggle-password-btn' onclick="togglePassword('loginPass', this)" style="position: absolute; left: 15px; top: 18px; cursor: pointer; color: #94a3b8; font-size: 20px;"></i>
+                </div>
+                <div style="text-align: right; margin-top: -10px; margin-bottom: 15px;">
+                    <a href="#" onclick="resetStudentPassword()" style="font-size: 13px; color: var(--primary-color); text-decoration: none; font-weight: bold;">نسيت كلمة المرور؟</a>
+                </div>
                 <button class="btn" onclick="studentLogin()">دخول 🚀</button>
             </div>
 
@@ -190,7 +196,10 @@
             <div id="registerFormSection" style="display: none;">
                 <input type="text" id="regName" class="ui-input" placeholder="اسمك الثلاثي (كما سيظهر للمعلم)">
                 <input type="email" id="regEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
-                <input type="password" id="regPass" class="ui-input" placeholder="اختر كلمة مرور (6 أحرف أو أكثر)">
+                <div style="position: relative;">
+                    <input type="password" id="regPass" class="ui-input" placeholder="اختر كلمة مرور (6 أحرف أو أكثر)">
+                    <i class='bx bx-show toggle-password-btn' onclick="togglePassword('regPass', this)" style="position: absolute; left: 15px; top: 18px; cursor: pointer; color: #94a3b8; font-size: 20px;"></i>
+                </div>
                 <div style="border-top: 1px dashed #cbd5e1; margin: 15px 0;"></div>
                 <input type="text" id="regClassCode" class="ui-input" placeholder="كود الفصل العام (مثال: C1X9P)" style="text-transform: uppercase;">
                 <input type="text" id="regActivationCode" class="ui-input" placeholder="كود التفعيل (تشتريه من المعلم)" style="text-transform: uppercase; border-color: #f59e0b; background: #fffbeb;">
@@ -222,7 +231,8 @@
                 <i class='bx bx-user-circle' style="font-size: 40px; color: #94a3b8;"></i>
                 <h4 id="displayStuName" style="margin: 5px 0; color: var(--primary-color);">اسم الطالب</h4>
                 <span id="displayClassName" style="font-size: 12px; color: #64748b; font-weight: bold;">اسم الفصل</span><br>
-                <button onclick="logoutStudent()" style="margin-top: 10px; background: #fee2e2; color: #ef4444; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold;">تسجيل خروج</button>
+                <button onclick="logoutStudent()" style="margin-top: 10px; background: #fee2e2; color: #ef4444; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; width: 100%;">تسجيل خروج</button>
+                <button onclick="changeStudentPassword()" style="margin-top: 5px; background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; width: 100%; display: flex; justify-content: center; align-items: center; gap: 5px;"><i class='bx bx-lock-open-alt'></i> تغيير كلمة المرور</button>
             </div>
             <nav class="sidebar-nav">
                 <a class="nav-item active" onclick="switchTab('tabExams', this)"><i class='bx bx-laptop'></i> الامتحانات</a>
@@ -606,7 +616,7 @@
             });
         }
 
-            // ==========================================
+        // ==========================================
         // 📚 لوحة التحكم والمواد والامتحانات
         // ==========================================
 
@@ -1033,6 +1043,53 @@
             }
 
             document.body.appendChild(wmDiv);
+        }
+
+        // ==========================================
+        // 🔐 دوال كلمات المرور (إظهار، استعادة، تغيير)
+        // ==========================================
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace('bx-show', 'bx-hide');
+                icon.style.color = 'var(--primary-color)';
+            } else {
+                input.type = "password";
+                icon.classList.replace('bx-hide', 'bx-show');
+                icon.style.color = '#94a3b8';
+            }
+        }
+
+        async function resetStudentPassword() {
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email) return showToast('يرجى كتابة بريدك الإلكتروني في خانة الدخول أولاً لإرسال الرابط', 'error');
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast('✅ تم إرسال رابط استعادة كلمة المرور إلى بريدك', 'success');
+            } catch (e) {
+                showToast('❌ تأكد من صحة البريد الإلكتروني أو أنه مسجل لدينا', 'error');
+            }
+        }
+
+        async function changeStudentPassword() {
+            const newPassword = prompt('أدخل كلمة المرور الجديدة (6 أحرف على الأقل):');
+            if (!newPassword) return; 
+            if (newPassword.length < 6) return showToast('❌ كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error');
+            
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    await user.updatePassword(newPassword);
+                    showToast('✅ تم تغيير كلمة المرور بنجاح!', 'success');
+                } catch (e) {
+                    if (e.code === 'auth/requires-recent-login') {
+                        alert('⚠️ لأسباب أمنية، يرجى تسجيل الخروج والدخول مجدداً قبل تغيير كلمة المرور.');
+                    } else {
+                        showToast('❌ خطأ: ' + e.message, 'error');
+                    }
+                }
+            }
         }
     </script>
 </body>
