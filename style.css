@@ -2070,10 +2070,14 @@ body.dark-mode .f-history-item.active {
         display: none !important;
     }
 
-    .setup-container {
-        margin-bottom: 90px !important;
-        /* رفع المحرر للأعلى لكي لا يتغطى بالشريط السفلي */
+        .setup-container {
+        margin-bottom: 40px !important;
     }
+
+    body {
+        padding-bottom: 120px !important; /* 🚀 السر هنا: إجبار المتصفح على خلق مساحة تمرير آمنة فوق الشريط السفلي */
+    }
+
 
     .floating-panel {
         right: 5% !important;
