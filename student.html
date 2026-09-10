@@ -41,25 +41,22 @@
             background: linear-gradient(135deg, #e0e7ff, #ffffff);
             display: flex; justify-content: center; align-items: center;
             z-index: 999999;
-            padding: 20px; /* إضافة مساحة للتنفس من الحواف */
+            padding: 20px; 
             box-sizing: border-box;
         }
         .auth-box {
             background: white; padding: 40px; border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.1); width: 90%; max-width: 400px;
             text-align: center; border-top: 6px solid var(--primary-color);
-            max-height: 95vh; /* منع المربع من تخطي طول الشاشة */
-            overflow-y: auto; /* تفعيل شريط التمرير الداخلي عند الحاجة */
+            max-height: 95vh; 
+            overflow-y: auto; 
             box-sizing: border-box;
         }
-        /* تجميل شكل شريط التمرير داخل المربع */
         .auth-box::-webkit-scrollbar { width: 5px; }
         .auth-box::-webkit-scrollbar-track { background: transparent; }
         .auth-box::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        .app-wrapper {
-            display: none; 
-            width: 100%; min-height: 100vh;
-        }
+        
+        .app-wrapper { display: none; width: 100%; min-height: 100vh; }
         .sidebar {
             width: 260px; background: #ffffff; box-shadow: -2px 0 15px rgba(0, 0, 0, 0.05);
             display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; z-index: 100;
@@ -77,15 +74,9 @@
             color: #475569; text-decoration: none; font-weight: bold; border-radius: 10px;
             margin-bottom: 8px; cursor: pointer; transition: 0.2s; font-size: 15px;
         }
-        .nav-item:hover, .nav-item.active {
-            background: #e0e7ff; color: var(--primary-color);
-        }
-        .main-content {
-            flex: 1; padding: 30px; overflow-y: auto; height: 100vh; box-sizing: border-box;
-        }
-        .content-tab {
-            display: none; flex-direction: column; gap: 15px; align-items: center;
-        }
+        .nav-item:hover, .nav-item.active { background: #e0e7ff; color: var(--primary-color); }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
+        .content-tab { display: none; flex-direction: column; gap: 15px; align-items: center; }
         
         .container {
             background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
@@ -144,31 +135,26 @@
             .timer-display { top: auto; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; padding: 10px 20px; width: max-content; }
         }
         
-        /* 🛡️ درع منع تحديد النصوص والطباعة */
         .anti-cheat-shield {
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10 and IE 11 */
-            user-select: none; /* Standard syntax */
+            -webkit-user-select: none; 
+            -ms-user-select: none; 
+            user-select: none; 
         }
 
-        /* إخفاء المحتوى تماماً لو الطالب حاول يطبع الصفحة Ctrl+P */
         @media print {
-            body {
-                display: none !important;
-            }
+            body { display: none !important; }
         }
     </style>
 </head>
 
 <body>
 
-    <!-- 🌟 شاشة التحميل الابتدائية (تمنع وميض صفحة الدخول) -->
     <div id="initialLoader" style="position: fixed; inset: 0; background: #f1f5f9; z-index: 99999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s opacity;">
         <i class='bx bx-loader-alt bx-spin' style="font-size: 70px; color: var(--primary-color);"></i>
         <h3 style="color: #475569; margin-top: 15px; font-weight: 900;">جاري تجهيز بيئة التعلم...</h3>
     </div>
 
-    <!-- 1️⃣ شاشة الدخول والتسجيل (بنظام الحسابات والأكواد) -->
+    <!-- 1️⃣ شاشة الدخول والتسجيل -->
     <div id="authScreen" style="display: none;">
         <div class="auth-box">
             <i class='bx bxs-graduation auth-icon' style="font-size: 60px; color: var(--primary-color); margin-bottom: 10px;"></i>
@@ -179,7 +165,6 @@
                 <button id="tabRegister" onclick="switchAuthMode('register')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;">تفعيل حساب جديد</button>
             </div>
 
-            <!-- نموذج تسجيل الدخول (للطالب القديم) -->
             <div id="loginFormSection">
                 <input type="email" id="loginEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
                 <div style="position: relative;">
@@ -192,7 +177,6 @@
                 <button class="btn" onclick="studentLogin()">دخول 🚀</button>
             </div>
 
-            <!-- نموذج تفعيل حساب جديد (لأول مرة) -->
             <div id="registerFormSection" style="display: none;">
                 <input type="text" id="regName" class="ui-input" placeholder="اسمك الثلاثي (كما سيظهر للمعلم)">
                 <input type="email" id="regEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
@@ -209,7 +193,7 @@
         </div>
     </div>
 
-    <!-- 🛑 شاشة انتهاء الاشتراك (تظهر تلقائياً عندما تنتهي المدة) -->
+    <!-- 🛑 شاشة انتهاء الاشتراك -->
     <div id="renewalScreen" style="display: none; position: fixed; inset: 0; background: linear-gradient(135deg, #fee2e2, #ffffff); justify-content: center; align-items: center; z-index: 999999;">
         <div class="auth-box" style="border-top-color: #ef4444; box-shadow: 0 25px 50px rgba(239, 68, 68, 0.2);">
             <i class='bx bx-time-five' style="font-size: 60px; color: #ef4444; margin-bottom: 10px;"></i>
@@ -243,7 +227,6 @@
         </aside>
 
         <main class="main-content" id="mainDashboardContent">
-            <!-- قسم الامتحانات -->
             <div id="tabExams" class="content-tab" style="display: flex;">
                 <div style="width: 100%; max-width: 700px;">
                     <h3 style="color: #475569; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class='bx bx-list-ul'></i> الامتحانات الخاصة بفصلك:</h3>
@@ -252,8 +235,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- الأقسام الأخرى -->
             <div id="tabPDFs" class="content-tab">
                 <div class="placeholder-box">
                     <i class='bx bxs-file-pdf'></i><h2 style="color: #475569;">ملفات PDF بـ شرح</h2>
@@ -320,7 +301,86 @@
 
         db.enablePersistence({synchronizeTabs:true}).catch(function(err) { console.log('خطأ في الكاش', err); });
         
-        let currentExamData = null; let timerInterval = null; let currentExamCode = null; let activeStudentId = "";
+        // =========================================================================
+        // 🔒 تحديث الأمان الحرج 1: محرك الصندوق الأسود (لمنع سرقة الإجابات)
+        // =========================================================================
+        const SecureExamEngine = (function() {
+            let _secretExamData = null;
+            let _examCode = null;
+
+            return {
+                loadExam: function(data, code) {
+                    _secretExamData = data;
+                    _examCode = code;
+                },
+                getSafeQuestions: function() {
+                    if (!_secretExamData) return null;
+                    // عمل نسخة عميقة لعدم التأثير على الأصل
+                    let safeData = JSON.parse(JSON.stringify(_secretExamData)); 
+                    if(safeData.questions) {
+                        safeData.questions.forEach(q => {
+                            // 🚀 السر هنا: مسح الإجابة الصحيحة قبل تسليمها لصفحة الـ HTML!
+                            delete q.ans; 
+                        });
+                    }
+                    return safeData;
+                },
+                gradeAndSave: async function(studentAnswers, stuId, stuName, teacherId, classId) {
+                    if (!_secretExamData) throw new Error("لا توجد بيانات للامتحان!");
+                    
+                    let correctCount = 0;
+                    let totalAutoGraded = 0;
+
+                    // 1. التصحيح الآلي المحمي (الذي لا يراه الكونسول)
+                    _secretExamData.questions.forEach((q, index) => {
+                        if (q.type !== 'heading') {
+                            if (q.type === 'mcq' || q.type === 'tf_inline') {
+                                totalAutoGraded++;
+                                let uAns = studentAnswers[`q_${index}`];
+                                if (uAns && String(uAns).trim() === String(q.ans).trim()) {
+                                    correctCount++;
+                                }
+                            }
+                        }
+                    });
+
+                    // 2. إرسال النتيجة للسيرفر بأمان
+                    await db.collection('online_exams').doc(_examCode).collection('results').doc(stuId).set({
+                        studentIdentifier: stuId,
+                        studentName: stuName,
+                        score: correctCount,
+                        total: totalAutoGraded,
+                        answers: studentAnswers,
+                        submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // تحديث قائمة المدرس
+                    const teacherRef = db.collection('users').doc(teacherId);
+                    const teacherSnap = await teacherRef.get();
+                    if(teacherSnap.exists) {
+                        let classrooms = teacherSnap.data().classrooms;
+                        let classIdx = classrooms.findIndex(c => c.id === classId);
+                        if(classIdx > -1) {
+                            let stuIdx = classrooms[classIdx].students.findIndex(s => s.id === stuId);
+                            if(stuIdx > -1) {
+                                classrooms[classIdx].students[stuIdx].lastScore = `${correctCount} / ${totalAutoGraded}`;
+                                await teacherRef.update({ classrooms: classrooms });
+                            }
+                        }
+                    }
+
+                    return {
+                        correctCount,
+                        totalAutoGraded,
+                        showResults: _secretExamData.showResults
+                    };
+                }
+            };
+        })();
+
+        // =========================================================================
+
+        let timerInterval = null; let activeStudentId = "";
         let myStudentId = localStorage.getItem('mh_student_id'); let myName = localStorage.getItem('mh_student_name');
         let myClassCode = localStorage.getItem('mh_class_code'); let myTeacherId = localStorage.getItem('mh_teacher_id'); let myClassId = localStorage.getItem('mh_class_id');
 
@@ -350,9 +410,6 @@
             document.getElementById('tabRegister').style.cssText = mode === 'register' ? 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;' : 'flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;';
         }
 
-        // ==========================================
-        // 🛡️ نظام بصمة الأجهزة للطالب (جهازين كحد أقصى)
-        // ==========================================
         function generateStudentFingerprint() {
             try {
                 const canvas = document.createElement('canvas');
@@ -382,13 +439,11 @@
         // 💡 المراقبة الذكية: فحص الأجهزة، الحذف، والصلاحية
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // 🛡️ الدرع الواقي: ننتظر ثانيتين لتفادي التعارض (Race Condition)
                 setTimeout(async () => {
                     try {
-                        // 1. هل هذا حساب معلم أو مدير؟
                         const teacherDoc = await db.collection('users').doc(user.uid).get();
                         if (teacherDoc.exists) {
-                            document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                            document.getElementById('initialLoader').style.display = 'none'; 
                             document.getElementById('studentDashboard').style.display = 'none';
                             if(document.getElementById('renewalScreen')) document.getElementById('renewalScreen').style.display = 'none';
                             
@@ -402,12 +457,9 @@
                             return; 
                         }
 
-                        // 2. إذا لم يكن معلماً، نتحقق هل هو طالب؟
                         const stuDoc = await db.collection('students').doc(user.uid).get();
-                        
-                        // 🚨 3. الانتحار الذاتي للطالب: لو مش موجود في الطلاب ولا المعلمين!
                         if (!stuDoc.exists) {
-                            document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                            document.getElementById('initialLoader').style.display = 'none'; 
                             showToast('⚠️ تم إلغاء وحذف حسابك من قبل المعلم!', 'error');
                             await user.delete().catch(e => console.warn(e));
                             auth.signOut();
@@ -418,20 +470,18 @@
 
                         const data = stuDoc.data();
                         
-                        // 🛑 4. فحص الصلاحية وتاريخ الانتهاء للطالب
                         if (data.expiryDate && Date.now() > data.expiryDate) {
-                            document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                            document.getElementById('initialLoader').style.display = 'none'; 
                             document.getElementById('authScreen').style.display = 'none';
                             document.getElementById('studentDashboard').style.display = 'none';
                             document.getElementById('renewalScreen').style.display = 'flex';
                             return; 
                         }
 
-                        // 📱 5. نظام حماية الأجهزة للطالب (جهازين كحد أقصى)
                         let devices = data.devices || [];
                         if (!devices.includes(localStudentDeviceId)) {
                             if (devices.length >= 2) {
-                                document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                                document.getElementById('initialLoader').style.display = 'none'; 
                                 let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (جهازين فقط).\n\n- اضغط [إلغاء] لتسجيل الخروج من جهازك القديم.\n- اضغط [موافق] لتصفير الأجهزة وطرد أجهزتك السابقة.");
                                 if (resetConfirm) {
                                     devices = [localStudentDeviceId];
@@ -446,8 +496,7 @@
                             }
                         }
 
-                        // فتح المنصة للطالب بأمان
-                        document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                        document.getElementById('initialLoader').style.display = 'none'; 
                         document.getElementById('renewalScreen').style.display = 'none';
                         document.getElementById('authScreen').style.display = 'none';
                         document.getElementById('studentDashboard').style.display = 'flex';
@@ -465,9 +514,6 @@
                         
                         initDashboard();
                         
-                        // =====================================================
-                        // 🚀 6. الرادار المباشر لطرد الأجهزة القديمة فوراً (Real-time Kick-out)
-                        // =====================================================
                         db.collection('students').doc(user.uid).onSnapshot((snap) => {
                             if (snap.exists) {
                                 let liveDevices = snap.data().devices || [];
@@ -483,12 +529,11 @@
                         
                     } catch(e) { 
                         console.error(e); 
-                        document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                        document.getElementById('initialLoader').style.display = 'none'; 
                     }
                 }, 2000); 
             } else {
-                // حالة تسجيل الخروج
-                document.getElementById('initialLoader').style.display = 'none'; // 👈 إخفاء اللودر
+                document.getElementById('initialLoader').style.display = 'none'; 
                 if (document.querySelector('#authScreen .auth-box').innerHTML.includes('أنت في صفحة الطلاب')) {
                     location.reload(); 
                 } else {
@@ -511,7 +556,6 @@
             } catch(e) { showToast('❌ البريد أو كلمة المرور غير صحيحة', 'error'); }
         }
 
-        // 💡 تفعيل حساب طالب جديد
         async function studentRegister() {
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
@@ -625,13 +669,11 @@
             document.getElementById('displayStuName').innerText = myName;
 
             try {
-                // الجلب المتوازي لبيانات المدرس والامتحانات
                 const [teacherSnap, examsSnap] = await Promise.all([
                     db.collection('users').doc(myTeacherId).get(),
                     db.collection('online_exams').where('teacherId', '==', myTeacherId).get()
                 ]);
                 
-                // --- 1. عرض المواد والواجبات ---
                 if (teacherSnap.exists) {
                     let classrooms = teacherSnap.data().classrooms || [];
                     let myClass = classrooms.find(c => c.id === myClassId);
@@ -644,7 +686,6 @@
                     }
                 }
 
-                // --- 2. عرض الامتحانات (فورياً) ---
                 let examsHtml = '';
                 let pendingResultChecks = []; 
 
@@ -665,7 +706,6 @@
                             cardStyle = 'border-right: 5px solid var(--primary-color);';
                         }
                         
-                        // 🚀 التعديل هنا: إرسال كل الامتحانات (حتى المنتهية) للفحص في الخلفية
                         pendingResultChecks.push(doc.id); 
 
                         examsHtml += `
@@ -681,7 +721,6 @@
 
                 document.getElementById('examsList').innerHTML = examsHtml || '<p style="color:#94a3b8; text-align: center;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
 
-                // --- 3. الفحص الصامت في الخلفية ---
                 pendingResultChecks.forEach(async (examId) => {
                     try {
                         const res = await db.collection('online_exams').doc(examId).collection('results').doc(myStudentId).get();
@@ -689,7 +728,6 @@
                             const btnContainer = document.getElementById(`exam-btn-container-${examId}`);
                             const card = document.getElementById(`exam-card-${examId}`);
                             if (btnContainer && card) {
-                                // 🚀 بمجرد ما يلاقي النتيجة، هيشيل كلمة "منتهي" ويحط "تم الامتحان" فوراً
                                 btnContainer.innerHTML = `<button disabled style="background: #f1f5f9; color: #10b981; border: 1px solid #10b981; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-check-double'></i> تم الامتحان</button>`;
                                 card.style.borderRight = '5px solid #10b981';
                                 card.style.opacity = '0.9';
@@ -750,7 +788,7 @@
         }
 
         // ==========================================
-        // 🚀 دالة بدء الامتحان (مُحسنة لجلب البيانات في نفس اللحظة)
+        // 🚀 دالة بدء الامتحان (مُحسنة لجلب البيانات بأمان تام)
         // ==========================================
         async function startDashboardExam(examCode) {
             activeStudentId = myStudentId; 
@@ -758,14 +796,12 @@
             const btn = document.getElementById(btnId);
             const originalText = btn ? btn.innerHTML : '';
             
-            // إظهار جاري التحميل فوراً
             if(btn) {
                 btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> جاري التحميل...';
                 btn.style.opacity = '0.7'; btn.style.cursor = 'not-allowed'; btn.disabled = true;
             }
 
             try {
-                // الجلب المتوازي لبيانات الامتحان ونتيجة الطالب
                 const [docSnap, resultSnap] = await Promise.all([
                     db.collection('online_exams').doc(examCode).get(),
                     db.collection('online_exams').doc(examCode).collection('results').doc(activeStudentId).get()
@@ -776,19 +812,17 @@
                     return showToast('❌ كود الامتحان غير صحيح!', 'error');
                 }
                 
-                currentExamData = docSnap.data();
-                currentExamCode = examCode;
+                let rawExamData = docSnap.data();
 
-                if (currentExamData.endTime && Date.now() > currentExamData.endTime) {
+                if (rawExamData.endTime && Date.now() > rawExamData.endTime) {
                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
                     return showToast('⏳ لقد انتهى الموعد المحدد لهذا الامتحان!', 'error');
                 }
-                if (!currentExamData.active) {
+                if (!rawExamData.active) {
                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
                     return showToast('⚠️ هذا الامتحان مغلق حالياً.', 'error');
                 }
 
-                // التأكد من أن الطالب لم يمتحن بعد
                 if (resultSnap.exists) {
                     if(btn) { 
                         btn.innerHTML = `<i class='bx bx-check-double'></i> تم الامتحان`;
@@ -797,18 +831,18 @@
                     return showToast('✋ لقد قمت بتسليم هذا الامتحان مسبقاً!', 'error');
                 }
 
-                // =====================================================
-                // 🛡️ تشغيل درع المراقبة والعلامة المائية
-                // =====================================================
+                // 🚀 تخزين البيانات في الصندوق الأسود الآمن
+                SecureExamEngine.loadExam(rawExamData, examCode);
+
                 activateExamSecurity(); 
 
                 document.getElementById('studentDashboard').style.display = 'none';
                 document.getElementById('examSection').style.display = 'block';
-                document.getElementById('displayExamTitle').innerText = currentExamData.title;
+                document.getElementById('displayExamTitle').innerText = rawExamData.title;
                 document.getElementById('displayExamStudentName').innerText = "الطالب: " + myName;
 
                 renderQuestions();
-                if (currentExamData.endTime) startTimer(currentExamData.endTime);
+                if (rawExamData.endTime) startTimer(rawExamData.endTime);
 
                 if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
 
@@ -841,7 +875,10 @@
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
             let html = '';
-            const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
+            
+            // 🚀 استدعاء النسخة الآمنة من الأسئلة (بدون إجابات)
+            const safeExamData = SecureExamEngine.getSafeQuestions();
+            const realQuestions = safeExamData.questions.filter(q => q.type !== 'heading');
 
             realQuestions.forEach((q, index) => {
                 html += `<div class="question-card">`;
@@ -865,9 +902,6 @@
         async function submitExam(isAuto = false) {
             if (!isAuto && !confirm('هل أنت متأكد من تسليم الإجابات؟ لن تتمكن من التعديل بعد التسليم.')) return;
 
-            // =====================================================
-            // 🏳️ إيقاف درع الحماية والمراقبة فور تأكيد التسليم
-            // =====================================================
             deactivateExamSecurity(); 
 
             if (timerInterval) {
@@ -875,16 +909,15 @@
                 document.getElementById('timerDisplay').style.display = 'none'; 
             }
 
-            const realQuestions = currentExamData.questions.filter(q => q.type !== 'heading');
-            let correctCount = 0; let totalAutoGraded = 0; let studentAnswers = {};
+            // 🚀 جلب الأسئلة من النسخة الآمنة لجمع اختيارات الطالب
+            const safeExamData = SecureExamEngine.getSafeQuestions();
+            const realQuestions = safeExamData.questions.filter(q => q.type !== 'heading');
+            let studentAnswers = {};
 
             realQuestions.forEach((q, index) => {
                 if (q.type === 'mcq' || q.type === 'tf_inline') {
-                    totalAutoGraded++;
                     const selectedOption = document.querySelector(`input[name="q_${index}"]:checked`);
-                    let userAnswer = selectedOption ? selectedOption.value : "بدون إجابة";
-                    studentAnswers[`q_${index}`] = userAnswer;
-                    if (userAnswer === q.ans) correctCount++;
+                    studentAnswers[`q_${index}`] = selectedOption ? selectedOption.value : "بدون إجابة";
                 } else {
                     const textArea = document.querySelector(`textarea[name="q_${index}"]`);
                     studentAnswers[`q_${index}`] = textArea ? textArea.value : "";
@@ -897,18 +930,19 @@
             resultSec.innerHTML = `<i class='bx bx-loader-alt bx-spin' style="font-size: 80px; color: var(--primary-color);"></i><h2 style="color: #0f172a;">جاري إرسال وتصحيح الإجابات... ⏳</h2>`;
 
             try {
-                await saveResultToCloud(correctCount, totalAutoGraded, studentAnswers);
+                // 🚀 السحر والأمان: استدعاء دالة التصحيح المحمية لتقوم بالتقييم الداخلي والإرسال للسحابة
+                const result = await SecureExamEngine.gradeAndSave(studentAnswers, activeStudentId, myName, myTeacherId, myClassId);
 
                 let scoreHtml = '';
-                if (currentExamData.showResults) {
-                    let percentage = (correctCount / totalAutoGraded) * 100;
+                if (result.showResults) {
+                    let percentage = (result.correctCount / result.totalAutoGraded) * 100;
                     let feedbackColor = percentage >= 85 ? "#10b981" : percentage >= 50 ? "#3b82f6" : "#ef4444";
                     let feedbackText = percentage >= 85 ? "أداء ممتاز! 🌟" : percentage >= 50 ? "لقد اجتزت الاختبار 👍" : "تحتاج إلى مزيد من المذاكرة 📚";
 
                     scoreHtml = `
                         <div style="margin-top: 20px;">
                             <p style="font-size: 18px; font-weight: bold; color: #475569;">نتيجتك هي:</p>
-                            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;">${correctCount} / ${totalAutoGraded}</div>
+                            <div style="font-size: 45px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;">${result.correctCount} / ${result.totalAutoGraded}</div>
                             <p style="font-weight: bold; margin-top: 10px; color: ${feedbackColor};">${feedbackText}</p>
                         </div>`;
                 } else {
@@ -921,31 +955,6 @@
             }
         }
 
-        async function saveResultToCloud(correctCount, totalAutoGraded, studentAnswers) {
-            await db.collection('online_exams').doc(currentExamCode).collection('results').doc(activeStudentId).set({
-                studentIdentifier: activeStudentId,
-                studentName: myName,
-                score: correctCount,
-                total: totalAutoGraded,
-                answers: studentAnswers,
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            const teacherRef = db.collection('users').doc(myTeacherId);
-            const teacherSnap = await teacherRef.get();
-            if(teacherSnap.exists) {
-                let classrooms = teacherSnap.data().classrooms;
-                let classIdx = classrooms.findIndex(c => c.id === myClassId);
-                if(classIdx > -1) {
-                    let stuIdx = classrooms[classIdx].students.findIndex(s => s.id === activeStudentId);
-                    if(stuIdx > -1) {
-                        classrooms[classIdx].students[stuIdx].lastScore = `${correctCount} / ${totalAutoGraded}`;
-                        await teacherRef.update({ classrooms: classrooms });
-                    }
-                }
-            }
-        }
-
         // ========================================================
         // 🚨 محرك الحماية ضد الغش (Anti-Cheat Engine)
         // ========================================================
@@ -953,7 +962,6 @@
         let cheatWarnings = 0;
         let isExamActive = false; 
 
-        // 1. منع كليك يمين واختصارات لوحة المفاتيح (النسخ واللصق)
         document.addEventListener('contextmenu', event => {
             if(isExamActive) event.preventDefault();
         });
@@ -967,14 +975,12 @@
             }
         });
 
-        // 2. رادار الخروج من الصفحة (Tab-Switching)
         document.addEventListener("visibilitychange", () => {
             if (document.hidden && isExamActive) {
                 cheatWarnings++;
                 
                 alert(`🚨 تحذير غش! لقد قمت بالخروج من صفحة الامتحان.\nهذا هو الإنذار رقم (${cheatWarnings} من 3). سيتم سحب ورقتك إذا تكرر الأمر.`);
                 
-                // سحب الورقة إجبارياً بعد 3 محاولات
                 if (cheatWarnings >= 3) {
                     alert('❌ تم سحب ورقة الامتحان بسبب محاولات الغش المتكررة!');
                     submitExam(true); 
@@ -982,7 +988,6 @@
             }
         });
 
-        // 3. دالة تشغيل الحماية 
         function activateExamSecurity() {
             isExamActive = true;
             cheatWarnings = 0;
@@ -993,7 +998,6 @@
             showToast('🛡️ تم تفعيل درع المراقبة. يرجى عدم الخروج من الصفحة.', 'info');
         }
 
-        // دالة إيقاف الحماية 
         function deactivateExamSecurity() {
             isExamActive = false;
             document.body.classList.remove('anti-cheat-shield');
@@ -1002,7 +1006,6 @@
             if (wm) wm.remove();
         }
 
-        // 4. السحر: العلامة المائية الشفافة لردع السكرين شوت
         function createDynamicWatermark() {
             let oldWm = document.getElementById('cheatWatermark');
             if (oldWm) oldWm.remove();
