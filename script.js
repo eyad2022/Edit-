@@ -44,6 +44,19 @@ const db = firebase.firestore();
 db.settings({
     experimentalForceLongPolling: true
 });
+
+
+// 🚀 دالة جلب الوقت الفعلي من سيرفرات جوجل لتخطي تلاعب الأجهزة
+async function getServerTime() {
+    try {
+        const res = await fetch('https://firestore.googleapis.com/v1/projects/elalfey-app/databases/(default)/documents', { method: 'HEAD', cache: 'no-store' });
+        const dateHeader = res.headers.get('Date');
+        return dateHeader ? new Date(dateHeader).getTime() : Date.now();
+    } catch { 
+        return Date.now(); 
+    }
+}
+
 // =====================================================================
 // 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب) - نسخة مصححة
 // =====================================================================
@@ -844,10 +857,13 @@ async function verifyVIPCode() {
 
         let addDays = codeData.days;
         let newExpiry = 'lifetime';
+        
+        // 🚀 السحر هنا: استخدام وقت السيرفر بدلاً من وقت التليفون لحساب الاشتراك
+        const serverNow = await getServerTime();
 
         if (addDays !== 9999) {
-            let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || Date.now();
-            if (current < Date.now()) current = Date.now();
+            let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || serverNow;
+            if (current < serverNow) current = serverNow;
             newExpiry = current + (addDays * 24 * 60 * 60 * 1000);
         }
 
@@ -863,6 +879,7 @@ async function verifyVIPCode() {
 
     } catch (e) { showToast('فشل التفعيل السحابي، تأكد من اتصال الإنترنت', 'error'); }
 }
+
 
 async function generateDynamicCodes() {
     const days = parseInt(document.getElementById('adminCodeType').value);
@@ -5317,7 +5334,8 @@ async function openManageExamsModal() {
         });
 
         window.teacherExamsCache = exams;
-        renderExamsListUI(exams);
+        let serverNow = await getServerTime(); // 🚀 جلب وقت السيرفر
+        renderExamsListUI(exams, serverNow); // 🚀 تمريره لدالة الرسم
 
     } catch (e) {
         console.error("Fetch error:", e);
@@ -5326,7 +5344,7 @@ async function openManageExamsModal() {
 }
 
 // دالة مساعدة لرسم القائمة (لمنع تكرار الكود)
-function renderExamsListUI(exams) {
+function renderExamsListUI(exams, serverNow = Date.now()) {
     const listDiv = document.getElementById('manageExamsList');
     
     if (exams.length === 0) {
@@ -5336,7 +5354,8 @@ function renderExamsListUI(exams) {
 
     let html = '';
     exams.forEach(data => {
-        let isExpired = data.endTime && Date.now() > data.endTime;
+        // 🚀 الاعتماد على وقت السيرفر بدلاً من وقت التليفون
+        let isExpired = data.endTime && serverNow > data.endTime;
         let statusBadge = isExpired
             ? '<span style="background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-x-circle"></i> مغلق (منتهي)</span>'
             : '<span style="background: #d1fae5; color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-check-circle"></i> مفتوح (نشط)</span>';
