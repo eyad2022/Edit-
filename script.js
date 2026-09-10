@@ -45,17 +45,28 @@ db.settings({
     experimentalForceLongPolling: true
 });
 
-
-// 🚀 دالة جلب الوقت الفعلي من سيرفرات جوجل لتخطي تلاعب الأجهزة
+// 🚀 دالة فولاذية لجلب وقت السيرفر الحقيقي متخطية حماية المتصفحات والكاش
 async function getServerTime() {
     try {
-        const res = await fetch('https://firestore.googleapis.com/v1/projects/elalfey-app/databases/(default)/documents', { method: 'HEAD', cache: 'no-store' });
-        const dateHeader = res.headers.get('Date');
-        return dateHeader ? new Date(dateHeader).getTime() : Date.now();
-    } catch { 
-        return Date.now(); 
+        // المحاولة الأولى: جلب الوقت من خادم وقت عالمي (مضمون 100% ولا يتدخل فيه المتصفح أو الكاش)
+        const timeResponse = await fetch('https://worldtimeapi.org/api/timezone/UTC', { cache: 'no-store' });
+        if (timeResponse.ok) {
+            const timeData = await timeResponse.json();
+            return new Date(timeData.utc_datetime).getTime();
+        }
+        throw new Error('Time API Failed');
+    } catch (error) {
+        try {
+            // المحاولة الثانية: جلب الوقت من سيرفر موقعك أنت، مع إضافة رقم عشوائي لكسر كاش الـ Service Worker
+            const fallbackResponse = await fetch(window.location.origin + '/?bypass=' + Math.random(), { method: 'HEAD', cache: 'no-store' });
+            const dateHeader = fallbackResponse.headers.get('Date');
+            return dateHeader ? new Date(dateHeader).getTime() : Date.now();
+        } catch {
+            return Date.now();
+        }
     }
 }
+
 
 // =====================================================================
 // 🛡️ نظام بصمة الجهاز المعقدة (لمنع التخفي والتلاعب) - نسخة مصححة
