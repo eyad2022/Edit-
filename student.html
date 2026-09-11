@@ -161,7 +161,7 @@
             <h2 style="margin-top: 0; color: #1e293b;">بوابة الطالب الذكية</h2>
             
             <div style="display: flex; gap: 10px; margin-bottom: 25px; background: #f8fafc; padding: 6px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <button id="tabLogin" onclick="switchAuthMode('login')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;">تسجيل الدخول</button>
+                <button id="tabLogin" onclick="switchAuthMode('login')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: white; color: var(--primary-color); font-weight: bold; cursor: box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s;">تسجيل الدخول</button>
                 <button id="tabRegister" onclick="switchAuthMode('register')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: #64748b; font-weight: bold; cursor: pointer; transition: 0.3s;">تفعيل حساب جديد</button>
             </div>
 
@@ -301,37 +301,55 @@
 
         db.enablePersistence({synchronizeTabs:true}).catch(function(err) { console.log('خطأ في الكاش', err); });
         
-        // 🚀 دالة فولاذية لجلب وقت السيرفر الحقيقي متخطية الكاش والـ Service Worker
-        async function getServerTime() {
-            try {
-                // 1. GitHub API (سريع، موثوق، يدعم CORS، ولا يتدخل فيه كاش الموقع)
-                const res1 = await fetch('https://api.github.com/', { cache: 'no-store' });
-                const dateHeader = res1.headers.get('Date');
-                if (dateHeader) return new Date(dateHeader).getTime();
-                throw new Error('No Date');
-            } catch (e1) {
+        // 🚀 محرك الوقت الفولاذي للطالب (Zero Trust Time Engine) - يدعم الاوفلاين ويصطاد التلاعب
+        async function getTrueTime() {
+            let localTime = Date.now();
+            let lastTrustedTime = parseInt(localStorage.getItem('mh_trusted_time')) || 0;
+            let realTime = null;
+
+            if (navigator.onLine) {
                 try {
-                    // 2. WorldTimeAPI (بديل قوي)
-                    const res2 = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-store' });
-                    const data2 = await res2.json();
-                    return new Date(data2.utc_datetime).getTime();
-                } catch (e2) {
+                    const r0 = await fetch(window.location.origin + '/?bypass=' + Math.random(), { method: 'HEAD', cache: 'no-store' });
+                    const dateHeader = r0.headers.get('Date');
+                    if (dateHeader) realTime = new Date(dateHeader).getTime();
+                } catch(e0) {}
+                
+                if (!realTime) {
                     try {
-                        // 3. TimeAPI (بديل ثالث)
-                        const res3 = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC', { cache: 'no-store' });
-                        const data3 = await res3.json();
-                        return new Date(data3.dateTime).getTime();
-                    } catch (e3) {
-                        // ❌ الضربة القاضية: لو كل السيرفرات فشلت (أو الطالب قفل النت)، هنرجع null ونمنع الدخول!
-                        // مستحيل نرجع وقت الجهاز (Date.now) أبداً!
-                        return null; 
+                        const r1 = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC', {cache: 'no-store'});
+                        const d1 = await r1.json();
+                        realTime = new Date(d1.dateTime).getTime();
+                    } catch(e1) {
+                        try {
+                            const r2 = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', {cache: 'no-store'});
+                            const d2 = await r2.json();
+                            realTime = new Date(d2.utc_datetime).getTime();
+                        } catch(e2) {}
                     }
                 }
             }
+
+            if (realTime) {
+                localStorage.setItem('mh_trusted_time', realTime);
+                return { time: realTime, valid: true };
+            }
+
+            // 🚨 حماية الأوفلاين: منع الدخول لو مسح الذاكرة عشان يصفر العداد
+            if (lastTrustedTime === 0) {
+                return { time: localTime, valid: false, msg: 'يرجى الاتصال بالإنترنت لمرة واحدة فقط لضبط وقت المنصة بشكل آمن.' };
+            }
+
+            // 🚨 حماية الأوفلاين: لو رجع تاريخ التليفون لورا
+            if (localTime < (lastTrustedTime - 60000)) {
+                return { time: localTime, valid: false, msg: '⛔ تم اكتشاف تلاعب في تاريخ الجهاز! يرجى ضبط الوقت الحقيقي.' };
+            }
+
+            localStorage.setItem('mh_trusted_time', localTime);
+            return { time: localTime, valid: true };
         }
 
         // =========================================================================
-        // 🔒 تحديث الأمان الحرج: محرك الصندوق الأسود (مع منع الـ DevTools)
+        // 🔒 محرك الصندوق الأسود (مع منع الـ DevTools)
         // =========================================================================
         const SecureExamEngine = (function() {
             let _secretExamData = null;
@@ -592,23 +610,24 @@
                         }
 
                         const data = stuDoc.data();
-                        const serverNow = await getServerTime();
                         
-                        // 🚀 الحماية المطلقة: لو السيرفرات الـ 3 فشلوا والنت مقطوع، إقفل المنصة تماماً!
-                        if (!serverNow) {
+                        // 🚀 الفحص بالوقت الفولاذي
+                        const timeData = await getTrueTime();
+                        
+                        if (!timeData.valid) {
                             document.getElementById('initialLoader').style.display = 'none'; 
                             document.getElementById('studentDashboard').style.display = 'none';
                             document.getElementById('authScreen').style.display = 'flex';
                             document.querySelector('#authScreen .auth-box').innerHTML = `
-                                <i class='bx bx-wifi-off' style="font-size: 60px; color: #ef4444; margin-bottom: 10px;"></i>
-                                <h2 style="margin-top: 0; color: #1e293b;">لا يوجد اتصال آمن</h2>
-                                <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">لم نتمكن من التحقق من الوقت الفعلي من السيرفر (مطلوب لمنع التلاعب). يرجى التأكد من اتصالك بالإنترنت وتحديث الصفحة.</p>
+                                <i class='bx bx-time-five' style="font-size: 60px; color: #ef4444; margin-bottom: 10px;"></i>
+                                <h2 style="margin-top: 0; color: #1e293b;">خطأ في الوقت</h2>
+                                <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">${timeData.msg}</p>
                                 <button class="btn" onclick="location.reload()" style="background: #3b82f6;">تحديث الصفحة 🔄</button>
                             `;
                             return; 
                         }
                         
-                        if (data.expiryDate && serverNow > data.expiryDate) {
+                        if (data.expiryDate && timeData.time > data.expiryDate) {
                             document.getElementById('initialLoader').style.display = 'none'; 
                             document.getElementById('authScreen').style.display = 'none';
                             document.getElementById('studentDashboard').style.display = 'none';
@@ -720,12 +739,13 @@
 
                 const validityDays = actData.validityDays || 30; 
                 
-                const serverNow = await getServerTime();
-                if (!serverNow) {
-                    return showToast('⚠️ يرجى الاتصال بالإنترنت للتحقق من الوقت وإكمال التسجيل', 'error');
+                // 🚀 الفحص بالوقت الصارم
+                const timeData = await getTrueTime();
+                if (!timeData.valid) {
+                    return showToast(timeData.msg, 'error');
                 }
                 
-                const expiryDate = serverNow + (validityDays * 24 * 60 * 60 * 1000);
+                const expiryDate = timeData.time + (validityDays * 24 * 60 * 60 * 1000);
 
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 const studentUid = cred.user.uid;
@@ -781,13 +801,14 @@
 
                 const validityDays = codeData.validityDays || 30;
                 
-                const serverNow = await getServerTime();
-                if (!serverNow) {
-                    return showToast('⚠️ يرجى الاتصال بالإنترنت للتحقق من الوقت ومعالجة الكود', 'error');
+                // 🚀 الفحص بالوقت الصارم
+                const timeData = await getTrueTime();
+                if (!timeData.valid) {
+                    return showToast(timeData.msg, 'error');
                 }
                 
-                let currentExpiry = studentData.expiryDate || serverNow;
-                if (currentExpiry < serverNow) currentExpiry = serverNow; 
+                let currentExpiry = studentData.expiryDate || timeData.time;
+                if (currentExpiry < timeData.time) currentExpiry = timeData.time; 
                 const newExpiryDate = currentExpiry + (validityDays * 24 * 60 * 60 * 1000);
 
                 const batch = db.batch();
@@ -832,15 +853,18 @@
                 let examsHtml = '';
                 let pendingResultChecks = []; 
                 
-                const serverNow = await getServerTime();
-                // 🚀 لو السيرفر مفصول، هنقفل كل الامتحانات برمجياً كإجراء حماية
-                const safeTime = serverNow ? serverNow : Number.MAX_SAFE_INTEGER; 
+                // 🚀 الفحص بالوقت الصارم
+                const timeData = await getTrueTime();
+                if (!timeData.valid) {
+                    document.getElementById('examsList').innerHTML = `<p style="color:#ef4444; text-align: center; font-weight:bold;">${timeData.msg}</p>`;
+                    return;
+                }
 
                 examsSnap.docs.forEach(doc => {
                     let exam = doc.data();
                     if ((exam.classId === myClassId || exam.classId === 'all') && exam.active) {
                         
-                        let isExpired = exam.endTime && safeTime > exam.endTime;
+                        let isExpired = exam.endTime && timeData.time > exam.endTime;
                         
                         let btnHtml = ''; let cardStyle = '';
 
@@ -945,15 +969,15 @@
                 }
                 
                 let rawExamData = docSnap.data();
-                const serverNow = await getServerTime();
                 
-                // 🚀 لو السيرفر مفصول مستحيل يدخل
-                if (!serverNow) {
+                // 🚀 الفحص بالوقت الصارم قبل فتح الامتحان
+                const timeData = await getTrueTime();
+                if (!timeData.valid) {
                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
-                    return showToast('⚠️ يرجى الاتصال بالإنترنت للتحقق من موعد الامتحان!', 'error');
+                    return showToast(timeData.msg, 'error');
                 }
 
-                if (rawExamData.endTime && serverNow > rawExamData.endTime) {
+                if (rawExamData.endTime && timeData.time > rawExamData.endTime) {
                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
                     return showToast('⏳ لقد انتهى الموعد المحدد لهذا الامتحان!', 'error');
                 }
@@ -993,11 +1017,10 @@
             let timerDisplay = document.getElementById('timerDisplay');
             timerDisplay.style.display = 'block'; 
 
-            let serverNow = await getServerTime();
-            // شكليات عشان العداد ميقفش، بس كدة كدة الإرسال في السليم
-            if (!serverNow) serverNow = Date.now(); 
+            const timeData = await getTrueTime();
+            let safeTime = timeData.valid ? timeData.time : Date.now(); 
 
-            let diff = endTimeMillis - serverNow;
+            let diff = endTimeMillis - safeTime;
 
             timerInterval = setInterval(() => {
                 diff -= 1000; 
