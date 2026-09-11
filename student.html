@@ -115,12 +115,25 @@
         input[type="radio"] { margin-left: 10px; transform: scale(1.2); }
         .result-box { text-align: center; padding: 30px; border-radius: 15px; margin-top: 20px; display: none; }
         
-        .timer-display {
-            position: fixed; top: 20px; left: 20px; background: rgba(254, 226, 226, 0.95); color: #ef4444;
-            padding: 10px 25px; border-radius: 50px; font-weight: 900; font-size: 16px; text-align: center;
-            border: 2px solid #fca5a5; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3); z-index: 99999;
-            display: none; direction: rtl; backdrop-filter: blur(5px); animation: pulseTimer 2s infinite;
+                .timer-display {
+            position: fixed; 
+            top: 20px; 
+            left: 20px; /* ثابت في أعلى الشمال */
+            background: rgba(255, 255, 255, 0.95); 
+            color: var(--primary-color);
+            padding: 8px 18px; 
+            border-radius: 12px; 
+            font-weight: 900; 
+            font-size: 15px; 
+            text-align: center;
+            border: 2px solid var(--primary-color); 
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15); 
+            z-index: 99999;
+            display: none; 
+            direction: rtl; 
+            backdrop-filter: blur(8px);
         }
+
         @keyframes pulseTimer { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .toast { position: fixed; bottom: 20px; right: 20px; background: #ef4444; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; display: none; z-index: 1000000; }
         .placeholder-box { text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); width: 100%; max-width: 700px; border-top: 6px solid #94a3b8; }
@@ -132,9 +145,17 @@
             .student-profile, .sidebar-logo { width: 100%; }
             .nav-item { flex: 1; justify-content: center; font-size: 13px; padding: 10px; margin-bottom:0; }
             .main-content { height: auto; overflow-y: visible; padding: 15px; }
-            .timer-display { top: 15px !important; bottom: auto !important; left: 50% !important; transform: translateX(-50%) !important; font-size: 14px; padding: 8px 20px; width: max-content; z-index: 9999999 !important; }
+             .timer-display { 
+                top: 15px !important; 
+                bottom: auto !important; 
+                left: 15px !important; /* إجباره يفضل في الشمال */
+                transform: none !important; /* إلغاء التوسيط المزعج */
+                font-size: 13px; 
+                padding: 6px 14px; 
+                width: max-content; 
+                z-index: 9999999 !important; 
+            }
         }
-        
         .anti-cheat-shield {
             -webkit-user-select: none; 
             -ms-user-select: none; 
@@ -1013,11 +1034,12 @@
             }
         }
 
-        async function startTimer(endTimeMillis) {
+                async function startTimer(endTimeMillis) {
             let timerDisplay = document.getElementById('timerDisplay');
             timerDisplay.style.display = 'block'; 
 
             const timeData = await getTrueTime();
+            // شكليات عشان العداد ميقفش، بس كدة كدة الإرسال في السليم
             let safeTime = timeData.valid ? timeData.time : Date.now(); 
 
             let diff = endTimeMillis - safeTime;
@@ -1031,12 +1053,25 @@
                     alert("انتهى وقت الامتحان! سيتم تسليم إجاباتك الحالية آلياً.");
                     submitExam(true);
                 } else {
+                    // 🚀 التصليح هنا: حساب الساعات والأيام وتضمينهم في العداد بشكل سليم
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    timerDisplay.innerHTML = `⏳ متبقي: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    
+                    let timeString = "";
+                    if (days > 0) timeString += `${days} يوم و `;
+                    if (hours > 0) timeString += `${hours}:`;
+                    
+                    // تظبيط شكل الدقائق والثواني (إضافة صفر لو رقم واحد عشان الشكل الجمالي)
+                    let minsStr = (minutes < 10 && hours > 0) ? '0' + minutes : minutes;
+                    let secsStr = seconds < 10 ? '0' + seconds : seconds;
+                    
+                    timerDisplay.innerHTML = `⏳ متبقي: ${timeString}${minsStr}:${secsStr}`;
                 }
             }, 1000);
         }
+
 
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
