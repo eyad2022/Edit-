@@ -44,33 +44,45 @@ const db = firebase.firestore();
 db.settings({
     experimentalForceLongPolling: true
 });
-// 🚀 نظام الوقت الهجين: يدعم الأوفلاين 100% ويصطاد التلاعب في التاريخ
+// 🚀 نظام الوقت الهجين: يدعم// 🚀 نظام الوقت الفولاذي: يقرأ من السيرفر الخاص بك مباشرة لمنع الحظر (CORS)
 async function getSmartTime() {
     let localTime = Date.now();
-    let lastValidTime = parseInt(localStorage.getItem('mh_last_valid_time')) || 0;
-
+    
     if (navigator.onLine) {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-store', signal: controller.signal });
-            clearTimeout(timeoutId);
-            const data = await res.json();
-            const realTime = new Date(data.utc_datetime).getTime();
-            
-            localStorage.setItem('mh_last_valid_time', realTime);
-            return { time: realTime, cheater: false };
-        } catch (e) {}
+            // نطلب الوقت من نفس دومين الموقع لضمان تخطي حماية المتصفحات
+            const res = await fetch(window.location.origin + '/?bypass=' + Math.random(), { 
+                method: 'HEAD', 
+                cache: 'no-store' 
+            });
+            const dateHeader = res.headers.get('Date');
+            if (dateHeader) {
+                const realTime = new Date(dateHeader).getTime();
+                localStorage.setItem('mh_secure_time', realTime);
+                return { time: realTime, cheater: false };
+            }
+        } catch (e) {
+            // محاولة بديلة من سيرفر عالمي لو السيرفر الأول تأخر
+            try {
+                const res2 = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-store' });
+                const data2 = await res2.json();
+                const realTime2 = new Date(data2.utc_datetime).getTime();
+                localStorage.setItem('mh_secure_time', realTime2);
+                return { time: realTime2, cheater: false };
+            } catch(e2) {}
+        }
     }
     
-    // 🚨 مصيدة آلة الزمن للأوفلاين
-    if (localTime < (lastValidTime - 60000)) { 
-        return { time: localTime, cheater: true }; // تلاعب في الوقت!
+    // 🚨 حماية الأوفلاين: لو قفل النت وغير التاريخ لسنة قديمة، الموقع هيقفشه
+    let lastSecureTime = parseInt(localStorage.getItem('mh_secure_time')) || 0;
+    if (lastSecureTime > 0 && localTime < (lastSecureTime - 60000)) { 
+        return { time: localTime, cheater: true }; // اكتشاف تلاعب
     }
     
-    localStorage.setItem('mh_last_valid_time', localTime);
+    localStorage.setItem('mh_secure_time', localTime);
     return { time: localTime, cheater: false };
 }
+
 
 
 
@@ -801,40 +813,28 @@ function restoreFromCloudHistory(idx) {
     showToast('تم استعادة المشروع المختار بنجاح', 'success');
 }
 
-function requireVIP(actionType, param) {
-    // 1. التحقق من تسجيل الدخول أولاً (منع الزوار غير المسجلين)
+async function requireVIP(actionType, param) {
     if (!auth.currentUser) {
         showToast('⚠️ يرجى إنشاء حساب مجاني أو تسجيل الدخول أولاً!', 'error');
-
-        // --- التعديل هنا: استخدام دالة فتح نافذة تسجيل الدخول الجديدة ---
-        if (typeof openLoginModal === 'function') {
-            openLoginModal();
-        } else {
-            // كود احتياطي
-            const authModal = document.getElementById('authModal');
-            if (authModal) {
-                authModal.style.display = 'flex';
-                document.getElementById('loginSection').style.display = 'block';
-                document.getElementById('signupSection').style.display = 'none';
-            }
-        }
+        if (typeof openLoginModal === 'function') openLoginModal();
         return;
     }
 
-    // 2. التحقق من صلاحية الاشتراك أو الفترة التجريبية في السحابة
     let expiry = localStorage.getItem('elalfey_vip_expiry');
-    let isVIP = false;
+    
+    // 🚀 الفحص بالوقت الصارم
+    const timeData = await getSmartTime();
+    if (timeData.cheater) return showToast('⛔ تم اكتشاف تلاعب في تاريخ الجهاز! يرجى ضبط الوقت الحقيقي للمتابعة.', 'error');
 
+    let isVIP = false;
     if (expiry === 'lifetime') {
         isVIP = true;
-    } else if (expiry && parseInt(expiry) > Date.now()) {
+    } else if (expiry && parseInt(expiry) > timeData.time) {
         isVIP = true;
     }
 
-    // 3. السماح أو الرفض
     if (isVIP) {
         proceedWithAction(actionType, param);
-        return;
     } else {
         pendingAction = actionType;
         pendingActionParam = param;
@@ -843,9 +843,15 @@ function requireVIP(actionType, param) {
     }
 }
 
-function openVIPModalManual() {
+
+async function openVIPModalManual() {
     let expiry = localStorage.getItem('elalfey_vip_expiry');
-    if (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now())) {
+    
+    // 🚀 الفحص بالوقت الصارم
+    const timeData = await getSmartTime();
+    if (timeData.cheater) return showToast('⛔ تم اكتشاف تلاعب في تاريخ الجهاز!', 'error');
+
+    if (expiry === 'lifetime' || (expiry && parseInt(expiry) > timeData.time)) {
         showToast('حسابك مفعل بالفعل بالنسخة الاحترافية الشاملة! 🎉', 'info');
         return;
     }
@@ -854,6 +860,7 @@ function openVIPModalManual() {
     pendingAction = null;
     pendingActionParam = null;
 }
+
 
 async function verifyVIPCode() {
     const code = document.getElementById('vipCodeInput').value.trim().toUpperCase();
@@ -875,12 +882,13 @@ async function verifyVIPCode() {
         let addDays = codeData.days;
         let newExpiry = 'lifetime';
         
-        // 🚀 السحر هنا: استخدام وقت السيرفر بدلاً من وقت التليفون لحساب الاشتراك
-        const serverNow = await getServerTime();
+        // 🚀 الفحص بالوقت الصارم
+        const timeData = await getSmartTime();
+        if (timeData.cheater) return showToast('⛔ تم اكتشاف تلاعب في تاريخ الجهاز!', 'error');
 
         if (addDays !== 9999) {
-            let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || serverNow;
-            if (current < serverNow) current = serverNow;
+            let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || timeData.time;
+            if (current < timeData.time) current = timeData.time;
             newExpiry = current + (addDays * 24 * 60 * 60 * 1000);
         }
 
@@ -896,6 +904,7 @@ async function verifyVIPCode() {
 
     } catch (e) { showToast('فشل التفعيل السحابي، تأكد من اتصال الإنترنت', 'error'); }
 }
+
 
 
 async function generateDynamicCodes() {
@@ -4488,8 +4497,9 @@ async function executeAIGeneration() {
 // 2. إدارة الفصول والطلاب (Cloud Firestore)
 // ========================================================
 
-// جلب وعرض الفصول من السحابة
-// جلب وعرض الفصول من السحابة (محدثة بزر حذف الفصل)
+// جلب وعرض الفصول من السحابة 
+(محدثة بزر حذف الفصل)
+
 async function loadClassroomsFromCloud() {
     const user = auth.currentUser;
     if (!user) return;
@@ -4547,13 +4557,26 @@ async function loadClassroomsFromCloud() {
         // تحديث الإحصائيات وفحص الباقة
         document.getElementById('lmsTotalClasses').innerText = classrooms.length;
 
-        let expiry = localStorage.getItem('elalfey_vip_expiry');
-        let isVIP = (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now()));
+                let expiry = localStorage.getItem('elalfey_vip_expiry');
+        
+        // 🚀 الفحص بالوقت الصارم
+        const timeData = await getSmartTime();
+        let isVIP = false;
+        
+        if (!timeData.cheater) {
+            isVIP = (expiry === 'lifetime' || (expiry && parseInt(expiry) > timeData.time));
+        }
 
         const countDisplay = document.getElementById('lmsTotalStudents');
         const noticeDisplay = document.getElementById('lmsPlanNotice');
 
-        if (isVIP) {
+        if (timeData.cheater) {
+            countDisplay.innerText = `محظور`;
+            countDisplay.style.color = "#ef4444";
+            noticeDisplay.innerText = "تلاعب في الوقت!";
+            noticeDisplay.style.background = "#fee2e2";
+            noticeDisplay.style.color = "#b91c1c";
+        } else if (isVIP) {
             countDisplay.innerText = `${totalStudents} / ∞`;
             countDisplay.style.color = "#10b981";
             noticeDisplay.innerText = "باقة VIP (غير محدودة)";
@@ -4573,7 +4596,6 @@ async function loadClassroomsFromCloud() {
                 noticeDisplay.style.color = "#b45309";
             }
         }
-
     } catch (e) { }
 }
 
@@ -5325,25 +5347,11 @@ async function openManageExamsModal() {
     listDiv.innerHTML = '<div style="text-align: center; padding: 30px;"><i class="bx bx-loader-alt bx-spin" style="font-size: 40px; color: #3b82f6;"></i><br><strong style="color: #64748b;">جاري جلب الامتحانات من السيرفر مباشرة...</strong></div>';
 
     try {
-        // جلب امتحانات المعلم الحالي
-        const examsSnap = await db.collection('online_exams')
-            .where('teacherId', '==', user.uid)
-            .get();
+        const examsSnap = await db.collection('online_exams').where('teacherId', '==', user.uid).get();
 
         let exams = [];
         examsSnap.forEach(doc => exams.push({ id: doc.id, ...doc.data() }));
 
-        // فحص ذكي: إذا كانت النتيجة صفر، نتأكد هل المشكلة في كود الحساب UID؟
-        if (exams.length === 0) {
-            const allExamsCheck = await db.collection('online_exams').limit(5).get();
-            if (!allExamsCheck.empty) {
-                console.warn("⚠️ تنبيه: توجد امتحانات في قاعدة البيانات ولكنها مسجلة بحساب UID مختلف عن حسابك الحالي!");
-                console.log("معرف حسابك الحالي (Current UID):", user.uid);
-                allExamsCheck.forEach(d => console.log(`الامتحان ${d.id} مسجل للمدرب:`, d.data().teacherId));
-            }
-        }
-
-        // ترتيب الامتحانات بالأحدث
         exams.sort((a, b) => {
             let tA = a.createdAt ? (typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : Date.parse(a.createdAt)) : 0;
             let tB = b.createdAt ? (typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : Date.parse(b.createdAt)) : 0;
@@ -5351,8 +5359,10 @@ async function openManageExamsModal() {
         });
 
         window.teacherExamsCache = exams;
-        let serverNow = await getServerTime(); // 🚀 جلب وقت السيرفر
-        renderExamsListUI(exams, serverNow); // 🚀 تمريره لدالة الرسم
+        
+        // 🚀 جلب الوقت الفعلي 
+        const timeData = await getSmartTime(); 
+        renderExamsListUI(exams, timeData.time); 
 
     } catch (e) {
         console.error("Fetch error:", e);
@@ -5360,8 +5370,7 @@ async function openManageExamsModal() {
     }
 }
 
-// دالة مساعدة لرسم القائمة (لمنع تكرار الكود)
-function renderExamsListUI(exams, serverNow = Date.now()) {
+function renderExamsListUI(exams, safeTime = Date.now()) {
     const listDiv = document.getElementById('manageExamsList');
     
     if (exams.length === 0) {
@@ -5372,7 +5381,7 @@ function renderExamsListUI(exams, serverNow = Date.now()) {
     let html = '';
     exams.forEach(data => {
         // 🚀 الاعتماد على وقت السيرفر بدلاً من وقت التليفون
-        let isExpired = data.endTime && serverNow > data.endTime;
+        let isExpired = data.endTime && safeTime > data.endTime;
         let statusBadge = isExpired
             ? '<span style="background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-x-circle"></i> مغلق (منتهي)</span>'
             : '<span style="background: #d1fae5; color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;"><i class="bx bx-check-circle"></i> مفتوح (نشط)</span>';
@@ -5396,6 +5405,7 @@ function renderExamsListUI(exams, serverNow = Date.now()) {
     });
     listDiv.innerHTML = html;
 }
+
 
 // 4. دالة تمديد الوقت
 async function extendExamTime(examId, classId) {
