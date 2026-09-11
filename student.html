@@ -139,23 +139,34 @@
         .placeholder-box { text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); width: 100%; max-width: 700px; border-top: 6px solid #94a3b8; }
         .placeholder-box i { font-size: 60px; color: #cbd5e1; margin-bottom: 15px; }
 
-        @media (max-width: 768px) {
+                @media (max-width: 768px) {
             .app-wrapper { flex-direction: column; }
             .sidebar { width: 100%; padding: 15px; flex-direction: row; flex-wrap: wrap; box-sizing: border-box; }
             .student-profile, .sidebar-logo { width: 100%; }
             .nav-item { flex: 1; justify-content: center; font-size: 13px; padding: 10px; margin-bottom:0; }
             .main-content { height: auto; overflow-y: visible; padding: 15px; }
-             .timer-display { 
-                top: 15px !important; 
-                bottom: auto !important; 
-                left: 15px !important; /* إجباره يفضل في الشمال */
-                transform: none !important; /* إلغاء التوسيط المزعج */
-                font-size: 13px; 
-                padding: 6px 14px; 
-                width: max-content; 
+            
+            /* 🚀 الإصلاح الفولاذي لعداد الموبايل */
+            .timer-display { 
+                top: 10px !important; 
+                left: 10px !important; 
+                right: auto !important; 
+                transform: none !important; 
+                font-size: 12px !important; 
+                padding: 6px 12px !important; 
+                width: auto !important; 
+                max-width: 90vw !important; 
+                white-space: nowrap !important; 
+                border-radius: 8px !important;
                 z-index: 9999999 !important; 
             }
+            
+            /* 🚀 زق الامتحان لتحت شوية عشان العداد ميغطيش على العنوان */
+            .exam-container {
+                margin-top: 60px !important; 
+            }
         }
+
         .anti-cheat-shield {
             -webkit-user-select: none; 
             -ms-user-select: none; 
@@ -165,6 +176,7 @@
         @media print {
             body { display: none !important; }
         }
+
     </style>
 </head>
 
