@@ -4497,12 +4497,12 @@ async function executeAIGeneration() {
 // 2. إدارة الفصول والطلاب (Cloud Firestore)
 // ========================================================
 
-// جلب وعرض الفصول من السحابة 
-(محدثة بزر حذف الفصل)
-
+// جلب وعرض الفصول من السحابة
+// جلب وعرض الفصول من السحابة (محدثة بزر حذف الفصل)
 async function loadClassroomsFromCloud() {
     const user = auth.currentUser;
     if (!user) return;
+
 
     const grid = document.getElementById('classroomsGrid');
 
