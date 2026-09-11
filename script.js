@@ -801,25 +801,37 @@ function restoreFromCloudHistory(idx) {
     showToast('تم استعادة المشروع المختار بنجاح', 'success');
 }
 
-async function requireVIP(actionType, param) {
+function requireVIP(actionType, param) {
+    // 1. التحقق من تسجيل الدخول أولاً (منع الزوار غير المسجلين)
     if (!auth.currentUser) {
         showToast('⚠️ يرجى إنشاء حساب مجاني أو تسجيل الدخول أولاً!', 'error');
-        if (typeof openLoginModal === 'function') openLoginModal();
+
+        // --- التعديل هنا: استخدام دالة فتح نافذة تسجيل الدخول الجديدة ---
+        if (typeof openLoginModal === 'function') {
+            openLoginModal();
+        } else {
+            // كود احتياطي
+            const authModal = document.getElementById('authModal');
+            if (authModal) {
+                authModal.style.display = 'flex';
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('signupSection').style.display = 'none';
+            }
+        }
         return;
     }
 
+    // 2. التحقق من صلاحية الاشتراك أو الفترة التجريبية في السحابة
     let expiry = localStorage.getItem('elalfey_vip_expiry');
     let isVIP = false;
-    
-    const timeData = await getSmartTime();
-    if (timeData.cheater) return showToast('⛔ تم اكتشاف تلاعب في تاريخ الجهاز! يرجى ضبط الوقت الحقيقي للمتابعة.', 'error');
 
     if (expiry === 'lifetime') {
         isVIP = true;
-    } else if (expiry && parseInt(expiry) > timeData.time) {
+    } else if (expiry && parseInt(expiry) > Date.now()) {
         isVIP = true;
     }
 
+    // 3. السماح أو الرفض
     if (isVIP) {
         proceedWithAction(actionType, param);
         return;
@@ -831,14 +843,9 @@ async function requireVIP(actionType, param) {
     }
 }
 
-
-async function openVIPModalManual() {
+function openVIPModalManual() {
     let expiry = localStorage.getItem('elalfey_vip_expiry');
-    
-    const timeData = await getSmartTime();
-    if (timeData.cheater) return showToast('⛔ تم اكتشاف تلاعب في تاريخ الجهاز!', 'error');
-
-    if (expiry === 'lifetime' || (expiry && parseInt(expiry) > timeData.time)) {
+    if (expiry === 'lifetime' || (expiry && parseInt(expiry) > Date.now())) {
         showToast('حسابك مفعل بالفعل بالنسخة الاحترافية الشاملة! 🎉', 'info');
         return;
     }
@@ -847,7 +854,6 @@ async function openVIPModalManual() {
     pendingAction = null;
     pendingActionParam = null;
 }
-
 
 async function verifyVIPCode() {
     const code = document.getElementById('vipCodeInput').value.trim().toUpperCase();
@@ -868,13 +874,13 @@ async function verifyVIPCode() {
 
         let addDays = codeData.days;
         let newExpiry = 'lifetime';
-           // 🚀 الفحص بالوقت الذكي (أوفلاين + حماية)
-        const timeData = await getSmartTime();
-        if (timeData.cheater) return showToast('⛔ تم اكتشاف تلاعب في تاريخ الجهاز!', 'error');
+        
+        // 🚀 السحر هنا: استخدام وقت السيرفر بدلاً من وقت التليفون لحساب الاشتراك
+        const serverNow = await getServerTime();
 
         if (addDays !== 9999) {
-            let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || timeData.time;
-            if (current < timeData.time) current = timeData.time;
+            let current = parseInt(localStorage.getItem('elalfey_vip_expiry')) || serverNow;
+            if (current < serverNow) current = serverNow;
             newExpiry = current + (addDays * 24 * 60 * 60 * 1000);
         }
 
