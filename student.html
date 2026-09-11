@@ -115,10 +115,11 @@
         input[type="radio"] { margin-left: 10px; transform: scale(1.2); }
         .result-box { text-align: center; padding: 30px; border-radius: 15px; margin-top: 20px; display: none; }
         
-                .timer-display {
+               .timer-display {
             position: fixed; 
             top: 20px; 
-            left: 20px; /* ثابت في أعلى الشمال */
+            right: 20px; /* 🚀 اليمين أأمن مكان في العربي ومستحيل يتقص */
+            left: auto;
             background: rgba(255, 255, 255, 0.95); 
             color: var(--primary-color);
             padding: 8px 18px; 
@@ -128,18 +129,19 @@
             text-align: center;
             border: 2px solid var(--primary-color); 
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15); 
-            z-index: 99999;
+            z-index: 9999999;
             display: none; 
             direction: rtl; 
             backdrop-filter: blur(8px);
         }
+ 
 
         @keyframes pulseTimer { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .toast { position: fixed; bottom: 20px; right: 20px; background: #ef4444; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; display: none; z-index: 1000000; }
         .placeholder-box { text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); width: 100%; max-width: 700px; border-top: 6px solid #94a3b8; }
         .placeholder-box i { font-size: 60px; color: #cbd5e1; margin-bottom: 15px; }
 
-                @media (max-width: 768px) {
+              @media (max-width: 768px) {
             .app-wrapper { flex-direction: column; }
             .sidebar { width: 100%; padding: 15px; flex-direction: row; flex-wrap: wrap; box-sizing: border-box; }
             .student-profile, .sidebar-logo { width: 100%; }
@@ -148,20 +150,15 @@
             
             /* 🚀 الإصلاح الفولاذي لعداد الموبايل */
             .timer-display { 
-                top: 10px !important; 
-                left: 10px !important; 
-                right: auto !important; 
+                top: 15px !important; 
+                right: 15px !important; /* 🚀 إجباره في اليمين */
+                left: auto !important; 
                 transform: none !important; 
-                font-size: 12px !important; 
-                padding: 6px 12px !important; 
-                width: auto !important; 
-                max-width: 90vw !important; 
-                white-space: nowrap !important; 
-                border-radius: 8px !important;
-                z-index: 9999999 !important; 
+                font-size: 14px !important; 
+                padding: 6px 15px !important; 
+                width: max-content !important; /* عشان ياخد مساحته براحته */
+                white-space: nowrap !important;
             }
-            
-            /* 🚀 زق الامتحان لتحت شوية عشان العداد ميغطيش على العنوان */
             .exam-container {
                 margin-top: 60px !important; 
             }
