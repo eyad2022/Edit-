@@ -578,7 +578,6 @@ async function handleSignupCloud() {
     try {
         showToast('جاري التحقق من الحساب...', 'info');
 
-        // 1. فحص بصمة الجهاز
         const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
         const deviceDoc = await deviceRegRef.get();
         if (deviceDoc.exists) {
@@ -587,7 +586,6 @@ async function handleSignupCloud() {
 
         const emailLower = email.toLowerCase();
         
-        // 🚀 2. استعادة الاشتراك القديم (إن وجد)
         const backupDoc = await db.collection('device_registry').doc('backup_' + emailLower).get();
         const emailCheck = await db.collection('device_registry').where('email', '==', emailLower).get();
         
@@ -595,17 +593,17 @@ async function handleSignupCloud() {
         let assignedTrialStart = null;
 
         if (backupDoc.exists) {
-            // مستخدم قديم له نسخة احتياطية (نرجعله اشتراكه بالظبط)
             assignedVipExpiry = backupDoc.data().vipExpiry;
+            // 🚀 تنظيف الكود القديم لو كان واخد حظر بالغلط
+            if (assignedVipExpiry === 'expired') assignedVipExpiry = null; 
             assignedTrialStart = backupDoc.data().trialStart;
             showToast('أهلاً بعودتك! جاري استعادة تفاصيل اشتراكك...', 'info');
         } else if (!emailCheck.empty) {
-            // مستخدم قديم بس ملوش نسخة (استهلك فترته قبل التحديث الجديد)
-            assignedVipExpiry = 'expired';
+            // 🚀 التعديل هنا: نخليه null بدل 'expired' عشان ميعتبرهوش محظور من الإدارة
+            assignedVipExpiry = null; 
             assignedTrialStart = -1;
-            showToast('أهلاً بعودتك! لا توجد فترة مجانية متاحة لهذا الإيميل.', 'info');
+            showToast('أهلاً بعودتك! لقد استهلكت الفترة التجريبية مسبقاً.', 'info');
         } else {
-            // مستخدم جديد تماماً (ياخد 7 أيام)
             const timeData = await getSmartTime();
             assignedTrialStart = timeData.time || Date.now();
             assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
@@ -666,7 +664,6 @@ async function handleGoogleSignIn() {
         const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
-            // 🚀 استعادة الاشتراك من حساب جوجل
             const backupDoc = await db.collection('device_registry').doc('backup_' + emailLower).get();
             const emailCheck = await db.collection('device_registry').where('email', '==', emailLower).get();
             
@@ -675,9 +672,11 @@ async function handleGoogleSignIn() {
 
             if (backupDoc.exists) {
                 assignedVipExpiry = backupDoc.data().vipExpiry;
+                if (assignedVipExpiry === 'expired') assignedVipExpiry = null; 
                 assignedTrialStart = backupDoc.data().trialStart;
             } else if (!emailCheck.empty) {
-                assignedVipExpiry = 'expired';
+                // 🚀 التعديل هنا: null بدل 'expired'
+                assignedVipExpiry = null; 
                 assignedTrialStart = -1;
             } else {
                 const timeData = await getSmartTime();
@@ -710,6 +709,7 @@ async function handleGoogleSignIn() {
         }
     }
 }
+
 
 // ==================================================
 // تفعيل زر Enter لتسجيل الدخول وإنشاء الحساب
