@@ -1026,47 +1026,88 @@ async function generateDynamicCodes() {
         document.getElementById('generatedCodesOutput').value = 'خطأ سحابي: ' + e.message;
     }
 }
-
 // 🛑 نظام الإدارة الفائق (Super Admin Actions)
 window.executeAdminAction = async function (action) {
-    const targetEmail = document.getElementById('adminTargetEmail').value.trim();
+    const targetEmail = document.getElementById('adminTargetEmail').value.trim().toLowerCase();
     if (!targetEmail) return showToast('يرجى إدخال بريد المستخدم أولاً!', 'error');
 
     try {
         showToast('جاري تنفيذ الإجراء سحابياً...', 'info');
+        
+        // 1. البحث في جدول المستخدمين
         const usersRef = db.collection('users');
         const qSnap = await usersRef.where('email', '==', targetEmail).get();
-
-        if (qSnap.empty) return showToast('هذا البريد غير موجود في قاعدة بيانات المستخدمين!', 'error');
-
-        const userDoc = qSnap.docs[0];
-        const userData = userDoc.data();
+        
+        // 2. 🚀 تجهيز مؤشر الخزنة الاحتياطية (لضربها أو تحديثها)
+        const backupRef = db.collection('device_registry').doc('backup_' + targetEmail);
 
         if (action === 'cancel_vip') {
-            await userDoc.ref.update({ vipExpiry: 'expired' });
-            showToast('تم إلغاء اشتراك الـ VIP للمستخدم بنجاح', 'success');
+            let updated = false;
+            
+            // تحديث جميع الحسابات المرتبطة بهذا الإيميل 
+            if (!qSnap.empty) {
+                for (let doc of qSnap.docs) {
+                    await doc.ref.update({ vipExpiry: 'expired', trialStart: -1 });
+                    updated = true;
+                }
+            }
+            
+            // 🚀 ضرب الخزنة عشان ميرجعش الاشتراك لو عمل ريفريش
+            const backupDoc = await backupRef.get();
+            if (backupDoc.exists) {
+                await backupRef.update({ vipExpiry: 'expired', trialStart: -1 });
+                updated = true;
+            }
+            
+            if (updated) {
+                showToast('✅ تم إلغاء اشتراك الـ VIP وضرب الخزنة بنجاح', 'success');
+            } else {
+                showToast('❌ هذا البريد غير موجود بالنظام', 'error');
+            }
+
         } else if (action === 'ban_user') {
-            await userDoc.ref.update({ banned: true, vipExpiry: 'expired' });
-            showToast('تم حظر المستخدم وطرده من النظام نهائياً', 'success');
+            if (!qSnap.empty) {
+                for (let doc of qSnap.docs) {
+                    await doc.ref.update({ banned: true, vipExpiry: 'expired', trialStart: -1 });
+                }
+            }
+            const backupDoc = await backupRef.get();
+            if (backupDoc.exists) {
+                await backupRef.update({ vipExpiry: 'expired', trialStart: -1 });
+            }
+            showToast('🚫 تم حظر المستخدم وطرده من النظام نهائياً', 'success');
+
         } else if (action === 'delete_user') {
-            const confirmDelete = confirm('⚠️ تحذير: هل أنت متأكد من مسح حساب هذا المستخدم نهائياً ليتمكن من التسجيل به كحساب جديد؟');
+            const confirmDelete = confirm('⚠️ تحذير: هل أنت متأكد من فرمتة هذا المستخدم ومسح خزنته وأجهزته نهائياً؟');
             if (!confirmDelete) return;
 
-            // فك ارتباط الأجهزة المرتبطة بهذا الحساب
-            if (userData.devices && Array.isArray(userData.devices)) {
-                for (let dId of userData.devices) {
-                    await db.collection('device_registry').doc(dId).delete();
+            // مسح الحساب والأجهزة المرتبطة به من جدول المستخدمين
+            if (!qSnap.empty) {
+                for (let doc of qSnap.docs) {
+                    const userData = doc.data();
+                    if (userData.devices && Array.isArray(userData.devices)) {
+                        for (let dId of userData.devices) {
+                            await db.collection('device_registry').doc(dId).delete().catch(e=>{});
+                        }
+                    }
+                    await doc.ref.delete();
                 }
             }
 
-            // مسح الحساب
-            await userDoc.ref.delete();
-            showToast('تم مسح الحساب وتحرير أجهزته بنجاح. (يمكنه التسجيل من جديد الآن)', 'success');
+            // 🚀 الأهم: مسح بصمة الإيميل من سجل الأجهزة عشان يقدر يسجل من جديد
+            const deviceSnap = await db.collection('device_registry').where('email', '==', targetEmail).get();
+            deviceSnap.forEach(doc => { doc.ref.delete(); });
+            
+            // 🚀 مسح الخزنة الاحتياطية نهائياً
+            await backupRef.delete().catch(e=>{});
+
+            showToast('🗑️ تم فرمتة المستخدم ومسح أجهزته وخزنته بنجاح!', 'success');
         }
     } catch (e) {
-        showToast('حدث خطأ أثناء التنفيذ: ' + e.message, 'error');
+        showToast('❌ حدث خطأ أثناء التنفيذ: ' + e.message, 'error');
     }
 };
+
 
 function proceedWithAction(actionType, param) {
     if (actionType === 'export') executeExport(param);
