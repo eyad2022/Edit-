@@ -4040,13 +4040,54 @@ function changePassword() {
     }
 }
 
-function deleteAccount() {
-    if (confirm('تحذير خطير: هل أنت متأكد من حذف حسابك نهائياً؟ سيتم مسح كل بياناتك ولن تتمكن من التراجع.')) {
-        firebase.auth().currentUser.delete()
-            .then(() => window.location.reload())
-            .catch(error => alert('لأسباب أمنية، يجب تسجيل الخروج ثم الدخول مجدداً قبل حذف الحساب.'));
+async function deleteAccount() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const confirmation = confirm("⚠️ تحذير: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح بياناتك، ولكن سيتم الاحتفاظ بالمدة المتبقية من اشتراكك (إن وجد) في حال قررت العودة لاحقاً بنفس الإيميل.");
+
+    if (confirmation) {
+        try {
+            showToast('جاري حفظ مدة الاشتراك وإغلاق الحساب...', 'info');
+
+            const userDocRef = db.collection('users').doc(user.uid);
+            const userDoc = await userDocRef.get();
+            
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                // 🚀 السحر هنا: أخذ نسخة احتياطية من الاشتراك قبل الحذف
+                await db.collection('device_registry').doc('backup_' + user.email.toLowerCase()).set({
+                    email: user.email.toLowerCase(),
+                    vipExpiry: userData.vipExpiry || null,
+                    trialStart: userData.trialStart || null,
+                    backupDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            // 1. مسح بيانات المستخدم من قاعدة البيانات (users)
+            await userDocRef.delete();
+
+            // 2. حذف الحساب من نظام المصادقة (Auth)
+            await user.delete();
+
+            // 3. محو آثار المستخدم من المتصفح بالكامل
+            if (typeof handleLogoutCloud === 'function') {
+                handleLogoutCloud();
+            } else {
+                window.location.reload();
+            }
+
+            showToast('✅ تم حذف الحساب بنجاح. اشتراكك محفوظ وتقدر ترجع بيه في أي وقت.', 'success');
+        } catch (error) {
+            if (error.code === 'auth/requires-recent-login') {
+                showToast('⚠️ لدواعي أمنية، يرجى تسجيل الخروج ثم الدخول مرة أخرى قبل محاولة الحذف.', 'error');
+            } else {
+                showToast('❌ حدث خطأ أثناء حذف الحساب: ' + error.message, 'error');
+            }
+        }
     }
 }
+
 
 function showStatsModal() {
     const modal = document.getElementById('adminPanelModal');
