@@ -398,21 +398,63 @@ auth.onAuthStateChanged(async (user) => {
                         localStorage.removeItem('elalfey_vip_expiry');
                     }
 
-                    // ربط تاريخ الانتهاء بالبطاقة الذكية الجديدة
+                                        // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي الحي
                     const expireEl = document.getElementById('vipEndDateDisplay');
+                    if (window.vipCountdownInterval) clearInterval(window.vipCountdownInterval); // تنظيف العداد القديم لمنع التداخل
+
                     if (expireEl) {
                         if (liveData.vipExpiry === 'lifetime') {
-                            expireEl.innerText = "نسخة مدى الحياة";
-                            expireEl.style.color = "#10b981";
+                            expireEl.innerHTML = `<div style="font-weight: 900; color: #10b981; margin-top: 5px;">نسخة مدى الحياة 👑</div>`;
                         } else if (liveData.vipExpiry && liveData.vipExpiry !== 'expired') {
                             let dateObj = new Date(liveData.vipExpiry);
-                            expireEl.innerText = dateObj.toLocaleDateString('ar-EG');
-                            expireEl.style.color = "#0f172a";
+                            
+                            // تهيئة الشكل الأساسي (التاريخ فوق والعداد تحته بتصميم زجاجي)
+                            expireEl.innerHTML = `
+                                <div style="font-size: 14px; font-weight: 900; color: #0f172a;">${dateObj.toLocaleDateString('ar-EG')}</div>
+                                <div id="vipCountdownTimer" style="font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: bold; background: #fee2e2; padding: 3px 8px; border-radius: 6px; display: inline-block; direction: rtl; border: 1px solid #fca5a5;">جاري الحساب...</div>
+                            `;
+                            
+                            // جلب الوقت السليم للبدء منه
+                            let safeStartTime = parseInt(localStorage.getItem('mh_last_valid_time')) || Date.now();
+                            let diff = liveData.vipExpiry - safeStartTime;
+                            
+                            // تشغيل العداد الحي (محصن ضد تغيير ساعة الموبايل أثناء الفتح)
+                            window.vipCountdownInterval = setInterval(() => {
+                                diff -= 1000; // النقصان البرمجي المستقل
+                                
+                                let timerDisplay = document.getElementById('vipCountdownTimer');
+                                if (!timerDisplay) {
+                                    clearInterval(window.vipCountdownInterval);
+                                    return;
+                                }
+
+                                if (diff <= 0) {
+                                    clearInterval(window.vipCountdownInterval);
+                                    timerDisplay.innerText = "انتهى الاشتراك!";
+                                    timerDisplay.style.background = "#fecaca";
+                                    timerDisplay.style.color = "#b91c1c";
+                                } else {
+                                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                                    
+                                    let timeStr = "";
+                                    if (days > 0) timeStr += `${days} يوم و `;
+                                    
+                                    let hStr = hours < 10 && days === 0 ? '0' + hours : hours;
+                                    let mStr = minutes < 10 ? '0' + minutes : minutes;
+                                    let sStr = seconds < 10 ? '0' + seconds : seconds;
+                                    
+                                    timerDisplay.innerText = `⏳ ${timeStr}${hStr}:${mStr}:${sStr}`;
+                                }
+                            }, 1000);
+                            
                         } else {
-                            expireEl.innerText = "منتهي";
-                            expireEl.style.color = "#ef4444";
+                            expireEl.innerHTML = `<div style="font-weight: 900; color: #ef4444; margin-top: 5px;">منتهي ❌</div>`;
                         }
                     }
+
 
                     // ربط الأجهزة النشطة بالبطاقة الذكية الجديدة
                     let liveDevices = liveData.devices || [];
