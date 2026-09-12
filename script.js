@@ -568,11 +568,13 @@ async function handleSignupCloud() {
             assignedVipExpiry = null; 
             assignedTrialStart = -1;
             showToast('أهلاً بعودتك! لقد استهلكت الفترة التجريبية مسبقاً.', 'info');
-        } else {
+            } else {
             const timeData = await getSmartTime();
             assignedTrialStart = timeData.time || Date.now();
             assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
+            showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success'); // 🚀 الإشعار رجع هنا
         }
+
 
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
@@ -648,7 +650,9 @@ async function handleGoogleSignIn() {
                 const timeData = await getSmartTime();
                 assignedTrialStart = timeData.time || Date.now();
                 assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
+                showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success'); // 🚀 الإشعار رجع هنا
             }
+
 
             await docRef.set({
                 name: user.displayName || "مستخدم جوجل",
