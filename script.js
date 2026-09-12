@@ -302,11 +302,10 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         const docRef = db.collection('users').doc(user.uid);
 
-        // 🚀 حذفنا كود التفعيل التجريبي من هنا لأنه بيعمل (Race Condition) مع دالة التسجيل
-        // دوال التسجيل وجوجل هما اللي بقوا مسؤولين عن منح الـ 7 أيام أو استعادة الخزنة بالكامل!
+        // 🚀 حذفنا كود التفعيل التجريبي من هنا نهائياً لأنه بيعمل تعارض (Race Condition)
+        // دالة إنشاء الحساب ودالة جوجل هما بس اللي بقوا مسؤولين عن منح الـ 7 أيام أو استعادة الخزنة!
 
         // === الاستماع الحي للتغيرات (Live Snapshot) ===
-        // بمجرد ما دالة التسجيل تنشئ الملف وتظبط الاشتراك، المراقب ده هيقراه فوراً ويشغل الواجهة
         if (sessionListener) sessionListener();
         sessionListener = docRef.onSnapshot((snap) => {
             if (snap.exists) {
@@ -457,6 +456,7 @@ auth.onAuthStateChanged(async (user) => {
         localStorage.removeItem('elalfey_vip_expiry');
     }
 });
+
 
 
 // ==================================================
