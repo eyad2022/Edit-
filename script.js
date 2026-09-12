@@ -303,9 +303,11 @@ auth.onAuthStateChanged(async (user) => {
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
 
-        // === 1. النظام السحابي: منح 7 أيام للحسابات الجديدة ===
+                // === 1. النظام السحابي: منح 7 أيام للحسابات الجديدة (محمية بوقت السيرفر) ===
         if (!docSnap.exists || !docSnap.data().trialStart) {
-            const trialStart = Date.now();
+            const timeData = await getSmartTime();
+            // لو فشل يجيب وقت السيرفر هياخد وقت الجهاز مؤقتاً، بس كده كده وقت الجهاز هيتقفش بعدين لو حاول يتلاعب
+            const trialStart = timeData.time || Date.now(); 
             const trialDays = 7;
             const trialExpiryDate = trialStart + (trialDays * 24 * 60 * 60 * 1000);
 
@@ -313,7 +315,8 @@ auth.onAuthStateChanged(async (user) => {
                 email: user.email,
                 trialStart: trialStart,
                 vipExpiry: trialExpiryDate, // نعطيه 7 أيام كأنه VIP
-                joinDate: Date.now()
+                // 🚀 تسجيل الانضمام بوقت سيرفرات جوجل الموثوقة لمنع التلاعب النهائي
+                joinDate: firebase.firestore.FieldValue.serverTimestamp() 
             }, { merge: true });
 
             showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success');
@@ -398,7 +401,7 @@ auth.onAuthStateChanged(async (user) => {
                         localStorage.removeItem('elalfey_vip_expiry');
                     }
 
-                                        // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي الحي
+                                                            // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي (يعتمد على السيرفر فقط)
                     const expireEl = document.getElementById('vipEndDateDisplay');
                     if (window.vipCountdownInterval) clearInterval(window.vipCountdownInterval); // تنظيف العداد القديم لمنع التداخل
 
@@ -408,52 +411,55 @@ auth.onAuthStateChanged(async (user) => {
                         } else if (liveData.vipExpiry && liveData.vipExpiry !== 'expired') {
                             let dateObj = new Date(liveData.vipExpiry);
                             
-                            // تهيئة الشكل الأساسي (التاريخ فوق والعداد تحته بتصميم زجاجي)
+                            // واجهة تحميل سريعة لحد ما السيرفر يرد بالوقت الحقيقي
                             expireEl.innerHTML = `
                                 <div style="font-size: 14px; font-weight: 900; color: #0f172a;">${dateObj.toLocaleDateString('ar-EG')}</div>
-                                <div id="vipCountdownTimer" style="font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: bold; background: #fee2e2; padding: 3px 8px; border-radius: 6px; display: inline-block; direction: rtl; border: 1px solid #fca5a5;">جاري الحساب...</div>
+                                <div id="vipCountdownTimer" style="font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: bold; background: #fee2e2; padding: 3px 8px; border-radius: 6px; display: inline-block; direction: rtl; border: 1px solid #fca5a5;">جاري الاتصال بالسيرفر...</div>
                             `;
                             
-                            // جلب الوقت السليم للبدء منه
-                            let safeStartTime = parseInt(localStorage.getItem('mh_last_valid_time')) || Date.now();
-                            let diff = liveData.vipExpiry - safeStartTime;
-                            
-                            // تشغيل العداد الحي (محصن ضد تغيير ساعة الموبايل أثناء الفتح)
-                            window.vipCountdownInterval = setInterval(() => {
-                                diff -= 1000; // النقصان البرمجي المستقل
+                            // 🚀 جلب الوقت الفعلي من السيرفر قبل بدأ الحساب
+                            getSmartTime().then((timeData) => {
+                                // استخدام وقت السيرفر الآمن كنقطة بداية
+                                let actualTime = timeData.time; 
+                                let diff = liveData.vipExpiry - actualTime;
                                 
-                                let timerDisplay = document.getElementById('vipCountdownTimer');
-                                if (!timerDisplay) {
-                                    clearInterval(window.vipCountdownInterval);
-                                    return;
-                                }
+                                window.vipCountdownInterval = setInterval(() => {
+                                    diff -= 1000; // النقصان البرمجي المستقل
+                                    
+                                    let timerDisplay = document.getElementById('vipCountdownTimer');
+                                    if (!timerDisplay) {
+                                        clearInterval(window.vipCountdownInterval);
+                                        return;
+                                    }
 
-                                if (diff <= 0) {
-                                    clearInterval(window.vipCountdownInterval);
-                                    timerDisplay.innerText = "انتهى الاشتراك!";
-                                    timerDisplay.style.background = "#fecaca";
-                                    timerDisplay.style.color = "#b91c1c";
-                                } else {
-                                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                                    
-                                    let timeStr = "";
-                                    if (days > 0) timeStr += `${days} يوم و `;
-                                    
-                                    let hStr = hours < 10 && days === 0 ? '0' + hours : hours;
-                                    let mStr = minutes < 10 ? '0' + minutes : minutes;
-                                    let sStr = seconds < 10 ? '0' + seconds : seconds;
-                                    
-                                    timerDisplay.innerText = `⏳ ${timeStr}${hStr}:${mStr}:${sStr}`;
-                                }
-                            }, 1000);
+                                    if (diff <= 0) {
+                                        clearInterval(window.vipCountdownInterval);
+                                        timerDisplay.innerText = "انتهى الاشتراك!";
+                                        timerDisplay.style.background = "#fecaca";
+                                        timerDisplay.style.color = "#b91c1c";
+                                    } else {
+                                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                                        
+                                        let timeStr = "";
+                                        if (days > 0) timeStr += `${days} يوم و `;
+                                        
+                                        let hStr = hours < 10 && days === 0 ? '0' + hours : hours;
+                                        let mStr = minutes < 10 ? '0' + minutes : minutes;
+                                        let sStr = seconds < 10 ? '0' + seconds : seconds;
+                                        
+                                        timerDisplay.innerText = `⏳ متبقي: ${timeStr}${hStr}:${mStr}:${sStr}`;
+                                    }
+                                }, 1000);
+                            });
                             
                         } else {
                             expireEl.innerHTML = `<div style="font-weight: 900; color: #ef4444; margin-top: 5px;">منتهي ❌</div>`;
                         }
                     }
+
 
 
                     // ربط الأجهزة النشطة بالبطاقة الذكية الجديدة
