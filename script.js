@@ -300,182 +300,147 @@ let sessionListener = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-               const docRef = db.collection('users').doc(user.uid);
-        let docSnap = await docRef.get(); // 🚀 خليناها let عشان نقدر نحدثها
+        const docRef = db.collection('users').doc(user.uid);
 
-        // === 1. النظام السحابي: الدالة دي هتشتغل للحسابات الجديدة (اللي ملهاش ملف نهائي) ومش هتلمس القديم ===
-        if (!docSnap.exists) {
-            const timeData = await getSmartTime();
-            const trialStart = timeData.time || Date.now(); 
-            const trialDays = 7;
-            const trialExpiryDate = trialStart + (trialDays * 24 * 60 * 60 * 1000);
+        // 🚀 حذفنا كود التفعيل التجريبي من هنا لأنه بيعمل (Race Condition) مع دالة التسجيل
+        // دوال التسجيل وجوجل هما اللي بقوا مسؤولين عن منح الـ 7 أيام أو استعادة الخزنة بالكامل!
 
-            await docRef.set({
-                email: user.email,
-                name: user.displayName || "مستخدم",
-                trialStart: trialStart,
-                vipExpiry: trialExpiryDate,
-                joinDate: firebase.firestore.FieldValue.serverTimestamp() 
-            }, { merge: true });
+        // === الاستماع الحي للتغيرات (Live Snapshot) ===
+        // بمجرد ما دالة التسجيل تنشئ الملف وتظبط الاشتراك، المراقب ده هيقراه فوراً ويشغل الواجهة
+        if (sessionListener) sessionListener();
+        sessionListener = docRef.onSnapshot((snap) => {
+            if (snap.exists) {
+                let liveData = snap.data();
+                let devices = liveData.devices || [];
 
-            docSnap = await docRef.get(); // 🚀 تحديث الداتا عشان باقي الكود تحته يشتغل عادي
-            showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success');
-        }
- 
-
-
-        if (docSnap.exists) {
-            let data = docSnap.data();
-            let devices = data.devices || [];
-
-            // === 2. التحقق من عدد الأجهزة (3 أجهزة كحد أقصى) ===
-            if (!devices.includes(localDeviceId)) {
-                if (devices.length >= 3) {
-                    let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (3 أجهزة).\n\n- اضغط [إلغاء/Cancel] للذهاب وتسجيل الخروج يدوياً من أحد أجهزتك.\n- اضغط [موافق/OK] لتصفير الأجهزة وطرد جميع الأجهزة الأخرى إجبارياً الآن.");
-                    if (resetConfirm) {
-                        devices = [localDeviceId];
-                        await docRef.update({ devices: devices });
-                    } else {
-                        auth.signOut();
-                        return;
-                    }
-                } else {
-                    devices.push(localDeviceId);
-                    await docRef.update({ devices: devices });
-                }
-            }
-
-            // 🟢 التعديل الأول: إظهار الواجهة المستقبلية وحقن البيانات فيها 🟢
-            const futuristicProfile = document.querySelector('.f-profile-wrapper');
-            const guestNav = document.getElementById('guestNavButtons'); // أزرار (تسجيل / إنشاء حساب)
-
-            if (futuristicProfile) futuristicProfile.style.display = 'block';
-            if (guestNav) guestNav.style.display = 'none';
-
-            if (document.getElementById('userNameDisplay')) {
-                document.getElementById('userNameDisplay').innerText = data.name || "مستخدم";
-            }
-            if (document.getElementById('userEmailDisplay')) {
-                document.getElementById('userEmailDisplay').innerText = user.email;
-            }
-            // ---------------------------------------------------------
-
-            if (user.email === 'ayadmsd67@gmail.com') {
-                document.getElementById('adminPanelBtn').style.display = 'inline-flex'; // تم التحديث ليتناسب مع الزر الجديد
-            } else {
-                document.getElementById('adminPanelBtn').style.display = 'none';
-            }
-
-            if (data.history) loadHistoryUI(data.history);
-
-            // تحديث الصلاحية محلياً من السحابة
-            if (data.vipExpiry) localStorage.setItem('elalfey_vip_expiry', data.vipExpiry);
-
-            // === 4. الاستماع الحي للتغيرات (Live Snapshot) ===
-            if (sessionListener) sessionListener();
-            sessionListener = docRef.onSnapshot((snap) => {
-                if (snap.exists) {
-                    let liveData = snap.data();
-
-                    if (liveData.deleted) {
-                        showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
-                        handleLogoutCloud();
-                        return;
-                    }
-                    if (liveData.banned) {
-                        showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
-                        handleLogoutCloud();
-                        return;
-                    }
-
-                    // المزامنة الأمنية لمنع التلاعب عبر المتصفح
-                    let localVipExpiry = localStorage.getItem('elalfey_vip_expiry');
-                    if (liveData.vipExpiry === 'expired') {
-                        if (localVipExpiry) {
-                            localStorage.removeItem('elalfey_vip_expiry');
-                            showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من قبل الإدارة!', 'error');
-                        }
-                    } else if (liveData.vipExpiry) {
-                        if (localVipExpiry !== String(liveData.vipExpiry)) {
-                            localStorage.setItem('elalfey_vip_expiry', liveData.vipExpiry);
-                        }
-                    } else if (!liveData.vipExpiry && localVipExpiry) {
-                        localStorage.removeItem('elalfey_vip_expiry');
-                    }
-
-                    // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي (يعتمد على السيرفر فقط)
-                    const expireEl = document.getElementById('vipEndDateDisplay');
-                    if (window.vipCountdownInterval) clearInterval(window.vipCountdownInterval); // تنظيف العداد القديم لمنع التداخل
-
-                    if (expireEl) {
-                        if (liveData.vipExpiry === 'lifetime') {
-                            expireEl.innerHTML = `<div style="font-weight: 900; color: #10b981; margin-top: 5px;">نسخة مدى الحياة 👑</div>`;
-                        } else if (liveData.vipExpiry && liveData.vipExpiry !== 'expired') {
-                            let dateObj = new Date(liveData.vipExpiry);
-                            
-                            // واجهة تحميل سريعة لحد ما السيرفر يرد بالوقت الحقيقي
-                            expireEl.innerHTML = `
-                                <div style="font-size: 14px; font-weight: 900; color: #0f172a;">${dateObj.toLocaleDateString('ar-EG')}</div>
-                                <div id="vipCountdownTimer" style="font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: bold; background: #fee2e2; padding: 3px 8px; border-radius: 6px; display: inline-block; direction: rtl; border: 1px solid #fca5a5;">جاري الاتصال بالسيرفر...</div>
-                            `;
-                            
-                            // 🚀 جلب الوقت الفعلي من السيرفر قبل بدأ الحساب
-                            getSmartTime().then((timeData) => {
-                                // استخدام وقت السيرفر الآمن كنقطة بداية
-                                let actualTime = timeData.time; 
-                                let diff = liveData.vipExpiry - actualTime;
-                                
-                                window.vipCountdownInterval = setInterval(() => {
-                                    diff -= 1000; // النقصان البرمجي المستقل
-                                    
-                                    let timerDisplay = document.getElementById('vipCountdownTimer');
-                                    if (!timerDisplay) {
-                                        clearInterval(window.vipCountdownInterval);
-                                        return;
-                                    }
-
-                                    if (diff <= 0) {
-                                        clearInterval(window.vipCountdownInterval);
-                                        timerDisplay.innerText = "انتهى الاشتراك!";
-                                        timerDisplay.style.background = "#fecaca";
-                                        timerDisplay.style.color = "#b91c1c";
-                                    } else {
-                                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                                        
-                                        let timeStr = "";
-                                        if (days > 0) timeStr += `${days} يوم و `;
-                                        
-                                        let hStr = hours < 10 && days === 0 ? '0' + hours : hours;
-                                        let mStr = minutes < 10 ? '0' + minutes : minutes;
-                                        let sStr = seconds < 10 ? '0' + seconds : seconds;
-                                        
-                                        timerDisplay.innerText = `⏳ متبقي: ${timeStr}${hStr}:${mStr}:${sStr}`;
-                                    }
-                                }, 1000);
-                            });
-                            
+                // === التحقق من عدد الأجهزة (3 أجهزة كحد أقصى) ===
+                if (!devices.includes(localDeviceId)) {
+                    if (devices.length >= 3) {
+                        let resetConfirm = confirm("⚠️ عذراً، لقد وصلت للحد الأقصى (3 أجهزة).\n\n- اضغط [إلغاء/Cancel] للذهاب وتسجيل الخروج يدوياً من أحد أجهزتك.\n- اضغط [موافق/OK] لتصفير الأجهزة وطرد جميع الأجهزة الأخرى إجبارياً الآن.");
+                        if (resetConfirm) {
+                            devices = [localDeviceId];
+                            docRef.update({ devices: devices });
                         } else {
-                            expireEl.innerHTML = `<div style="font-weight: 900; color: #ef4444; margin-top: 5px;">منتهي ❌</div>`;
+                            auth.signOut();
+                            return;
                         }
-                    }
-
-                    // ربط الأجهزة النشطة بالبطاقة الذكية الجديدة
-                    let liveDevices = liveData.devices || [];
-                    const countEl = document.getElementById('activeDevicesDisplay');
-                    if (countEl) countEl.innerText = liveDevices.length + " / 3";
-
-                    if (!liveDevices.includes(localDeviceId)) {
-                        showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
-                        handleLogoutCloud();
+                    } else {
+                        devices.push(localDeviceId);
+                        docRef.update({ devices: devices });
                     }
                 }
-            });
-        }
+
+                // 🟢 إظهار الواجهة المستقبلية وحقن البيانات فيها 🟢
+                const futuristicProfile = document.querySelector('.f-profile-wrapper');
+                const guestNav = document.getElementById('guestNavButtons');
+
+                if (futuristicProfile) futuristicProfile.style.display = 'block';
+                if (guestNav) guestNav.style.display = 'none';
+
+                if (document.getElementById('userNameDisplay')) {
+                    document.getElementById('userNameDisplay').innerText = liveData.name || "مستخدم";
+                }
+                if (document.getElementById('userEmailDisplay')) {
+                    document.getElementById('userEmailDisplay').innerText = user.email;
+                }
+                
+                if (user.email === 'ayadmsd67@gmail.com') {
+                    document.getElementById('adminPanelBtn').style.display = 'inline-flex';
+                } else {
+                    document.getElementById('adminPanelBtn').style.display = 'none';
+                }
+
+                if (liveData.history) loadHistoryUI(liveData.history);
+
+                if (liveData.deleted) {
+                    showToast('🗑️ تم إغلاق وحذف حسابك من قبل الإدارة!', 'error');
+                    handleLogoutCloud();
+                    return;
+                }
+                if (liveData.banned) {
+                    showToast('🚫 تم حظر حسابك من النظام بواسطة الإدارة!', 'error');
+                    handleLogoutCloud();
+                    return;
+                }
+
+                let localVipExpiry = localStorage.getItem('elalfey_vip_expiry');
+                if (liveData.vipExpiry === 'expired') {
+                    if (localVipExpiry) {
+                        localStorage.removeItem('elalfey_vip_expiry');
+                        showToast('⚠️ تم إنهاء اشتراك VIP الخاص بك من الإدارة!', 'error');
+                    }
+                } else if (liveData.vipExpiry) {
+                    if (localVipExpiry !== String(liveData.vipExpiry)) {
+                        localStorage.setItem('elalfey_vip_expiry', liveData.vipExpiry);
+                    }
+                } else if (!liveData.vipExpiry && localVipExpiry) {
+                    localStorage.removeItem('elalfey_vip_expiry');
+                }
+
+                // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي
+                const expireEl = document.getElementById('vipEndDateDisplay');
+                if (window.vipCountdownInterval) clearInterval(window.vipCountdownInterval);
+
+                if (expireEl) {
+                    if (liveData.vipExpiry === 'lifetime') {
+                        expireEl.innerHTML = `<div style="font-weight: 900; color: #10b981; margin-top: 5px;">نسخة مدى الحياة 👑</div>`;
+                    } else if (liveData.vipExpiry && liveData.vipExpiry !== 'expired') {
+                        let dateObj = new Date(liveData.vipExpiry);
+                        expireEl.innerHTML = `
+                            <div style="font-size: 14px; font-weight: 900; color: #0f172a;">${dateObj.toLocaleDateString('ar-EG')}</div>
+                            <div id="vipCountdownTimer" style="font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: bold; background: #fee2e2; padding: 3px 8px; border-radius: 6px; display: inline-block; direction: rtl; border: 1px solid #fca5a5;">جاري الاتصال بالسيرفر...</div>
+                        `;
+                        
+                        getSmartTime().then((timeData) => {
+                            let actualTime = timeData.time; 
+                            let diff = liveData.vipExpiry - actualTime;
+                            
+                            window.vipCountdownInterval = setInterval(() => {
+                                diff -= 1000;
+                                let timerDisplay = document.getElementById('vipCountdownTimer');
+                                if (!timerDisplay) {
+                                    clearInterval(window.vipCountdownInterval);
+                                    return;
+                                }
+
+                                if (diff <= 0) {
+                                    clearInterval(window.vipCountdownInterval);
+                                    timerDisplay.innerText = "انتهى الاشتراك!";
+                                    timerDisplay.style.background = "#fecaca";
+                                    timerDisplay.style.color = "#b91c1c";
+                                } else {
+                                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                                    
+                                    let timeStr = "";
+                                    if (days > 0) timeStr += `${days} يوم و `;
+                                    
+                                    let hStr = hours < 10 && days === 0 ? '0' + hours : hours;
+                                    let mStr = minutes < 10 ? '0' + minutes : minutes;
+                                    let sStr = seconds < 10 ? '0' + seconds : seconds;
+                                    
+                                    timerDisplay.innerText = `⏳ متبقي: ${timeStr}${hStr}:${mStr}:${sStr}`;
+                                }
+                            }, 1000);
+                        });
+                    } else {
+                        expireEl.innerHTML = `<div style="font-weight: 900; color: #ef4444; margin-top: 5px;">منتهي ❌</div>`;
+                    }
+                }
+
+                const countEl = document.getElementById('activeDevicesDisplay');
+                if (countEl) countEl.innerText = devices.length + " / 3";
+
+                if (!devices.includes(localDeviceId)) {
+                    showToast('⚠️ تم تسجيل خروجك إجبارياً لتسجيل الدخول من جهاز آخر!', 'error');
+                    handleLogoutCloud();
+                }
+            }
+        });
     } else {
-        // === 5. حالة تسجيل الخروج ===
+        // === حالة تسجيل الخروج ===
         if (sessionListener) {
             sessionListener();
             sessionListener = null;
@@ -483,18 +448,16 @@ auth.onAuthStateChanged(async (user) => {
 
         document.getElementById('adminPanelBtn').style.display = 'none';
 
-        // 🔴 التعديل الثاني: إخفاء الواجهة المستقبلية وإظهار أزرار الضيوف 🔴
         const futuristicProfile = document.querySelector('.f-profile-wrapper');
         const guestNav = document.getElementById('guestNavButtons');
 
         if (futuristicProfile) futuristicProfile.style.display = 'none';
         if (guestNav) guestNav.style.display = 'flex';
-        // ---------------------------------------------------------
 
-        // مسح صلاحية الـ VIP من المتصفح عند الخروج
         localStorage.removeItem('elalfey_vip_expiry');
     }
 });
+
 
 // ==================================================
 // التحكم في نوافذ تسجيل الدخول وإنشاء الحساب (للتصميم المبهر الجديد)
