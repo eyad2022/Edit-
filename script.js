@@ -302,9 +302,8 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
-
-                // === 1. النظام السحابي: منح 7 أيام للحسابات الجديدة (محمية بوقت السيرفر) ===
-        if (!docSnap.exists || !docSnap.data().trialStart) {
+        // === 1. النظام السحابي: منح 7 أيام للحسابات الجديدة (محمية بوقت السيرفر) ===
+        if (!docSnap.exists || docSnap.data().trialStart === undefined || docSnap.data().trialStart === null) {
             const timeData = await getSmartTime();
             // لو فشل يجيب وقت السيرفر هياخد وقت الجهاز مؤقتاً، بس كده كده وقت الجهاز هيتقفش بعدين لو حاول يتلاعب
             const trialStart = timeData.time || Date.now(); 
@@ -321,6 +320,7 @@ auth.onAuthStateChanged(async (user) => {
 
             showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success');
         }
+
 
         if (docSnap.exists) {
             let data = docSnap.data();
@@ -401,7 +401,7 @@ auth.onAuthStateChanged(async (user) => {
                         localStorage.removeItem('elalfey_vip_expiry');
                     }
 
-                                                            // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي (يعتمد على السيرفر فقط)
+                    // 🚀 ربط تاريخ الانتهاء بالبطاقة الذكية مع العداد التنازلي (يعتمد على السيرفر فقط)
                     const expireEl = document.getElementById('vipEndDateDisplay');
                     if (window.vipCountdownInterval) clearInterval(window.vipCountdownInterval); // تنظيف العداد القديم لمنع التداخل
 
@@ -459,8 +459,6 @@ auth.onAuthStateChanged(async (user) => {
                             expireEl.innerHTML = `<div style="font-weight: 900; color: #ef4444; margin-top: 5px;">منتهي ❌</div>`;
                         }
                     }
-
-
 
                     // ربط الأجهزة النشطة بالبطاقة الذكية الجديدة
                     let liveDevices = liveData.devices || [];
@@ -578,12 +576,39 @@ async function handleSignupCloud() {
     if (pass !== passConfirm) return showToast('❌ كلمتا المرور غير متطابقتين!', 'error');
 
     try {
-        showToast('جاري التحقق من صلاحية الجهاز...', 'info');
+        showToast('جاري التحقق من الحساب...', 'info');
 
+        // 1. فحص بصمة الجهاز
         const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
         const deviceDoc = await deviceRegRef.get();
         if (deviceDoc.exists) {
             return showToast('عذراً، لقد قمت بإنشاء حساب من هذا الجهاز مسبقاً! كل جهاز مسموح له بحساب واحد فقط.', 'error');
+        }
+
+        const emailLower = email.toLowerCase();
+        
+        // 🚀 2. استعادة الاشتراك القديم (إن وجد)
+        const backupDoc = await db.collection('device_registry').doc('backup_' + emailLower).get();
+        const emailCheck = await db.collection('device_registry').where('email', '==', emailLower).get();
+        
+        let assignedVipExpiry = null;
+        let assignedTrialStart = null;
+
+        if (backupDoc.exists) {
+            // مستخدم قديم له نسخة احتياطية (نرجعله اشتراكه بالظبط)
+            assignedVipExpiry = backupDoc.data().vipExpiry;
+            assignedTrialStart = backupDoc.data().trialStart;
+            showToast('أهلاً بعودتك! جاري استعادة تفاصيل اشتراكك...', 'info');
+        } else if (!emailCheck.empty) {
+            // مستخدم قديم بس ملوش نسخة (استهلك فترته قبل التحديث الجديد)
+            assignedVipExpiry = 'expired';
+            assignedTrialStart = -1;
+            showToast('أهلاً بعودتك! لا توجد فترة مجانية متاحة لهذا الإيميل.', 'info');
+        } else {
+            // مستخدم جديد تماماً (ياخد 7 أيام)
+            const timeData = await getSmartTime();
+            assignedTrialStart = timeData.time || Date.now();
+            assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
         }
 
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -591,46 +616,40 @@ async function handleSignupCloud() {
 
         try {
             await cred.user.sendEmailVerification();
-            showToast('📩 تم إصدار أمر إرسال رسالة التفعيل بنجاح!', 'success');
-        } catch (emailError) {
-            showToast('⚠️ خطأ في إرسال رسالة التفعيل: ' + emailError.message, 'error');
-        }
-
-        let existingTrial = localStorage.getItem('elalfey_trial_start');
+            showToast('📩 تم إرسال رسالة التفعيل بنجاح!', 'success');
+        } catch (emailError) {}
 
         await db.collection('users').doc(cred.user.uid).set({
-            name: name, // تم إضافة الاسم لقاعدة البيانات
-            email: email,
+            name: name,
+            email: emailLower,
             devices: [localDeviceId],
             history: [],
-            trialStart: existingTrial ? existingTrial : null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            trialStart: assignedTrialStart,
+            vipExpiry: assignedVipExpiry,
+            joinDate: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         await deviceRegRef.set({
-            email: email,
+            email: emailLower,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         await auth.signOut();
 
         setTimeout(() => {
-            showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك الإلكتروني والضغط على رابط التفعيل لتتمكن من الدخول.', 'success');
+            showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك وتفعيل الحساب.', 'success');
         }, 2000);
 
-        // تفريغ الحقول وإغلاق النافذة
         document.getElementById('signupPasswordInput').value = '';
         document.getElementById('signupConfirmPasswordInput').value = '';
         document.getElementById('authModal').style.display = 'none';
 
     } catch (e) {
-        if (e.code === 'auth/email-already-in-use') {
-            showToast('هذا البريد الإلكتروني مسجل لدينا بالفعل! يرجى تسجيل الدخول.', 'error');
-        } else {
-            showToast('خطأ: ' + e.message, 'error');
-        }
+        if (e.code === 'auth/email-already-in-use') showToast('هذا البريد مسجل لدينا! يرجى تسجيل الدخول.', 'error');
+        else showToast('خطأ: ' + e.message, 'error');
     }
 }
+
 // ==================================================
 // دالة تسجيل الدخول / إنشاء الحساب باستخدام جوجل
 // ==================================================
@@ -641,27 +660,43 @@ async function handleGoogleSignIn() {
         showToast('جاري الاتصال بحساب جوجل...', 'info');
         const result = await auth.signInWithPopup(provider);
         const user = result.user;
+        const emailLower = user.email.toLowerCase();
 
-        // التحقق مما إذا كان المستخدم جديداً في قاعدة البيانات
         const docRef = db.collection('users').doc(user.uid);
         const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
-            // إنشاء ملف للمستخدم الجديد
-            let existingTrial = localStorage.getItem('elalfey_trial_start');
+            // 🚀 استعادة الاشتراك من حساب جوجل
+            const backupDoc = await db.collection('device_registry').doc('backup_' + emailLower).get();
+            const emailCheck = await db.collection('device_registry').where('email', '==', emailLower).get();
+            
+            let assignedVipExpiry = null;
+            let assignedTrialStart = null;
+
+            if (backupDoc.exists) {
+                assignedVipExpiry = backupDoc.data().vipExpiry;
+                assignedTrialStart = backupDoc.data().trialStart;
+            } else if (!emailCheck.empty) {
+                assignedVipExpiry = 'expired';
+                assignedTrialStart = -1;
+            } else {
+                const timeData = await getSmartTime();
+                assignedTrialStart = timeData.time || Date.now();
+                assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
+            }
+
             await docRef.set({
                 name: user.displayName || "مستخدم جوجل",
-                email: user.email,
+                email: emailLower,
                 devices: [localDeviceId],
                 history: [],
-                trialStart: existingTrial ? existingTrial : null,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                trialStart: assignedTrialStart,
+                vipExpiry: assignedVipExpiry,
+                joinDate: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // تسجيل الجهاز لمنع تعدد الحسابات العشوائي
-            const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
-            await deviceRegRef.set({
-                email: user.email,
+            await db.collection('device_registry').doc(localDeviceId).set({
+                email: emailLower,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
@@ -670,13 +705,12 @@ async function handleGoogleSignIn() {
         document.getElementById('authModal').style.display = 'none';
 
     } catch (error) {
-        if (error.code === 'auth/popup-closed-by-user') {
-            showToast('تم إلغاء تسجيل الدخول', 'info');
-        } else {
+        if (error.code !== 'auth/popup-closed-by-user') {
             showToast('حدث خطأ أثناء الدخول بجوجل: ' + error.message, 'error');
         }
     }
 }
+
 // ==================================================
 // تفعيل زر Enter لتسجيل الدخول وإنشاء الحساب
 // ==================================================
@@ -755,32 +789,41 @@ async function handleLogoutCloud() {
         showToast('حدث خطأ أثناء الخروج: ' + error.message, 'error');
     }
 }
-
-// 🛑 دالة حذف الحساب نهائياً (مع نظام حرق الجهاز)
+// 🛑 دالة حذف الحساب نهائياً (مع حفظ الاشتراك للعودة)
 async function deleteUserAccount() {
     const user = auth.currentUser;
     if (!user) return;
 
-    // رسالة تنبيه صارمة تتناسب مع النظام الجديد
-    const confirmation = confirm("⚠️ تحذير نهائي: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح بياناتك نهائياً، ولن تتمكن من إنشاء حساب جديد من هذا الجهاز للأبد!");
+    const confirmation = confirm("⚠️ تحذير: هل أنت متأكد من رغبتك في حذف حسابك؟\nسيتم مسح بياناتك، ولكن سيتم الاحتفاظ بالمدة المتبقية من اشتراكك (إن وجد) في حال قررت العودة لاحقاً بنفس الإيميل.");
 
     if (confirmation) {
         try {
-            showToast('جاري مسح بياناتك وإغلاق الحساب...', 'info');
+            showToast('جاري حفظ مدة الاشتراك وإغلاق الحساب...', 'info');
+
+            const userDocRef = db.collection('users').doc(user.uid);
+            const userDoc = await userDocRef.get();
+            
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                // 🚀 السحر هنا: أخذ نسخة احتياطية من الاشتراك قبل الحذف
+                await db.collection('device_registry').doc('backup_' + user.email.toLowerCase()).set({
+                    email: user.email.toLowerCase(),
+                    vipExpiry: userData.vipExpiry || null,
+                    trialStart: userData.trialStart || null,
+                    backupDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
 
             // 1. مسح بيانات المستخدم من قاعدة البيانات (users)
-            await db.collection('users').doc(user.uid).delete();
+            await userDocRef.delete();
 
-            // 💡 التعديل الأمني: تم إزالة أمر حذف (device_registry) 
-            // لكي تظل بصمة الجهاز مسجلة في النظام ويُمنع من التسجيل مجدداً.
-
-            // 2. حذف الحساب من نظام المصادقة (Auth) ليصبح الإيميل حراً
+            // 2. حذف الحساب من نظام المصادقة (Auth)
             await user.delete();
 
             // 3. محو آثار المستخدم من المتصفح بالكامل
             handleLogoutCloud();
 
-            showToast('✅ تم حذف الحساب بنجاح. هذا الجهاز محظور الآن من التسجيل مجدداً.', 'success');
+            showToast('✅ تم حذف الحساب بنجاح. اشتراكك محفوظ وتقدر ترجع بيه في أي وقت.', 'success');
         } catch (error) {
             if (error.code === 'auth/requires-recent-login') {
                 showToast('لدواعي أمنية، يرجى تسجيل الخروج ثم الدخول مرة أخرى قبل محاولة الحذف.', 'error');
@@ -790,6 +833,7 @@ async function deleteUserAccount() {
         }
     }
 }
+
 
 function syncCurrentToHistory() {
     const user = auth.currentUser;
