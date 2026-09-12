@@ -300,26 +300,28 @@ let sessionListener = null;
 
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        const docRef = db.collection('users').doc(user.uid);
-        const docSnap = await docRef.get();
-        // === 1. النظام السحابي: منح 7 أيام للحسابات الجديدة (محمية بوقت السيرفر) ===
-        if (!docSnap.exists || docSnap.data().trialStart === undefined || docSnap.data().trialStart === null) {
+               const docRef = db.collection('users').doc(user.uid);
+        let docSnap = await docRef.get(); // 🚀 خليناها let عشان نقدر نحدثها
+
+        // === 1. النظام السحابي: الدالة دي هتشتغل للحسابات الجديدة (اللي ملهاش ملف نهائي) ومش هتلمس القديم ===
+        if (!docSnap.exists) {
             const timeData = await getSmartTime();
-            // لو فشل يجيب وقت السيرفر هياخد وقت الجهاز مؤقتاً، بس كده كده وقت الجهاز هيتقفش بعدين لو حاول يتلاعب
             const trialStart = timeData.time || Date.now(); 
             const trialDays = 7;
             const trialExpiryDate = trialStart + (trialDays * 24 * 60 * 60 * 1000);
 
             await docRef.set({
                 email: user.email,
+                name: user.displayName || "مستخدم",
                 trialStart: trialStart,
-                vipExpiry: trialExpiryDate, // نعطيه 7 أيام كأنه VIP
-                // 🚀 تسجيل الانضمام بوقت سيرفرات جوجل الموثوقة لمنع التلاعب النهائي
+                vipExpiry: trialExpiryDate,
                 joinDate: firebase.firestore.FieldValue.serverTimestamp() 
             }, { merge: true });
 
+            docSnap = await docRef.get(); // 🚀 تحديث الداتا عشان باقي الكود تحته يشتغل عادي
             showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success');
         }
+ 
 
 
         if (docSnap.exists) {
@@ -592,14 +594,14 @@ async function handleSignupCloud() {
         let assignedVipExpiry = null;
         let assignedTrialStart = null;
 
-        if (backupDoc.exists) {
+                if (backupDoc.exists) {
             assignedVipExpiry = backupDoc.data().vipExpiry;
-            // 🚀 تنظيف الكود القديم لو كان واخد حظر بالغلط
             if (assignedVipExpiry === 'expired') assignedVipExpiry = null; 
-            assignedTrialStart = backupDoc.data().trialStart;
+            // 🚀 السحر هنا: لو ملقتش فترته التجريبية هنحطها -1 عشان السيستم ميفتكروش جديد ويديله 7 أيام!
+            assignedTrialStart = backupDoc.data().trialStart || -1; 
             showToast('أهلاً بعودتك! جاري استعادة تفاصيل اشتراكك...', 'info');
         } else if (!emailCheck.empty) {
-            // 🚀 التعديل هنا: نخليه null بدل 'expired' عشان ميعتبرهوش محظور من الإدارة
+
             assignedVipExpiry = null; 
             assignedTrialStart = -1;
             showToast('أهلاً بعودتك! لقد استهلكت الفترة التجريبية مسبقاً.', 'info');
@@ -670,10 +672,11 @@ async function handleGoogleSignIn() {
             let assignedVipExpiry = null;
             let assignedTrialStart = null;
 
-            if (backupDoc.exists) {
+                        if (backupDoc.exists) {
                 assignedVipExpiry = backupDoc.data().vipExpiry;
                 if (assignedVipExpiry === 'expired') assignedVipExpiry = null; 
-                assignedTrialStart = backupDoc.data().trialStart;
+                // 🚀 نفس الحماية هنا لجوجل
+                assignedTrialStart = backupDoc.data().trialStart || -1; 
             } else if (!emailCheck.empty) {
                 // 🚀 التعديل هنا: null بدل 'expired'
                 assignedVipExpiry = null; 
