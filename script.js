@@ -541,7 +541,7 @@ async function handleSignupCloud() {
     if (pass !== passConfirm) return showToast('❌ كلمتا المرور غير متطابقتين!', 'error');
 
     try {
-        showToast('جاري التحقق من الحساب...', 'info');
+        showToast('جاري إنشاء الحساب...', 'info');
 
         const deviceRegRef = db.collection('device_registry').doc(localDeviceId);
         const deviceDoc = await deviceRegRef.get();
@@ -556,32 +556,29 @@ async function handleSignupCloud() {
         
         let assignedVipExpiry = null;
         let assignedTrialStart = null;
+        let isNewTrial = false; // 🚀 متغير لتأجيل رسالة الـ 7 أيام
 
-                if (backupDoc.exists) {
+        if (backupDoc.exists) {
             assignedVipExpiry = backupDoc.data().vipExpiry;
             if (assignedVipExpiry === 'expired') assignedVipExpiry = null; 
-            // 🚀 السحر هنا: لو ملقتش فترته التجريبية هنحطها -1 عشان السيستم ميفتكروش جديد ويديله 7 أيام!
             assignedTrialStart = backupDoc.data().trialStart || -1; 
-            showToast('أهلاً بعودتك! جاري استعادة تفاصيل اشتراكك...', 'info');
         } else if (!emailCheck.empty) {
-
             assignedVipExpiry = null; 
             assignedTrialStart = -1;
-            showToast('أهلاً بعودتك! لقد استهلكت الفترة التجريبية مسبقاً.', 'info');
-            } else {
+        } else {
             const timeData = await getSmartTime();
             assignedTrialStart = timeData.time || Date.now();
             assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
-            showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success'); // 🚀 الإشعار رجع هنا
+            isNewTrial = true; // 🚀 سجلنا إنه هيحتاج الإشعار
         }
-
 
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
+        let emailSent = false;
         try {
             await cred.user.sendEmailVerification();
-            showToast('📩 تم إرسال رسالة التفعيل بنجاح!', 'success');
+            emailSent = true;
         } catch (emailError) {}
 
         await db.collection('users').doc(cred.user.uid).set({
@@ -601,19 +598,28 @@ async function handleSignupCloud() {
 
         await auth.signOut();
 
-        setTimeout(() => {
-            showToast('✅ تم إنشاء الحساب! يرجى الذهاب لبريدك وتفعيل الحساب.', 'success');
-        }, 2000);
-
+        // 🚀 1. إغلاق النافذة وتفريغ الحقول فوراً (أول حاجة تحصل)
         document.getElementById('signupPasswordInput').value = '';
         document.getElementById('signupConfirmPasswordInput').value = '';
         document.getElementById('authModal').style.display = 'none';
+
+        // 🚀 2. إظهار الإشعارات بالترتيب المنطقي وبفاصل زمني مريح
+        showToast('✅ تم إنشاء الحساب بنجاح!', 'success');
+        
+        setTimeout(() => {
+            if (emailSent) showToast('📩 تم إرسال رسالة التفعيل! يرجى مراجعة بريدك.', 'info');
+        }, 1500);
+
+        setTimeout(() => {
+            if (isNewTrial) showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك!', 'success');
+        }, 3000);
 
     } catch (e) {
         if (e.code === 'auth/email-already-in-use') showToast('هذا البريد مسجل لدينا! يرجى تسجيل الدخول.', 'error');
         else showToast('خطأ: ' + e.message, 'error');
     }
 }
+
 
 // ==================================================
 // دالة تسجيل الدخول / إنشاء الحساب باستخدام جوجل
@@ -636,23 +642,21 @@ async function handleGoogleSignIn() {
             
             let assignedVipExpiry = null;
             let assignedTrialStart = null;
+            let isNewTrial = false;
 
-                        if (backupDoc.exists) {
+            if (backupDoc.exists) {
                 assignedVipExpiry = backupDoc.data().vipExpiry;
                 if (assignedVipExpiry === 'expired') assignedVipExpiry = null; 
-                // 🚀 نفس الحماية هنا لجوجل
                 assignedTrialStart = backupDoc.data().trialStart || -1; 
             } else if (!emailCheck.empty) {
-                // 🚀 التعديل هنا: null بدل 'expired'
                 assignedVipExpiry = null; 
                 assignedTrialStart = -1;
             } else {
                 const timeData = await getSmartTime();
                 assignedTrialStart = timeData.time || Date.now();
                 assignedVipExpiry = assignedTrialStart + (7 * 24 * 60 * 60 * 1000);
-                showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك بنجاح!', 'success'); // 🚀 الإشعار رجع هنا
+                isNewTrial = true;
             }
-
 
             await docRef.set({
                 name: user.displayName || "مستخدم جوجل",
@@ -668,10 +672,21 @@ async function handleGoogleSignIn() {
                 email: emailLower,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-        }
 
-        showToast('تم تسجيل الدخول بنجاح!', 'success');
-        document.getElementById('authModal').style.display = 'none';
+            // 🚀 إغلاق النافذة أولاً
+            document.getElementById('authModal').style.display = 'none';
+            
+            // 🚀 الترتيب المنطقي للرسايل
+            showToast('✅ تم إنشاء الحساب وتسجيل الدخول بجوجل بنجاح!', 'success');
+            
+            setTimeout(() => {
+                if (isNewTrial) showToast('🎉 تم تفعيل الفترة التجريبية (7 أيام) لحسابك!', 'success');
+            }, 1500);
+
+        } else {
+            document.getElementById('authModal').style.display = 'none';
+            showToast('تم تسجيل الدخول بنجاح!', 'success');
+        }
 
     } catch (error) {
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -679,6 +694,7 @@ async function handleGoogleSignIn() {
         }
     }
 }
+
 
 
 // ==================================================
