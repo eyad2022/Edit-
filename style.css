@@ -2381,26 +2381,94 @@ body.dark-mode .f-history-item.active {
     }
 }
 
+/* ========================================================
+   📱 الحل الجذري والنهائي لتجاوب نافذة الدخول على الموبايل
+   ======================================================== */
 @media (max-width: 900px) {
     .auth-container {
         width: 95%;
-        height: 650px;
-        border-radius: 35px;
+        height: auto !important; 
+        min-height: 500px;
+        max-height: 90vh !important; 
+        border-radius: 25px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: auto !important; 
+        overflow-x: hidden !important;
     }
 
     .auth-container .bg-panel {
-        display: none !important;
+        display: none !important; 
     }
 
+    /* 1. قسم النصوص الترحيبية (أجبرناه يظهر فوق بـ order: 1) */
     .auth-container .info-text {
+        order: 1 !important; /* 🚀 السحر هنا: نرفعه فوق الفورم */
+        position: relative !important; 
+        width: 100% !important;
+        height: auto !important;
+        padding: 50px 20px 25px !important; /* زودنا المسافة العلوية لـ 50px عشان زرار الإغلاق ✖ ميكنش فوق الكلام */
+        background: linear-gradient(135deg, #00e5ff 0%, #6600ff 100%) !important;
+        border-radius: 0 0 30px 30px !important;
+        display: none !important; 
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        z-index: 10 !important;
+        animation: fadeInMobile 0.4s ease forwards !important;
+    }
+
+    .auth-container .info-text h2 { font-size: 24px !important; margin-bottom: 10px !important; }
+    .auth-container .info-text p { font-size: 13px !important; margin-top: 5px !important; line-height: 1.6 !important; }
+
+    /* 2. قسم الفورم (أجبرناه ينزل تحت بـ order: 2) */
+    .auth-container .form-box {
+        order: 2 !important; /* 🚀 السحر هنا: ننزله تحت النص الترحيبي */
+        position: relative !important; 
+        width: 100% !important;
+        height: auto !important;
+        padding: 25px 20px 30px !important;
+        display: none !important; 
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        z-index: 5 !important;
+        animation: fadeInMobile 0.4s ease forwards !important;
+    }
+    
+    .auth-container .form-box h2 { font-size: 24px !important; margin-bottom: 20px !important; }
+
+    .auth-container .animation {
+        transform: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+    }
+
+    /* 3. التبديل النظيف */
+    .auth-container .info-text.login,
+    .auth-container .form-box.login {
+        display: flex !important;
+    }
+    .auth-container .info-text.register,
+    .auth-container .form-box.register {
         display: none !important;
     }
 
-    .auth-container .form-box {
-        width: 100% !important;
-        padding: 0 25px !important;
+    .auth-container.active .info-text.login,
+    .auth-container.active .form-box.login {
+        display: none !important;
+    }
+    .auth-container.active .info-text.register,
+    .auth-container.active .form-box.register {
+        display: flex !important;
+    }
+
+    @keyframes fadeInMobile {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 }
+
 
 .auth-container .form-box {
     position: absolute;
