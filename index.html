@@ -793,6 +793,69 @@
           <strong id="lmsTotalClasses" style="font-size: 28px; color: #0f172a;">0</strong>
         </div>
       </div>
+      <!-- 📱 إعدادات تواصل المعلم مع الطلاب -->
+      <div style="background: var(--ui-container, #ffffff); border: 1px solid var(--ui-border, #e2e8f0); border-radius: 16px; padding: 18px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(37, 211, 102, 0.12); color: #25d366; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;">
+            <i class='bx bxl-whatsapp'></i>
+          </div>
+          <div>
+            <h4 style="margin: 0 0 3px 0; font-size: 15px; color: var(--primary-color);">رقم الواتساب للتواصل مع طلابك</h4>
+            <span style="font-size: 12px; color: #64748b;">سيظهر زر تواصل مباشر لطلاب فصولك فقط على هذا الرقم</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex: 1; min-width: 260px; max-width: 420px;">
+          <input type="tel" id="teacherWhatsappInput" placeholder="اكتب رقمك (مثال: 01012345678)"
+            style="flex: 1; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--ui-border, #cbd5e1); background: var(--ui-input-bg, #f8fafc); color: inherit; font-family: inherit; font-size: 14px; outline: none; direction: ltr; text-align: right;" />
+          <button type="button" onclick="saveTeacherWhatsApp()"
+            style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; font-family: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
+            حفظ الرقم ✅
+          </button>
+        </div>
+      </div>
+            <!-- 📢 إعدادات شريط تنبيهات المعلم المخصصة للفصول -->
+      <div style="background: var(--ui-container, #ffffff); border: 1px solid var(--ui-border, #e2e8f0); border-radius: 18px; padding: 20px; margin-bottom: 25px; box-shadow: 0 6px 18px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 13px; background: rgba(245, 158, 11, 0.14); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 25px; flex-shrink: 0;">
+              <i class='bx bxs-megaphone'></i>
+            </div>
+            <div>
+              <h4 style="margin: 0 0 3px 0; font-size: 15.5px; color: var(--primary-color); font-weight: 900;">إرسال تنبيه لطلاب فصولك</h4>
+              <span style="font-size: 12px; color: #64748b;">اختر فصلاً واحداً، أو مجموعة فصول معاً، أو كل الفصول</span>
+            </div>
+          </div>
+          <span id="annSelectedCounter" style="font-size: 12px; font-weight: 800; background: rgba(99, 102, 241, 0.1); color: var(--primary-color); padding: 5px 12px; border-radius: 20px;">
+            جاري تحميل الفصول...
+          </span>
+        </div>
+
+        <!-- أزرار اختيار الفصول المستهدفة -->
+        <div id="annClassroomsSelector" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding: 12px; background: var(--ui-input-bg, #f8fafc); border: 1px dashed var(--ui-border, #cbd5e1); border-radius: 12px;">
+          <span style="font-size: 12.5px; color: #64748b;">جاري جلب قائمة فصولك...</span>
+        </div>
+
+        <!-- حقل كتابة التنبيه وأزرار النشر والمسح -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <input type="text" id="teacherAnnouncementInput" placeholder="اكتب نص التنبيه هنا (مثال: امتحان الوحدة الأولى غداً الساعة 8 مساءً)..."
+            style="flex: 1; min-width: 240px; padding: 11px 15px; border-radius: 11px; border: 1.5px solid var(--ui-border, #cbd5e1); background: var(--ui-input-bg, #f8fafc); color: inherit; font-family: inherit; font-size: 14px; outline: none;" />
+          
+          <button type="button" onclick="saveTeacherAnnouncement(false)"
+            style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; padding: 11px 20px; border-radius: 11px; font-weight: 800; font-family: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.28);">
+            نشر للفصول المحددة 📢
+          </button>
+
+          <button type="button" onclick="saveTeacherAnnouncement(true)" title="حذف التنبيه من الفصول المحددة وإعادتها للرسالة الافتراضية"
+            style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 11px 15px; border-radius: 11px; font-weight: 800; font-family: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;">
+            مسح التنبيه 🗑️
+          </button>
+        </div>
+
+        <!-- عرض سريع للتنبيهات النشطة حالياً في كل فصل -->
+        <div id="activeClassAnnouncementsList" style="margin-top: 12px; display: none; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--ui-border, #e2e8f0);"></div>
+      </div>
+
 
       <!-- شبكة الفصول الافتراضية -->
       <div id="classroomsGrid"
@@ -2309,5 +2372,259 @@
           class='bx bx-printer'></i> تطبيق وتصدير الملزمة الآن</button>
     </div>
   </div>
+    <script>
+    // دالة حفظ رقم واتساب المدرس في حسابه الشخصي فقط
+    async function saveTeacherWhatsApp() {
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert("⚠️ يرجى تسجيل الدخول بحساب المعلم أولاً!");
+        return;
+      }
+
+      const inputEl = document.getElementById("teacherWhatsappInput");
+      const cleanPhone = (inputEl ? inputEl.value : "").replace(/[^0-9]/g, "");
+
+      if (cleanPhone.length < 10) {
+        alert("⚠️ يرجى إدخال رقم واتساب صحيح (مثال: 01012345678)");
+        return;
+      }
+
+      try {
+        await firebase.firestore().collection("users").doc(user.uid).set({
+          whatsapp: cleanPhone
+        }, { merge: true });
+
+        if (typeof showToast === "function") {
+          showToast("✅ تم حفظ رقم الواتساب بنجاح لطلابك!", "success");
+        } else {
+          alert("✅ تم حفظ رقم الواتساب بنجاح! سيظهر الآن لطلابك.");
+        }
+      } catch (err) {
+        alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
+      }
+    }
+
+    // جلب الرقم المحفوظ تلقائياً عند فتح المدرس للصفحة
+    window.addEventListener("DOMContentLoaded", () => {
+      const waitFirebase = setInterval(() => {
+        if (typeof firebase !== "undefined" && firebase.apps.length > 0) {
+          clearInterval(waitFirebase);
+          firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+              try {
+                const doc = await firebase.firestore().collection("users").doc(user.uid).get();
+                if (doc.exists && doc.data().whatsapp) {
+                  const inputEl = document.getElementById("teacherWhatsappInput");
+                  if (inputEl) inputEl.value = doc.data().whatsapp;
+                }
+              } catch (e) {}
+            }
+          });
+        }
+      }, 300);
+    });
+    
+    let teacherAnnClassrooms = [];
+    let selectedAnnClassIds = new Set();
+    let annFirstLoadDone = false;
+
+    function renderAnnClassroomPills() {
+      const container = document.getElementById("annClassroomsSelector");
+      const counterEl = document.getElementById("annSelectedCounter");
+      const activeListEl = document.getElementById("activeClassAnnouncementsList");
+      if (!container) return;
+
+      if (teacherAnnClassrooms.length === 0) {
+        container.innerHTML = `<span style="font-size: 13px; color: #64748b;">لا توجد فصول حالياً — أنشئ فصلاً أولاً لتوجيه التنبيهات إليه.</span>`;
+        if (counterEl) counterEl.innerText = "0 فصول";
+        if (activeListEl) activeListEl.style.display = "none";
+        return;
+      }
+
+      const allSelected = selectedAnnClassIds.size === teacherAnnClassrooms.length;
+      if (counterEl) {
+        counterEl.innerText = allSelected
+          ? `محدد: كل الفصول (${teacherAnnClassrooms.length})`
+          : `محدد: ${selectedAnnClassIds.size} من ${teacherAnnClassrooms.length} فصل`;
+      }
+
+      // زر تحديد / إلغاء تحديد كل الفصول
+      let html = `
+        <button type="button" onclick="toggleAllAnnClassrooms()"
+          style="padding: 6px 13px; border-radius: 20px; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px;
+          background: ${allSelected ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : 'var(--ui-container, #ffffff)'};
+          color: ${allSelected ? '#ffffff' : 'var(--ui-text, #334155)'};
+          border: 1.5px solid ${allSelected ? 'transparent' : 'var(--ui-border, #cbd5e1)'};">
+          ${allSelected ? '✅ كل الفصول' : '🌐 تحديد كل الفصول'}
+        </button>
+      `;
+
+      // أزرار الفصول الفردية
+      teacherAnnClassrooms.forEach(cls => {
+        const isSelected = selectedAnnClassIds.has(cls.id);
+        const hasAnn = cls.announcement && cls.announcement.trim().length > 0;
+        html += `
+          <button type="button" onclick="toggleSingleAnnClassroom('${cls.id}')"
+            style="padding: 6px 13px; border-radius: 20px; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;
+            background: ${isSelected ? 'rgba(245, 158, 11, 0.16)' : 'var(--ui-container, #ffffff)'};
+            color: ${isSelected ? '#b45309' : 'var(--ui-text, #475569)'};
+            border: 1.5px solid ${isSelected ? '#f59e0b' : 'var(--ui-border, #cbd5e1)'};">
+            <span>${isSelected ? '☑️' : '⬜'}</span>
+            <span>${cls.name}</span>
+            ${hasAnn ? '<span title="يوجد تنبيه نشط لهذا الفصل" style="width:7px; height:7px; border-radius:50%; background:#10b981; display:inline-block;"></span>' : ''}
+          </button>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // عرض ملخص التنبيهات النشطة حالياً لكل فصل مع إمكانية تعديلها بضغطة
+      if (activeListEl) {
+        const classesWithAnn = teacherAnnClassrooms.filter(c => c.announcement && c.announcement.trim());
+        if (classesWithAnn.length > 0) {
+          activeListEl.style.display = "flex";
+          activeListEl.innerHTML = `<span style="font-size: 11.5px; font-weight: 800; color: #64748b; margin-bottom: 2px;">📌 التنبيهات النشطة حالياً (اضغط على أي تنبيه لتعديله):</span>` +
+            classesWithAnn.map(c => `
+              <div onclick="editClassroomAnn('${c.id}')" title="اضغط لتحميل هذا التنبيه وتعديله"
+                style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 12px; border-radius: 9px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); font-size: 12.5px; cursor: pointer;">
+                <span style="font-weight: 800; color: #b45309; white-space: nowrap;">🏫 ${c.name}:</span>
+                <span style="flex: 1; color: var(--ui-text, #334155); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.announcement}</span>
+                <span style="font-size: 11px; color: var(--primary-color); font-weight: 800;">تعديل ✏️</span>
+              </div>
+            `).join('');
+        } else {
+          activeListEl.style.display = "none";
+        }
+      }
+    }
+
+    function toggleAllAnnClassrooms() {
+      if (selectedAnnClassIds.size === teacherAnnClassrooms.length) {
+        selectedAnnClassIds.clear();
+      } else {
+        teacherAnnClassrooms.forEach(c => selectedAnnClassIds.add(c.id));
+      }
+      renderAnnClassroomPills();
+    }
+
+    function toggleSingleAnnClassroom(classId) {
+      if (selectedAnnClassIds.has(classId)) {
+        selectedAnnClassIds.delete(classId);
+      } else {
+        selectedAnnClassIds.add(classId);
+      }
+      renderAnnClassroomPills();
+    }
+
+    function editClassroomAnn(classId) {
+      const target = teacherAnnClassrooms.find(c => c.id === classId);
+      if (!target) return;
+      const inputEl = document.getElementById("teacherAnnouncementInput");
+      if (inputEl) {
+        inputEl.value = target.announcement || "";
+        inputEl.focus();
+      }
+      selectedAnnClassIds.clear();
+      selectedAnnClassIds.add(classId);
+      renderAnnClassroomPills();
+    }
+
+    // حفظ أو مسح التنبيه للفصول المحددة فقط
+    async function saveTeacherAnnouncement(clearMode = false) {
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert("⚠️ يرجى تسجيل الدخول بحساب المعلم أولاً!");
+        return;
+      }
+
+      if (selectedAnnClassIds.size === 0) {
+        const msg = "⚠️ اختر فصلاً واحداً على الأقل من القائمة، أو اضغط (تحديد كل الفصول).";
+        typeof showToast === "function" ? showToast(msg, "error") : alert(msg);
+        return;
+      }
+
+      const inputEl = document.getElementById("teacherAnnouncementInput");
+      const text = clearMode ? "" : (inputEl ? inputEl.value : "").trim();
+
+      if (!clearMode && !text) {
+        const msg = "⚠️ اكتب نص التنبيه أولاً، أو اضغط على زر (مسح التنبيه).";
+        typeof showToast === "function" ? showToast(msg, "error") : alert(msg);
+        return;
+      }
+
+      try {
+        const userRef = firebase.firestore().collection("users").doc(user.uid);
+        const snap = await userRef.get();
+        if (!snap.exists) return;
+
+        let classrooms = snap.data().classrooms || [];
+        let updatedCount = 0;
+
+        classrooms = classrooms.map(cls => {
+          if (selectedAnnClassIds.has(cls.id)) {
+            updatedCount++;
+            return { ...cls, announcement: text };
+          }
+          return cls;
+        });
+
+        await userRef.update({
+          classrooms: classrooms,
+          announcement: firebase.firestore.FieldValue.delete()
+        });
+
+        if (clearMode && inputEl) inputEl.value = "";
+
+        const successMsg = clearMode
+          ? `✅ تم مسح التنبيه عن ${updatedCount} فصل بنجاح!`
+          : `📢 تم نشر التنبيه لـ ${updatedCount} فصل بنجاح!`;
+
+        if (typeof showToast === "function") {
+          showToast(successMsg, "success");
+        } else {
+          alert(successMsg);
+        }
+      } catch (err) {
+        alert("❌ حدث خطأ أثناء الحفظ: " + err.message);
+      }
+    }
+
+    // مزامنة حية لفصول المعلم وتنبيهاتها
+    window.addEventListener("DOMContentLoaded", () => {
+      const waitAnnFirebase = setInterval(() => {
+        if (typeof firebase !== "undefined" && firebase.apps.length > 0) {
+          clearInterval(waitAnnFirebase);
+          firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+              firebase.firestore().collection("users").doc(user.uid).onSnapshot((doc) => {
+                if (doc.exists) {
+                  const data = doc.data();
+                  teacherAnnClassrooms = (data.classrooms || []).map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    announcement: c.announcement || ""
+                  }));
+
+                  // في أول فتح للصفحة فقط: نحدد كل الفصول افتراضياً لسهولة النشر السريع
+                  if (!annFirstLoadDone) {
+                    teacherAnnClassrooms.forEach(c => selectedAnnClassIds.add(c.id));
+                    annFirstLoadDone = true;
+                  } else {
+                    // تنظيف أي فصل تم حذفه
+                    const validIds = new Set(teacherAnnClassrooms.map(c => c.id));
+                    selectedAnnClassIds.forEach(id => {
+                      if (!validIds.has(id)) selectedAnnClassIds.delete(id);
+                    });
+                  }
+
+                  renderAnnClassroomPills();
+                }
+              });
+            }
+          });
+        }
+      }, 300);
+    });
+  </script>
 </body>
 </html>
