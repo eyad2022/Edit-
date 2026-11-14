@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بوابة الطالب - M&H Editor Pro</title>
+    <title>بوابة الطالب الذكية - M&H Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="icon.png" />
@@ -16,33 +16,35 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
     <style>
-        /* =======================================
-           🚀 الأساسيات ومنع أي قص أو تمدد عرضي
-           ======================================= */
+        /* =========================================================
+           🌌 SPATIAL CYBER-GLASS UI (360° FUTURISTIC REDESIGN)
+           ========================================================= */
         *, *::before, *::after {
             box-sizing: border-box;
         }
 
         :root {
-            --primary-color: #4f46e5;
-            --primary-light: #eef2ff;
-            --primary-dark: #312e81;
-            --accent-color: #06b6d4;
-            --secondary-color: #10b981;
-            --bg-color: #f8fafc;
-            --surface-color: #ffffff;
-            --text-main: #0f172a;
+            --bg-void: #050811;
+            --bg-elevated: rgba(15, 23, 42, 0.72);
+            --glass-surface: rgba(17, 25, 46, 0.68);
+            --glass-hover: rgba(30, 41, 75, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-border-glow: rgba(99, 102, 241, 0.55);
+            --neon-indigo: #6366f1;
+            --neon-violet: #8b5cf6;
+            --neon-cyan: #22d3ee;
+            --neon-emerald: #10b981;
+            --neon-amber: #f59e0b;
+            --neon-rose: #f43f5e;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
             --text-muted: #64748b;
-            --border-light: #e2e8f0;
-            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
-            --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
-            --shadow-lg: 0 20px 35px -10px rgba(79, 70, 229, 0.18);
         }
 
         html, body {
             font-family: 'Cairo', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: var(--bg-void);
+            color: var(--text-primary);
             margin: 0;
             padding: 0;
             width: 100%;
@@ -52,397 +54,716 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        /* خلفية الشبكة المستقبلية + إضاءات Aurora */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: radial-gradient(ellipse at center, black 35%, transparent 85%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 35%, transparent 85%);
+            pointer-events: none;
+            z-index: 0;
+        }
 
-        /* =======================================
-           1. شاشات الدخول وتجديد الاشتراك
-           ======================================= */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 85% 8%, rgba(99, 102, 241, 0.22), transparent 42%),
+                radial-gradient(circle at 12% 88%, rgba(34, 211, 238, 0.18), transparent 44%),
+                radial-gradient(circle at 50% 45%, rgba(139, 92, 246, 0.1), transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050811; }
+        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.45); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-indigo); }
+
+        /* =========================================================
+           1. شاشات الدخول وتجديد الاشتراك (Futuristic Portal)
+           ========================================================= */
         #authScreen, #renewalScreen {
             position: fixed; inset: 0; z-index: 999999;
-            background: radial-gradient(circle at top right, #e0e7ff, #f8fafc 60%, #e0f2fe);
+            background:
+                radial-gradient(circle at 80% 15%, rgba(99, 102, 241, 0.3), transparent 45%),
+                radial-gradient(circle at 20% 85%, rgba(34, 211, 238, 0.25), transparent 45%),
+                #050811;
             display: flex; justify-content: center; align-items: center; padding: 16px;
         }
         
         .auth-box {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(16px);
-            padding: 32px 24px; border-radius: 28px;
-            box-shadow: var(--shadow-lg); width: 100%; max-width: 410px;
-            text-align: center; border: 1px solid #ffffff;
+            background: rgba(15, 23, 42, 0.84);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            padding: 36px 28px; border-radius: 32px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            width: 100%; max-width: 430px;
+            text-align: center;
+            border: 1px solid rgba(99, 102, 241, 0.32);
             max-height: 94vh; overflow-y: auto;
+            position: relative;
         }
 
         .ui-input {
-            width: 100%; padding: 14px 16px; border: 2px solid var(--border-light); 
-            border-radius: 14px; font-size: 15px; font-family: inherit; 
-            margin-bottom: 14px; outline: none; transition: 0.25s;
-            background: #f8fafc; color: var(--text-main);
+            width: 100%; padding: 14px 16px;
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 15px; font-size: 14.5px; font-family: inherit; 
+            margin-bottom: 14px; outline: none; transition: all 0.25s ease;
+            background: rgba(5, 8, 17, 0.72); color: #f8fafc;
         }
-        .ui-input:focus { border-color: var(--primary-color); background: #ffffff; box-shadow: 0 0 0 4px var(--primary-light); }
+        .ui-input::placeholder { color: #64748b; }
+        .ui-input:focus { 
+            border-color: var(--neon-cyan); 
+            background: rgba(15, 23, 42, 0.95); 
+            box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15); 
+        }
         
         .btn {
-            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary-color), #6366f1);
-            color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800;
-            cursor: pointer; transition: 0.25s; font-family: inherit;
+            width: 100%; padding: 14px 20px; 
+            background: linear-gradient(135deg, var(--neon-indigo) 0%, var(--neon-violet) 55%, #0284c7 100%);
+            color: white; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 15px;
+            font-size: 15.5px; font-weight: 800;
+            cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); font-family: inherit;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 12px 28px -6px rgba(99, 102, 241, 0.55);
         }
-        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 24px -4px rgba(79, 70, 229, 0.5); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { 
+            transform: translateY(-2px); 
+            box-shadow: 0 18px 36px -6px rgba(34, 211, 238, 0.45);
+            filter: brightness(1.08);
+        }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-        /* =======================================
-           2. لوحة التحكم الشاملة (Modern LMS)
-           ======================================= */
-        .app-wrapper { display: none; width: 100%; min-height: 100vh; }
-        
-        /* القائمة الجانبية (Desktop) */
-        .sidebar {
-            width: 270px; background: var(--surface-color); 
-            border-left: 1px solid var(--border-light);
-            display: flex; flex-direction: column; padding: 24px 18px; 
-            z-index: 100; position: fixed; right: 0; top: 0; bottom: 0;
-        }
-        
-        .sidebar-logo {
-            font-size: 22px; font-weight: 900; color: var(--primary-color);
-            margin-bottom: 24px; display: flex; align-items: center; justify-content: center; gap: 10px;
-            padding-bottom: 18px; border-bottom: 1px solid var(--border-light);
-        }
-        
-        .sidebar-actions {
-            background: #f8fafc; padding: 16px; border-radius: 18px;
-            margin-bottom: 24px; border: 1px solid var(--border-light);
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        
-        .nav-item {
-            display: flex; align-items: center; gap: 14px; padding: 13px 16px;
-            color: var(--text-muted); text-decoration: none; font-weight: 700; 
-            border-radius: 14px; margin-bottom: 6px; cursor: pointer; 
-            transition: 0.25s; font-size: 15px;
-        }
-        .nav-item i { font-size: 22px; }
-        .nav-item:hover { background: #f1f5f9; color: var(--text-main); }
-        .nav-item.active { 
-            background: linear-gradient(135deg, var(--primary-color), #6366f1); 
-            color: #ffffff; box-shadow: 0 6px 15px rgba(79, 70, 229, 0.25); 
+        /* =========================================================
+           2. هيكل المنصة الجديد (Top HUD + Bento Grid + Floating Dock)
+           ========================================================= */
+        .app-wrapper {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
         }
 
-        /* المحتوى الرئيسي */
-        .main-content { 
-            flex: 1; padding: 32px; margin-right: 270px; width: calc(100% - 270px);
-        }
-        
-        .content-tab { display: none; flex-direction: column; gap: 20px; width: 100%; animation: fadeIn 0.35s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 📢 شريط تنبيهات المعلم */
-        .announcement-bar {
-            background: linear-gradient(90deg, #fffbeb, #fef3c7);
-            border: 1px solid #fde68a;
-            border-right: 5px solid #f59e0b;
-            border-radius: 16px;
-            padding: 12px 18px;
-            margin-bottom: 18px;
+        /* شريط القيادة العلوي (Top Command HUD) */
+        .top-command-hud {
+            position: sticky;
+            top: 14px;
+            width: calc(100% - 32px);
+            max-width: 1180px;
+            z-index: 500;
+            background: rgba(13, 19, 38, 0.78);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 22px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
-            color: #92400e;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            margin-top: 14px;
+        }
+
+        .hud-brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+        .hud-brand-icon {
+            width: 40px; height: 40px;
+            border-radius: 13px;
+            background: linear-gradient(135deg, var(--neon-indigo), var(--neon-cyan));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: #fff;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+        }
+        .hud-brand-title {
+            font-size: 18px;
+            font-weight: 900;
+            background: linear-gradient(90deg, #ffffff 0%, #c7d2fe 55%, #67e8f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.3px;
+        }
+        .hud-brand-sub {
+            font-size: 10.5px;
+            color: var(--neon-cyan);
+            font-weight: 800;
+            display: block;
+            margin-top: -2px;
+        }
+
+        .hud-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .hud-chip-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            padding: 8px 13px;
+            border-radius: 13px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .hud-chip-btn:hover {
+            background: rgba(99, 102, 241, 0.22);
+            border-color: var(--neon-indigo);
+            color: #fff;
+        }
+        .hud-chip-btn.danger {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.3);
+            color: #fda4af;
+        }
+        .hud-chip-btn.danger:hover {
+            background: rgba(244, 63, 94, 0.26);
+            color: #fff;
+        }
+
+        /* الحاوية الرئيسية بعرض كامل متوازن */
+        .main-content {
+            width: 100%;
+            max-width: 1180px;
+            padding: 22px 16px 115px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* شريط التنقل السفلي العائم (Floating Glass Dock - Desktop & Mobile) */
+        .floating-dock-wrapper {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 900;
+            width: auto;
+            max-width: calc(100% - 20px);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(13, 19, 38, 0.86);
+            backdrop-filter: blur(26px);
+            -webkit-backdrop-filter: blur(26px);
+            padding: 8px 10px;
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(99, 102, 241, 0.2);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 13.5px;
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+            position: relative;
+        }
+        .nav-item i {
+            font-size: 20px;
+            transition: 0.25s;
+        }
+        .nav-item:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--neon-indigo) 0%, var(--neon-violet) 60%, #0891b2 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.55);
+        }
+
+        .content-tab {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            animation: spatialReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes spatialReveal {
+            from { opacity: 0; transform: translateY(14px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* 📢 شريط تنبيهات المعلم بنبض راداري */
+        .announcement-bar {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(245, 158, 11, 0.38);
+            border-right: 5px solid var(--neon-amber);
+            border-radius: 22px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #fef3c7;
             font-size: 14px;
             font-weight: 700;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
             width: 100%;
         }
         .announcement-icon {
-            background: #f59e0b;
-            color: white;
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #050811;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
             flex-shrink: 0;
+            box-shadow: 0 0 22px rgba(245, 158, 11, 0.45);
+            animation: radarPulse 2.4s infinite;
+        }
+        @keyframes radarPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 18px rgba(245, 158, 11, 0.4); }
+            50% { transform: scale(1.07); box-shadow: 0 0 28px rgba(245, 158, 11, 0.7); }
+        }
+        .ann-live-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(245, 158, 11, 0.22); color: #fbbf24;
+            padding: 2px 10px; border-radius: 50px; font-size: 11px; font-weight: 900;
+            margin-bottom: 4px;
+        }
+        .ann-live-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: #fbbf24;
+            box-shadow: 0 0 8px #fbbf24;
         }
 
-        /* 🌟 بانر الترحيب العصري باسم الطالب */
+        /* 🌟 Bento Hero Deck (بطاقة القيادة التفاعلية) */
+        .bento-hero-grid {
+            display: grid;
+            grid-template-columns: 1.65fr 1fr;
+            gap: 16px;
+            width: 100%;
+        }
+
         .hero-banner {
-            background: linear-gradient(125deg, #1e1b4b 0%, #4338ca 55%, #0284c7 100%);
-            border-radius: 24px; padding: 28px 30px; color: white;
-            display: flex; justify-content: space-between; align-items: center; gap: 20px;
-            box-shadow: var(--shadow-lg); position: relative; overflow: hidden; width: 100%;
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.88) 0%, rgba(15, 23, 42, 0.9) 55%, rgba(8, 51, 68, 0.85) 100%);
+            backdrop-filter: blur(22px);
+            border-radius: 28px;
+            padding: 28px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            position: relative;
+            overflow: hidden;
         }
         .hero-banner::before {
-            content: ''; position: absolute; top: -40%; left: -10%; width: 260px; height: 260px;
-            background: rgba(255, 255, 255, 0.08); border-radius: 50%; pointer-events: none;
+            content: ''; position: absolute; top: -40%; left: -10%; width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none;
         }
         .hero-banner::after {
-            content: ''; position: absolute; bottom: -50%; right: 20%; width: 200px; height: 200px;
-            background: rgba(56, 189, 248, 0.15); border-radius: 50%; pointer-events: none;
+            content: ''; position: absolute; bottom: -45%; right: 10%; width: 240px; height: 240px;
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.28) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none;
         }
+
         .badges-row {
-            display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px;
         }
         .student-badge-pill {
             display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 5px 14px; border-radius: 50px; font-size: 12.5px; font-weight: 700;
-            color: #e0f2fe;
+            background: rgba(99, 102, 241, 0.22);
+            border: 1px solid rgba(129, 140, 248, 0.45);
+            padding: 5px 14px; border-radius: 50px; font-size: 12px; font-weight: 800;
+            color: #c7d2fe;
         }
         .sub-badge-pill {
             display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(16, 185, 129, 0.22); backdrop-filter: blur(8px);
+            background: rgba(16, 185, 129, 0.2);
             border: 1px solid rgba(52, 211, 153, 0.45);
-            padding: 5px 14px; border-radius: 50px; font-size: 12.5px; font-weight: 800;
-            color: #a7f3d0;
+            padding: 5px 14px; border-radius: 50px; font-size: 12px; font-weight: 800;
+            color: #6ee7b7;
         }
         .sub-badge-pill.warning {
-            background: rgba(245, 158, 11, 0.25);
-            border-color: rgba(251, 191, 36, 0.5);
+            background: rgba(245, 158, 11, 0.22);
+            border-color: rgba(251, 191, 36, 0.55);
             color: #fde68a;
         }
         .hero-name-highlight {
-            color: #fde047;
-            text-shadow: 0 2px 10px rgba(253, 224, 71, 0.3);
+            background: linear-gradient(90deg, #67e8f9, #a5b4fc, #fde047);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* بطاقة الحالة الرقمية الجانبية في Bento Grid */
+        .hero-telemetry-card {
+            background: var(--glass-surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 22px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+        .telemetry-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(5, 8, 17, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 15px;
+        }
+
+        /* عناوين الأقسام */
+        .section-heading {
+            color: var(--text-primary);
+            margin: 4px 0 0 0;
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+        .section-heading-icon {
+            width: 38px; height: 38px; border-radius: 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.14);
         }
 
         /* شبكة الكروت */
         .cards-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-            gap: 16px; width: 100%;
-        }
-
-        /* تنسيق الكروت المولدة من الـ JS */
-        .material-card {
-            background: var(--surface-color); padding: 20px !important; border-radius: 18px !important; 
-            box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); 
-            transition: 0.25s; display: flex; justify-content: space-between; align-items: center;
-            gap: 12px; width: 100% !important; max-width: 100% !important;
-        }
-        .material-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-        .material-card h3, .material-card h4 { font-size: 16px !important; font-weight: 800 !important; }
-        .material-card button, .material-card a { font-family: 'Cairo', sans-serif !important; border-radius: 12px !important; }
-        
-        .material-icon {
-            width: 48px; height: 48px; border-radius: 14px; display: flex; 
-            align-items: center; justify-content: center; font-size: 24px; color: white;
-        }
-
-        /* 🏆 لوحة شرف الأوائل (Leaderboard) */
-        .leaderboard-box {
-            background: var(--surface-color);
-            border-radius: 22px;
-            padding: 22px;
-            border: 1px solid var(--border-light);
-            box-shadow: var(--shadow-sm);
-            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
             width: 100%;
         }
-        .leaderboard-header {
+
+        /* الكروت الزجاجية التفاعلية */
+        .material-card {
+            background: var(--glass-surface) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            padding: 20px !important;
+            border-radius: 22px !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32) !important;
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-light);
+            gap: 14px;
+            width: 100% !important;
+            max-width: 100% !important;
+            color: var(--text-primary) !important;
+        }
+        .material-card:hover {
+            transform: translateY(-4px);
+            background: var(--glass-hover) !important;
+            border-color: var(--glass-border-glow) !important;
+            box-shadow: 0 20px 42px rgba(99, 102, 241, 0.22) !important;
+        }
+        .material-card h3, .material-card h4 {
+            color: #f8fafc !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
+        }
+        .material-card span {
+            color: #94a3b8 !important;
+        }
+        .material-card button, .material-card a {
+            font-family: 'Cairo', sans-serif !important;
+            border-radius: 13px !important;
+            transition: all 0.2s ease !important;
+        }
+        .material-card button:hover:not(:disabled), .material-card a:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .material-icon {
+            width: 50px; height: 50px; border-radius: 16px; display: flex;
+            align-items: center; justify-content: center; font-size: 24px; color: white;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        /* 🏆 لوحة شرف الأوائل (Holographic Leaderboard) */
+        .leaderboard-box {
+            background: var(--glass-surface);
+            backdrop-filter: blur(22px);
+            border-radius: 26px;
+            padding: 24px;
+            border: 1px solid rgba(251, 191, 36, 0.25);
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+            margin-top: 6px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .leaderboard-box::before {
+            content: ''; position: absolute; top: 0; right: 0; left: 0; height: 4px;
+            background: linear-gradient(90deg, #f59e0b, #fbbf24, #6366f1, #22d3ee);
+        }
+        .leaderboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px; margin-bottom: 18px;
+            padding-bottom: 14px; border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
         }
         .leaderboard-select {
-            padding: 8px 14px;
-            border-radius: 12px;
-            border: 1.5px solid var(--border-light);
-            background: #f8fafc;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--text-main);
-            outline: none;
-            cursor: pointer;
-            max-width: 100%;
+            padding: 9px 15px; border-radius: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(5, 8, 17, 0.8);
+            font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 13px;
+            color: #f8fafc; outline: none; cursor: pointer; max-width: 100%;
         }
         .rank-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: #f8fafc;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 16px; border-radius: 16px;
+            background: rgba(5, 8, 17, 0.55);
             margin-bottom: 10px;
-            border: 1px solid transparent;
-            transition: 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
         }
-        .rank-row.top-1 { background: linear-gradient(90deg, #fffbeb, #fef3c7); border-color: #fde68a; }
-        .rank-row.top-2 { background: linear-gradient(90deg, #f8fafc, #f1f5f9); border-color: #cbd5e1; }
-        .rank-row.top-3 { background: linear-gradient(90deg, #fff7ed, #ffedd5); border-color: #fed7aa; }
-        .rank-row.is-me { box-shadow: 0 0 0 2px var(--primary-color); }
+        .rank-row:hover { transform: translateX(-4px); border-color: rgba(255, 255, 255, 0.2); }
+        .rank-row.top-1 { background: linear-gradient(90deg, rgba(245, 158, 11, 0.22) 0%, rgba(15, 23, 42, 0.7) 100%); border-color: rgba(251, 191, 36, 0.5); }
+        .rank-row.top-2 { background: linear-gradient(90deg, rgba(148, 163, 184, 0.2) 0%, rgba(15, 23, 42, 0.7) 100%); border-color: rgba(203, 213, 225, 0.45); }
+        .rank-row.top-3 { background: linear-gradient(90deg, rgba(249, 115, 22, 0.2) 0%, rgba(15, 23, 42, 0.7) 100%); border-color: rgba(253, 186, 116, 0.45); }
+        .rank-row.is-me { box-shadow: 0 0 0 2px var(--neon-cyan), 0 8px 20px rgba(34, 211, 238, 0.25); }
         .rank-badge {
-            width: 34px; height: 34px; border-radius: 10px;
+            width: 38px; height: 38px; border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1) !important;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 15px; flex-shrink: 0;
+            font-weight: 900; font-size: 17px; flex-shrink: 0;
         }
 
         /* 📊 إحصائيات سجل الدرجات */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            width: 100%;
-            margin-bottom: 8px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%;
         }
         .stat-box {
-            background: var(--surface-color);
-            border: 1px solid var(--border-light);
-            border-radius: 18px;
-            padding: 16px 12px;
+            background: var(--glass-surface);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border);
+            border-radius: 22px;
+            padding: 20px 14px;
             text-align: center;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            transition: 0.25s;
         }
-        .stat-val { font-size: 22px; font-weight: 900; color: var(--primary-color); line-height: 1.2; }
-        .stat-lbl { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; }
+        .stat-box:hover { transform: translateY(-3px); border-color: var(--glass-border-glow); }
+        .stat-box:nth-child(1) { border-top: 4px solid var(--neon-indigo); }
+        .stat-box:nth-child(2) { border-top: 4px solid var(--neon-emerald); }
+        .stat-box:nth-child(3) { border-top: 4px solid var(--neon-amber); }
+        .stat-val { font-size: 26px; font-weight: 900; color: #a5b4fc; line-height: 1.2; }
+        .stat-lbl { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin-top: 5px; }
 
         /* 📋 مراجعة الإجابات التفصيلية */
         .review-box {
-            margin-top: 24px;
-            text-align: right;
-            display: none;
-            flex-direction: column;
-            gap: 14px;
-            border-top: 2px dashed var(--border-light);
+            margin-top: 20px; text-align: right; display: none;
+            flex-direction: column; gap: 14px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.16);
             padding-top: 20px;
         }
         .review-item {
-            background: #f8fafc;
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 16px;
+            background: rgba(5, 8, 17, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 18px;
+            color: #f8fafc;
         }
-        .review-item.correct { background: #f0fdf4; border-color: #bbf7d0; border-right: 5px solid #10b981; }
-        .review-item.wrong { background: #fef2f2; border-color: #fecaca; border-right: 5px solid #ef4444; }
-        .review-item.essay { background: #eff6ff; border-color: #bfdbfe; border-right: 5px solid #3b82f6; }
+        .review-item.correct { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.4); border-right: 5px solid #10b981; }
+        .review-item.wrong { background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.4); border-right: 5px solid #f43f5e; }
+        .review-item.essay { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.4); border-right: 5px solid #3b82f6; }
 
-        /* 💬 زر واتساب العائم للدعم السريع */
+        /* 💬 زر واتساب العائم */
         .whatsapp-float {
             position: fixed;
-            bottom: 24px;
-            left: 24px;
-            background: linear-gradient(135deg, #25d366, #128c7e);
+            bottom: 92px;
+            left: 22px;
+            background: linear-gradient(135deg, #25d366 0%, #059669 100%);
             color: white;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 50px;
             padding: 12px 18px;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 8px;
             font-family: 'Cairo', sans-serif;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13.5px;
             cursor: pointer;
-            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.35);
-            z-index: 990;
-            transition: 0.25s;
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45);
+            z-index: 890;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .whatsapp-float:hover { transform: translateY(-3px) scale(1.03); }
+        .whatsapp-float:hover { 
+            transform: translateY(-4px) scale(1.04); 
+            box-shadow: 0 18px 36px rgba(16, 185, 129, 0.6);
+        }
 
-        /* =======================================
-           3. شاشة الامتحان
-           ======================================= */
+        /* =========================================================
+           3. غرفة الامتحان المستقبلية (Focus HUD Chamber)
+           ========================================================= */
         .exam-container { 
-            margin: 30px auto; width: 92%; max-width: 820px; display: none; 
-            background: var(--surface-color); padding: 30px; border-radius: 24px;
-            box-shadow: var(--shadow-md); border-top: 6px solid var(--primary-color);
+            margin: 30px auto; width: 92%; max-width: 840px; display: none; 
+            background: rgba(13, 19, 38, 0.88);
+            backdrop-filter: blur(24px);
+            padding: 32px; border-radius: 28px;
+            box-shadow: 0 28px 65px rgba(0, 0, 0, 0.65);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-top: 5px solid var(--neon-cyan);
+            position: relative; z-index: 10;
         }
         .question-card { 
-            background: #f8fafc; border: 1px solid var(--border-light); 
-            padding: 20px; border-radius: 16px; margin-bottom: 18px;
+            background: rgba(5, 8, 17, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 22px; border-radius: 20px; margin-bottom: 18px;
+            transition: 0.2s;
         }
-        .question-title { font-weight: 800; font-size: 17px; margin-bottom: 14px; color: var(--text-main); line-height: 1.6; }
+        .question-card:hover { border-color: rgba(99, 102, 241, 0.4); }
+        .question-title { font-weight: 800; font-size: 17px; margin-bottom: 14px; color: #f8fafc; line-height: 1.65; }
         .option-label { 
-            display: flex; align-items: center; padding: 13px 16px; background: #ffffff; 
-            border: 2px solid var(--border-light); border-radius: 12px; margin-bottom: 10px; 
-            cursor: pointer; transition: 0.2s; font-weight: 700; font-size: 15px;
+            display: flex; align-items: center; padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.85); 
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px; margin-bottom: 10px; 
+            cursor: pointer; transition: all 0.2s ease; font-weight: 700; font-size: 15px;
+            color: #e2e8f0;
         }
-        .option-label:hover { border-color: var(--primary-color); background: var(--primary-light); }
-        .option-label input[type="radio"] { accent-color: var(--primary-color); width: 19px; height: 19px; margin-left: 12px; }
+        .option-label:hover { border-color: var(--neon-indigo); background: rgba(99, 102, 241, 0.14); }
+        .option-label:has(input:checked) {
+            border-color: var(--neon-cyan);
+            background: rgba(34, 211, 238, 0.14);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+        }
+        .option-label input[type="radio"] { accent-color: var(--neon-cyan); width: 19px; height: 19px; margin-left: 12px; }
         
-        .result-box { text-align: center; padding: 40px 24px; border-radius: 24px; margin: 30px auto; width: 92%; max-width: 680px; display: none; background: white; box-shadow: var(--shadow-md); }
+        .result-box { 
+            text-align: center; padding: 40px 26px; border-radius: 28px; 
+            margin: 30px auto; width: 92%; max-width: 700px; display: none; 
+            background: rgba(13, 19, 38, 0.9);
+            backdrop-filter: blur(24px);
+            box-shadow: 0 28px 65px rgba(0, 0, 0, 0.65); 
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            position: relative; z-index: 10;
+        }
 
         .timer-display {
             position: fixed; top: 18px; right: 18px;
-            background: rgba(255, 255, 255, 0.95); color: #ef4444;
+            background: rgba(15, 23, 42, 0.92); color: #fda4af;
             padding: 10px 20px; border-radius: 50px; font-weight: 900; font-size: 14px; 
-            border: 2px solid #fecaca; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.15); 
-            z-index: 9999999; display: none; direction: rtl; backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(244, 63, 94, 0.55);
+            box-shadow: 0 10px 28px rgba(244, 63, 94, 0.3); 
+            z-index: 9999999; display: none; direction: rtl; backdrop-filter: blur(12px);
         }
 
-        /* =======================================
-           4. تصميم الموبايل الاحترافي (Zero Overflow)
-           ======================================= */
-        .mobile-top-header { display: none; }
+        /* =========================================================
+           4. استجابة الموبايل المتكاملة (Zero Overflow)
+           ========================================================= */
+        @media (max-width: 820px) {
+            .bento-hero-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-telemetry-card {
+                display: none;
+            }
+        }
 
         @media (max-width: 768px) {
-            .mobile-top-header {
-                display: flex; justify-content: space-between; align-items: center;
-                background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
-                padding: 12px 14px; border-bottom: 1px solid var(--border-light);
-                position: fixed; top: 0; right: 0; left: 0; width: 100%; z-index: 999;
-            }
-            
-            /* شريط التنقل السفلي (5 تبويبات متناسقة) */
-            .sidebar { 
-                position: fixed; bottom: 0; right: 0; left: 0; top: auto; width: 100%; 
-                flex-direction: row; padding: 6px 4px; height: 68px;
-                border-radius: 22px 22px 0 0; box-shadow: 0 -6px 25px rgba(15, 23, 42, 0.08);
-                border-left: none; border-top: 1px solid var(--border-light);
-                background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px);
-            }
-            .sidebar-logo, .sidebar-actions { display: none; }
-            .sidebar-nav { display: flex; width: 100%; justify-content: space-around; align-items: center; }
-            .nav-item { 
-                flex-direction: column; gap: 2px; font-size: 10.5px; padding: 4px 2px; 
-                margin: 0; border-radius: 12px; flex: 1; text-align: center; justify-content: center;
-                background: transparent !important; color: var(--text-muted); box-shadow: none !important;
-                white-space: nowrap;
-            }
-            .nav-item i { font-size: 20px; padding: 4px 10px; border-radius: 16px; transition: 0.25s; }
-            .nav-item.active { color: var(--primary-color); font-weight: 800; }
-            .nav-item.active i { background: var(--primary-light); color: var(--primary-color); }
-
-            /* مساحة المحتوى في الموبايل */
-            .main-content { 
-                margin-right: 0; width: 100%; padding: 74px 14px 92px 14px;
-            }
-            
-            .hero-banner { 
-                flex-direction: column; align-items: flex-start; text-align: right; 
-                padding: 20px 18px; border-radius: 20px;
-            }
-            .hero-trophy-icon { display: none; }
-            .cards-grid { grid-template-columns: 1fr; }
-            .material-card { padding: 16px !important; }
-            .stats-grid { gap: 8px; }
-            .stat-val { font-size: 19px; }
-            
-            .whatsapp-float {
-                bottom: 80px;
-                left: 14px;
+            .top-command-hud {
+                top: 10px;
+                width: calc(100% - 20px);
                 padding: 10px 14px;
+                border-radius: 18px;
+                margin-top: 10px;
+            }
+            .hud-brand-title { font-size: 15.5px; }
+            .hud-brand-sub { display: none; }
+            .hud-chip-btn span { display: none; }
+            .hud-chip-btn { padding: 8px 10px; }
+
+            .floating-dock-wrapper {
+                bottom: 10px;
+                width: calc(100% - 16px);
+                max-width: 100%;
+            }
+            .sidebar-nav {
+                width: 100%;
+                justify-content: space-around;
+                padding: 6px 4px;
+                border-radius: 22px;
+                gap: 2px;
+            }
+            .nav-item {
+                flex-direction: column;
+                gap: 3px;
+                font-size: 10.5px;
+                padding: 6px 4px;
+                border-radius: 14px;
+                flex: 1;
+                justify-content: center;
+            }
+            .nav-item i { font-size: 19px; }
+
+            .main-content {
+                padding: 16px 12px 96px 12px;
+            }
+            .hero-banner {
+                padding: 20px 18px;
+                border-radius: 22px;
+            }
+            .cards-grid { grid-template-columns: 1fr; }
+            .stats-grid { gap: 8px; }
+            .stat-val { font-size: 20px; }
+
+            .whatsapp-float {
+                bottom: 84px;
+                left: 12px;
+                padding: 10px 15px;
                 font-size: 12.5px;
             }
-            
-            .exam-container { padding: 20px 16px; margin: 75px auto 25px auto; width: 94%; }
-            .timer-display { top: 72px !important; right: 14px !important; font-size: 13px; padding: 8px 14px; }
+            .exam-container { padding: 22px 16px; margin: 72px auto 25px auto; width: 94%; }
         }
 
         .toast { 
-            position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); 
-            background: #0f172a; color: white; padding: 12px 22px; border-radius: 50px; 
+            position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%); 
+            background: rgba(15, 23, 42, 0.96); color: white; padding: 12px 24px; border-radius: 50px; 
             font-weight: 700; font-size: 14px; display: none; z-index: 1000000; 
-            box-shadow: var(--shadow-lg); text-align: center; max-width: 90%;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.16);
+            text-align: center; max-width: 90%;
         }
         .anti-cheat-shield { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
         @media print { body { display: none !important; } }
@@ -451,33 +772,35 @@
 
 <body>
 
-    <div id="initialLoader" style="position: fixed; inset: 0; background: var(--bg-color); z-index: 99999999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <i class='bx bx-loader-alt bx-spin' style="font-size: 64px; color: var(--primary-color);"></i>
-        <h3 style="color: var(--text-main); margin-top: 15px; font-weight: 900;">جاري تجهيز بيئة التعلم...</h3>
+    <div id="initialLoader" style="position: fixed; inset: 0; background: #050811; z-index: 99999999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="width: 84px; height: 84px; border-radius: 26px; background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(34,211,238,0.2)); border: 1px solid rgba(34,211,238,0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(99, 102, 241, 0.35);">
+            <i class='bx bx-loader-alt bx-spin' style="font-size: 46px; color: #22d3ee;"></i>
+        </div>
+        <h3 style="color: #f8fafc; margin-top: 18px; font-weight: 900; letter-spacing: 0.5px;">جاري تشغيل بوابة التعلم الذكية...</h3>
     </div>
 
     <!-- 1️⃣ شاشة الدخول والتسجيل -->
     <div id="authScreen" style="display: none;">
         <div class="auth-box">
-            <div style="background: var(--primary-light); width: 74px; height: 74px; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
-                <i class='bx bxs-graduation' style="font-size: 42px; color: var(--primary-color);"></i>
+            <div style="background: linear-gradient(135deg, rgba(99,102,241,0.28), rgba(34,211,238,0.22)); border: 1px solid rgba(34,211,238,0.4); width: 80px; height: 80px; border-radius: 25px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; box-shadow: 0 0 32px rgba(99, 102, 241, 0.35);">
+                <i class='bx bxs-graduation' style="font-size: 46px; color: #22d3ee;"></i>
             </div>
-            <h2 style="margin: 0 0 6px 0; color: var(--text-main); font-weight: 900; font-size: 23px;">بوابة الطالب الذكية</h2>
-            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 22px 0;">سجّل دخولك للوصول إلى امتحاناتك وملازمك</p>
+            <h2 style="margin: 0 0 6px 0; color: #f8fafc; font-weight: 900; font-size: 24px;">بوابة الطالب الذكية</h2>
+            <p style="color: #94a3b8; font-size: 13.5px; margin: 0 0 22px 0;">سجّل دخولك للوصول إلى امتحاناتك وملازمك</p>
             
-            <div style="display: flex; gap: 8px; margin-bottom: 22px; background: #f1f5f9; padding: 5px; border-radius: 14px;">
-                <button id="tabLogin" onclick="switchAuthMode('login')" style="flex: 1; padding: 10px; border-radius: 10px; border: none; background: white; color: var(--primary-color); font-weight: 800; cursor: pointer; box-shadow: var(--shadow-sm); transition: 0.25s; font-family: inherit;">تسجيل الدخول</button>
-                <button id="tabRegister" onclick="switchAuthMode('register')" style="flex: 1; padding: 10px; border-radius: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;">تفعيل حساب جديد</button>
+            <div style="display: flex; gap: 6px; margin-bottom: 22px; background: rgba(5, 8, 17, 0.85); padding: 5px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.08);">
+                <button id="tabLogin" onclick="switchAuthMode('login')" style="flex: 1; padding: 10px; border-radius: 11px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;">تسجيل الدخول</button>
+                <button id="tabRegister" onclick="switchAuthMode('register')" style="flex: 1; padding: 10px; border-radius: 11px; border: none; background: transparent; color: #94a3b8; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;">تفعيل حساب جديد</button>
             </div>
 
             <div id="loginFormSection">
                 <input type="email" id="loginEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
                 <div style="position: relative; display: flex; align-items: center; margin-bottom: 14px;">
                     <input type="password" id="loginPass" class="ui-input" placeholder="كلمة المرور" style="margin-bottom: 0; padding-left: 42px;">
-                    <i class='bx bx-show toggle-password-btn' onclick="togglePassword('loginPass', this)" style="position: absolute; left: 14px; font-size: 22px; cursor: pointer; color: var(--text-muted); z-index: 10;"></i>
+                    <i class='bx bx-show toggle-password-btn' onclick="togglePassword('loginPass', this)" style="position: absolute; left: 14px; font-size: 22px; cursor: pointer; color: #94a3b8; z-index: 10;"></i>
                 </div>
                 <div style="text-align: right; margin-top: -6px; margin-bottom: 18px;">
-                    <a href="#" onclick="resetStudentPassword()" style="font-size: 13px; color: var(--primary-color); text-decoration: none; font-weight: 700;">نسيت كلمة المرور؟</a>
+                    <a href="#" onclick="resetStudentPassword()" style="font-size: 13px; color: #22d3ee; text-decoration: none; font-weight: 700;">نسيت كلمة المرور؟</a>
                 </div>
                 <button class="btn" onclick="studentLogin()">دخول للمنصة 🚀</button>
             </div>
@@ -487,61 +810,56 @@
                 <input type="email" id="regEmail" class="ui-input" placeholder="البريد الإلكتروني (جيميل)">
                 <div style="position: relative; display: flex; align-items: center; margin-bottom: 14px;">
                     <input type="password" id="regPass" class="ui-input" placeholder="كلمة مرور (6 أحرف أو أكثر)" style="margin-bottom: 0; padding-left: 42px;">
-                    <i class='bx bx-show toggle-password-btn' onclick="togglePassword('regPass', this)" style="position: absolute; left: 14px; font-size: 22px; cursor: pointer; color: var(--text-muted); z-index: 10;"></i>
+                    <i class='bx bx-show toggle-password-btn' onclick="togglePassword('regPass', this)" style="position: absolute; left: 14px; font-size: 22px; cursor: pointer; color: #94a3b8; z-index: 10;"></i>
                 </div>
-                <div style="border-top: 1px dashed var(--border-light); margin: 16px 0;"></div>
+                <div style="border-top: 1px dashed rgba(255,255,255,0.14); margin: 16px 0;"></div>
                 <input type="text" id="regClassCode" class="ui-input" placeholder="كود الفصل العام (مثال: C1X9P)" style="text-transform: uppercase;">
-                <input type="text" id="regActivationCode" class="ui-input" placeholder="كود التفعيل (من المعلم)" style="text-transform: uppercase; border-color: #f59e0b; background: #fffbeb;">
+                <input type="text" id="regActivationCode" class="ui-input" placeholder="كود التفعيل (من المعلم)" style="text-transform: uppercase; border-color: rgba(245, 158, 11, 0.55); background: rgba(245, 158, 11, 0.08);">
                 
-                <button class="btn" onclick="studentRegister()" style="background: linear-gradient(135deg, #10b981, #059669);">إنشاء وتفعيل الحساب ✅</button>
+                <button class="btn" onclick="studentRegister()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 24px -5px rgba(16, 185, 129, 0.45);">إنشاء وتفعيل الحساب ✅</button>
             </div>
         </div>
     </div>
 
     <!-- 🛑 شاشة انتهاء الاشتراك -->
     <div id="renewalScreen" style="display: none;">
-        <div class="auth-box" style="border-top: 6px solid #ef4444;">
-            <i class='bx bx-time-five' style="font-size: 58px; color: #ef4444; margin-bottom: 10px;"></i>
-            <h2 style="margin-top: 0; color: var(--text-main);">انتهى اشتراكك!</h2>
-            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 22px;">لقد انتهت مدة صلاحية اشتراكك في هذا الفصل. يرجى إدخال كود تفعيل جديد لمواصلة التعلم.</p>
-            <input type="text" id="renewalCodeInput" class="ui-input" placeholder="كود التفعيل الجديد" style="text-transform: uppercase; border-color: #ef4444; color: #ef4444; font-weight: bold; text-align: center; letter-spacing: 2px;">
-            <button class="btn" onclick="renewSubscription()" style="background: #ef4444; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">تجديد الاشتراك 🚀</button>
-            <button onclick="logoutStudent()" style="background: transparent; color: var(--text-muted); border: none; font-weight: bold; cursor: pointer; font-family: inherit;">تسجيل خروج مبدئياً</button>
+        <div class="auth-box" style="border-top: 5px solid #f43f5e;">
+            <i class='bx bx-time-five' style="font-size: 58px; color: #f43f5e; margin-bottom: 10px;"></i>
+            <h2 style="margin-top: 0; color: #f8fafc;">انتهى اشتراكك!</h2>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 22px;">لقد انتهت مدة صلاحية اشتراكك في هذا الفصل. يرجى إدخال كود تفعيل جديد لمواصلة التعلم.</p>
+            <input type="text" id="renewalCodeInput" class="ui-input" placeholder="كود التفعيل الجديد" style="text-transform: uppercase; border-color: #f43f5e; color: #fda4af; font-weight: bold; text-align: center; letter-spacing: 2px;">
+            <button class="btn" onclick="renewSubscription()" style="background: linear-gradient(135deg, #f43f5e, #e11d48); margin-bottom: 14px;">تجديد الاشتراك 🚀</button>
+            <button onclick="logoutStudent()" style="background: transparent; color: #94a3b8; border: none; font-weight: bold; cursor: pointer; font-family: inherit;">تسجيل خروج مبدئياً</button>
         </div>
     </div>
 
-    <!-- 2️⃣ لوحة التحكم الشاملة للطالب -->
+    <!-- 2️⃣ لوحة التحكم المستقبلية للطالب -->
     <div class="app-wrapper" id="studentDashboard">
         
-        <!-- شريط علوي للموبايل -->
-        <div class="mobile-top-header">
-            <div style="font-size: 17px; font-weight: 900; color: var(--primary-color); display: flex; align-items: center; gap: 6px;">
-                <i class='bx bxs-graduation' style="font-size: 22px;"></i> M&H Student
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button onclick="changeStudentPassword()" title="تغيير كلمة المرور" style="background: #eef2ff; color: var(--primary-color); border: 1px solid #c7d2fe; padding: 6px 10px; border-radius: 10px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 4px; font-family: inherit; cursor: pointer;">
-                    <i class='bx bx-lock-open-alt' style="font-size: 16px;"></i> كلمة المرور
-                </button>
-                <button onclick="logoutStudent()" title="تسجيل خروج" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 6px 10px; border-radius: 10px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 4px; font-family: inherit; cursor: pointer;">
-                    <i class='bx bx-log-out' style="font-size: 16px;"></i> خروج
-                </button>
-            </div>
-        </div>
-
-        <!-- القائمة الجانبية (كمبيوتر) / الشريط السفلي (موبايل) -->
-        <aside class="sidebar">
-            <div class="sidebar-logo"><i class='bx bxs-graduation'></i> M&H Student</div>
-            
-            <div class="sidebar-actions">
-                <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-align: center; margin-bottom: 4px;">إعدادات الحساب</span>
-                <button onclick="changeStudentPassword()" style="width: 100%; background: #ffffff; color: var(--primary-color); border: 1px solid #c7d2fe; padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 800; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class='bx bx-lock-open-alt' style="font-size: 17px;"></i> تغيير كلمة المرور
-                </button>
-                <button onclick="logoutStudent()" style="width: 100%; background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 800; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class='bx bx-log-out' style="font-size: 17px;"></i> تسجيل خروج
-                </button>
+        <!-- شريط القيادة العلوي (Floating Top HUD) -->
+        <header class="top-command-hud">
+            <div class="hud-brand">
+                <div class="hud-brand-icon"><i class='bx bxs-graduation'></i></div>
+                <div>
+                    <div class="hud-brand-title">M&H STUDENT OS</div>
+                    <span class="hud-brand-sub">NEXT-GEN LEARNING PORTAL</span>
+                </div>
             </div>
 
+            <div class="hud-controls">
+                <button onclick="changeStudentPassword()" title="تغيير كلمة المرور" class="hud-chip-btn">
+                    <i class='bx bx-lock-open-alt' style="font-size: 17px; color: #22d3ee;"></i>
+                    <span>كلمة المرور</span>
+                </button>
+                <button onclick="logoutStudent()" title="تسجيل خروج" class="hud-chip-btn danger">
+                    <i class='bx bx-log-out' style="font-size: 17px;"></i>
+                    <span>خروج</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- شريط التنقل السفلي العائم (Floating Glass Dock) -->
+        <div class="floating-dock-wrapper">
             <nav class="sidebar-nav">
                 <a class="nav-item active" id="navExams" onclick="switchTab('tabExams', this)"><i class='bx bx-laptop'></i> <span>الامتحانات</span></a>
                 <a class="nav-item" id="navPDFs" onclick="switchTab('tabPDFs', this)"><i class='bx bxs-file-pdf'></i> <span>الملازم</span></a>
@@ -549,47 +867,73 @@
                 <a class="nav-item" id="navHomework" onclick="switchTab('tabHomework', this)"><i class='bx bx-edit'></i> <span>الواجبات</span></a>
                 <a class="nav-item" id="navGrades" onclick="switchTab('tabGrades', this)"><i class='bx bx-bar-chart-alt-2'></i> <span>درجاتي</span></a>
             </nav>
-        </aside>
+        </div>
 
         <main class="main-content" id="mainDashboardContent">
             
-            <!-- 📢 شريط تنبيهات المعلم -->
+            <!-- 📢 شريط تنبيهات المعلم المخصص لكل فصل -->
             <div id="teacherAnnouncementBar" class="announcement-bar">
                 <div class="announcement-icon"><i class='bx bxs-megaphone'></i></div>
-                <div id="teacherAnnouncementText" style="line-height: 1.5;">أهلاً بك في فصلك الدراسي! تابع مواعيد الامتحانات والملازم الجديدة باستمرار.</div>
+                <div style="flex: 1;">
+                    <div class="ann-live-tag"><span class="ann-live-dot"></span> بث مباشر من معلمك</div>
+                    <div id="teacherAnnouncementText" style="line-height: 1.55;">أهلاً بك في فصلك الدراسي! تابع مواعيد الامتحانات والملازم الجديدة باستمرار.</div>
+                </div>
             </div>
 
-            <!-- 🌟 كارت الترحيب الشخصي + شارة الاشتراك -->
-            <div class="hero-banner" style="margin-bottom: 24px;">
-                <div style="z-index: 2;">
-                    <div class="badges-row">
-                        <div class="student-badge-pill">
-                            <i class='bx bxs-school'></i>
-                            <span id="displayClassName">الفصل الدراسي</span>
+            <!-- 🌟 Bento Hero Grid: بطاقة الترحيب + لوحة البيانات السريعة -->
+            <div class="bento-hero-grid">
+                <div class="hero-banner">
+                    <div style="z-index: 2;">
+                        <div class="badges-row">
+                            <div class="student-badge-pill">
+                                <i class='bx bxs-school'></i>
+                                <span id="displayClassName">الفصل الدراسي</span>
+                            </div>
+                            <div id="subscriptionBadge" class="sub-badge-pill" style="display: none;">
+                                <i class='bx bx-time-five'></i>
+                                <span id="subscriptionDaysText">باقي 30 يوم</span>
+                            </div>
                         </div>
-                        <div id="subscriptionBadge" class="sub-badge-pill" style="display: none;">
-                            <i class='bx bx-time-five'></i>
-                            <span id="subscriptionDaysText">باقي 30 يوم</span>
+                        <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 900; line-height: 1.4;">
+                            <span id="timeGreetingText">مرحباً</span> يا <span id="displayStuName" class="hero-name-highlight">بطل</span> 👋
+                        </h2>
+                        <p style="margin: 0; font-size: 13.5px; color: #cbd5e1; line-height: 1.65;">
+                            مساحتك الذكية للتفوق الدراسي.. كل امتحاناتك، ملازمك، وترتيبك في مكان واحد.
+                        </p>
+                    </div>
+                    <div style="width: 78px; height: 78px; border-radius: 24px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 2;">
+                        <i class='bx bx-trophy' style="font-size: 44px; color: #fde047; filter: drop-shadow(0 0 14px rgba(253, 224, 71, 0.5));"></i>
+                    </div>
+                </div>
+
+                <!-- بطاقة المؤشرات الفورية (Quick Telemetry Card) -->
+                <div class="hero-telemetry-card">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-size: 12px; font-weight: 800; color: #22d3ee; letter-spacing: 0.4px;">⚡ مؤشر الأداء السريع</span>
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="telemetry-row">
+                            <span style="font-size: 12.5px; color: #94a3b8; font-weight: 700;">حالة الحساب</span>
+                            <span style="font-size: 12.5px; color: #6ee7b7; font-weight: 900;">مُفعّل ومؤمّن 🛡️</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span style="font-size: 12.5px; color: #94a3b8; font-weight: 700;">الانتقال السريع</span>
+                            <button onclick="switchTab('tabGrades', document.getElementById('navGrades'))" style="background: rgba(99,102,241,0.25); color: #c7d2fe; border: 1px solid rgba(129,140,248,0.4); border-radius: 9px; padding: 3px 10px; font-family: inherit; font-size: 11.5px; font-weight: 800; cursor: pointer;">عرض درجاتي ↗</button>
                         </div>
                     </div>
-                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 900; line-height: 1.4;">
-                        مرحباً يا <span id="displayStuName" class="hero-name-highlight">بطل</span> 👋
-                    </h2>
-                    <p style="margin: 0; font-size: 14px; color: #e0e7ff; line-height: 1.6;">
-                        أهلاً بك في منصتك التعليمية.. استعد جيداً وحقق أعلى الدرجات! 🚀
-                    </p>
                 </div>
-                <i class='bx bx-trophy hero-trophy-icon' style="font-size: 75px; color: #fde047; opacity: 0.9; z-index: 2;"></i>
             </div>
 
             <!-- 1️⃣ تبويب الامتحانات + لوحة الشرف -->
             <div id="tabExams" class="content-tab" style="display: flex;">
-                <h3 style="color: var(--text-main); margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bx-list-check' style="color: var(--primary-color); font-size: 24px;"></i> الامتحانات المتاحة:
+                <h3 class="section-heading">
+                    <span class="section-heading-icon" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;"><i class='bx bx-list-check'></i></span>
+                    الامتحانات المتاحة:
                 </h3>
                 <div id="examsList" class="cards-grid">
-                    <div style="text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 30px;">
-                        <i class='bx bx-loader-alt bx-spin' style="font-size: 32px; color: var(--primary-color);"></i>
+                    <div style="text-align: center; color: var(--text-secondary); grid-column: 1 / -1; padding: 30px;">
+                        <i class='bx bx-loader-alt bx-spin' style="font-size: 32px; color: var(--neon-cyan);"></i>
                         <p style="margin-top: 8px; font-weight: 700;">جاري البحث عن الامتحانات...</p>
                     </div>
                 </div>
@@ -597,9 +941,11 @@
                 <!-- 🏆 لوحة شرف الأوائل -->
                 <div id="leaderboardSection" class="leaderboard-box" style="display: none;">
                     <div class="leaderboard-header">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <i class='bx bxs-crown' style="font-size: 26px; color: #f59e0b;"></i>
-                            <h3 id="leaderboardTitle" style="margin: 0; font-size: 17px; color: var(--text-main);">لوحة شرف الأوائل</h3>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(251, 191, 36, 0.4); color: #fbbf24; width: 40px; height: 40px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; font-size: 22px;">
+                                <i class='bx bxs-crown'></i>
+                            </span>
+                            <h3 id="leaderboardTitle" style="margin: 0; font-size: 17px; font-weight: 900; color: #f8fafc;">لوحة شرف الأوائل</h3>
                         </div>
                         <select id="leaderboardExamSelect" class="leaderboard-select" onchange="renderSelectedLeaderboard()"></select>
                     </div>
@@ -609,32 +955,36 @@
 
             <!-- 2️⃣ تبويب الملازم -->
             <div id="tabPDFs" class="content-tab">
-                <h3 style="color: var(--text-main); margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bxs-file-pdf' style="color: #ef4444; font-size: 24px;"></i> ملفات الشرح والملازم:
+                <h3 class="section-heading">
+                    <span class="section-heading-icon" style="background: rgba(244, 63, 94, 0.2); color: #fda4af;"><i class='bx bxs-file-pdf'></i></span>
+                    ملفات الشرح والملازم:
                 </h3>
                 <div id="pdfsList" class="cards-grid"></div>
             </div>
 
             <!-- 3️⃣ تبويب الفيديوهات -->
             <div id="tabVideos" class="content-tab">
-                <h3 style="color: var(--text-main); margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bx-video' style="color: #3b82f6; font-size: 24px;"></i> الفيديوهات التعليمية:
+                <h3 class="section-heading">
+                    <span class="section-heading-icon" style="background: rgba(34, 211, 238, 0.2); color: #67e8f9;"><i class='bx bx-video'></i></span>
+                    الفيديوهات التعليمية:
                 </h3>
                 <div id="videosList" class="cards-grid"></div>
             </div>
 
             <!-- 4️⃣ تبويب الواجبات -->
             <div id="tabHomework" class="content-tab">
-                <h3 style="color: var(--text-main); margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bx-edit' style="color: #f59e0b; font-size: 24px;"></i> الواجبات المنزلية:
+                <h3 class="section-heading">
+                    <span class="section-heading-icon" style="background: rgba(245, 158, 11, 0.2); color: #fcd34d;"><i class='bx bx-edit'></i></span>
+                    الواجبات المنزلية:
                 </h3>
                 <div id="homeworkList" class="cards-grid"></div>
             </div>
 
             <!-- 5️⃣ تبويب سجل درجاتي ومراجعة الإجابات -->
             <div id="tabGrades" class="content-tab">
-                <h3 style="color: var(--text-main); margin: 0 0 8px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bx-bar-chart-alt-2' style="color: var(--primary-color); font-size: 24px;"></i> سجل درجاتي ومستواي:
+                <h3 class="section-heading">
+                    <span class="section-heading-icon" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc;"><i class='bx bx-bar-chart-alt-2'></i></span>
+                    سجل درجاتي ومستواي:
                 </h3>
                 
                 <div id="gradesStatsSummary" class="stats-grid">
@@ -643,41 +993,44 @@
                         <div class="stat-lbl">امتحان مكتمل</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-val" id="statAvgPercent" style="color: #10b981;">0%</div>
+                        <div class="stat-val" id="statAvgPercent" style="color: #34d399;">0%</div>
                         <div class="stat-lbl">متوسط النسبة</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-val" id="statBestScore" style="color: #f59e0b;">-</div>
+                        <div class="stat-val" id="statBestScore" style="color: #fbbf24;">-</div>
                         <div class="stat-lbl">أعلى درجة</div>
                     </div>
                 </div>
 
                 <div id="gradesList" class="cards-grid"></div>
-                <div id="dashboardReviewBox" class="review-box" style="background: white; padding: 20px; border-radius: 20px; border: 1px solid var(--border-light);"></div>
+                <div id="dashboardReviewBox" class="review-box" style="background: var(--glass-surface); padding: 22px; border-radius: 22px; border: 1px solid var(--glass-border);"></div>
             </div>
         </main>
 
         <!-- 💬 زر واتساب سريع للتواصل مع المعلم -->
-        <button id="whatsappSupportBtn" class="whatsapp-float" onclick="contactTeacherWhatsApp()">
-            <i class='bx bxl-whatsapp' style="font-size: 22px;"></i>
+        <button id="whatsappSupportBtn" class="whatsapp-float" style="display: none;" onclick="contactTeacherWhatsApp()">
+            <i class='bx bxl-whatsapp' style="font-size: 21px;"></i>
             <span>تواصل مع المعلم</span>
         </button>
     </div>
 
-    <!-- 3️⃣ شاشة ورقة الامتحان -->
+    <!-- 3️⃣ شاشة ورقة الامتحان (Focus HUD Chamber) -->
     <div class="exam-container" id="examSection">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-light); padding-bottom: 16px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 16px; margin-bottom: 24px; gap: 12px; flex-wrap: wrap;">
             <div>
-                <h2 id="displayExamTitle" style="color: var(--primary-color); margin: 0 0 6px 0; font-size: 21px;">جاري التحميل...</h2>
-                <span id="displayExamStudentName" style="color: var(--text-muted); font-weight: 700; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; font-size: 13px;"></span>
+                <h2 id="displayExamTitle" style="color: #67e8f9; margin: 0 0 8px 0; font-size: 21px; font-weight: 900;">جاري التحميل...</h2>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span id="displayExamStudentName" style="color: #cbd5e1; font-weight: 700; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 4px 12px; border-radius: 20px; font-size: 12.5px;"></span>
+                    <span id="examProgressPill" style="color: #6ee7b7; font-weight: 800; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); padding: 4px 12px; border-radius: 20px; font-size: 12.5px;">تم حل: 0 / 0</span>
+                </div>
             </div>
-            <i class='bx bx-laptop' style="font-size: 36px; color: #cbd5e1;"></i>
+            <i class='bx bx-shield-quarter' style="font-size: 36px; color: #6366f1;"></i>
         </div>
         
         <div id="timerDisplay" class="timer-display"></div>
         <div id="questionsContainer"></div>
         
-        <button class="btn" onclick="submitExam()" style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 24px; font-size: 17px; padding: 16px;">
+        <button class="btn" onclick="submitExam()" style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 24px; font-size: 16.5px; padding: 16px; box-shadow: 0 12px 26px -5px rgba(16, 185, 129, 0.45);">
             <i class='bx bx-check-shield'></i> تسليم وإنهاء الاختبار
         </button>
     </div>
@@ -685,21 +1038,21 @@
     <!-- 4️⃣ شاشة النتيجة + مراجعة الإجابات -->
     <div class="result-box" id="resultSection">
         <i class='bx bx-check-circle' style="font-size: 80px; color: #10b981; margin-bottom: 10px;"></i>
-        <h2 style="color: var(--text-main); font-size: 24px; margin: 0;">تم التسليم بنجاح!</h2>
+        <h2 style="color: #f8fafc; font-size: 24px; margin: 0;">تم التسليم بنجاح!</h2>
         
-        <div id="scoreDisplay" style="display: none; margin-top: 24px; background: #f8fafc; padding: 24px; border-radius: 20px; border: 1px solid var(--border-light);">
-            <p style="font-size: 15px; font-weight: 700; color: var(--text-muted); margin: 0 0 8px 0;">نتيجتك النهائية هي:</p>
-            <div style="font-size: 48px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;" id="finalScoreText">0 / 0</div>
+        <div id="scoreDisplay" style="display: none; margin-top: 24px; background: rgba(5, 8, 17, 0.65); padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <p style="font-size: 15px; font-weight: 700; color: #94a3b8; margin: 0 0 8px 0;">نتيجتك النهائية هي:</p>
+            <div style="font-size: 48px; font-weight: 900; color: #22d3ee; direction: ltr; display: inline-block;" id="finalScoreText">0 / 0</div>
             <p id="feedbackText" style="font-weight: 800; font-size: 17px; margin-top: 12px;"></p>
         </div>
         
-        <div id="hiddenResultMsg" style="display: none; margin-top: 24px; color: #b45309; background: #fef3c7; padding: 18px; border-radius: 16px; font-weight: 700; border: 1px solid #fde68a;">
+        <div id="hiddenResultMsg" style="display: none; margin-top: 24px; color: #fde68a; background: rgba(245, 158, 11, 0.16); padding: 18px; border-radius: 16px; font-weight: 700; border: 1px solid rgba(251, 191, 36, 0.4);">
             النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.
         </div>
 
         <div id="examReviewContainer" class="review-box"></div>
         
-        <button class="btn" onclick="location.reload()" style="background: var(--primary-color); margin-top: 24px;">العودة للرئيسية</button>
+        <button class="btn" onclick="location.reload()" style="margin-top: 24px;">العودة للرئيسية</button>
     </div>
 
     <div class="toast" id="toastMsg"></div>
@@ -722,7 +1075,7 @@
 
         db.enablePersistence({synchronizeTabs:true}).catch(function(err) { console.log('خطأ في الكاش', err); });
         
-        // 🚀 محرك الوقت الفولاذي للطالب (Zero Trust Time Engine) - يدعم الاوفلاين ويصطاد التلاعب
+        // 🚀 محرك الوقت الفولاذي للطالب (Zero Trust Time Engine)
         async function getTrueTime() {
             let localTime = Date.now();
             let lastTrustedTime = parseInt(localStorage.getItem('mh_trusted_time')) || 0;
@@ -755,12 +1108,10 @@
                 return { time: realTime, valid: true };
             }
 
-            // 🚨 حماية الأوفلاين: منع الدخول لو مسح الذاكرة عشان يصفر العداد
             if (lastTrustedTime === 0) {
                 return { time: localTime, valid: false, msg: 'يرجى الاتصال بالإنترنت لمرة واحدة فقط لضبط وقت المنصة بشكل آمن.' };
             }
 
-            // 🚨 حماية الأوفلاين: لو رجع تاريخ التليفون لورا
             if (localTime < (lastTrustedTime - 60000)) {
                 return { time: localTime, valid: false, msg: '⛔ تم اكتشاف تلاعب في تاريخ الجهاز! يرجى ضبط الوقت الحقيقي.' };
             }
@@ -770,7 +1121,7 @@
         }
 
         // =========================================================================
-        // ✅ دالة التصحيح الذكية (تطابق ص/صح/صواب و خ/خطأ/غلط وتوحد الألف في الاختياري)
+        // ✅ دالة التصحيح الذكية
         // =========================================================================
         function normalizeAnswerValue(q, val) {
             if (val === undefined || val === null) return '';
@@ -868,11 +1219,11 @@
                 const watermarkText = `${stuName} - ${shortCode}`;
                 const wmDiv = document.createElement('div');
                 wmDiv.id = 'cheatWatermark';
-                wmDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; display: flex; flex-wrap: wrap; overflow: hidden; opacity: 0.08;`;
+                wmDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; display: flex; flex-wrap: wrap; overflow: hidden; opacity: 0.06;`;
                 for (let i = 0; i < 50; i++) {
                     const span = document.createElement('span');
                     span.innerText = watermarkText;
-                    span.style.cssText = `font-size: 24px; font-weight: bold; color: #000; transform: rotate(-30deg); margin: 40px; white-space: nowrap;`;
+                    span.style.cssText = `font-size: 24px; font-weight: bold; color: #ffffff; transform: rotate(-30deg); margin: 40px; white-space: nowrap;`;
                     wmDiv.appendChild(span);
                 }
                 document.body.appendChild(wmDiv);
@@ -988,7 +1339,7 @@
         let myStudentId = localStorage.getItem('mh_student_id'); let myName = localStorage.getItem('mh_student_name');
         let myClassCode = localStorage.getItem('mh_class_code'); let myTeacherId = localStorage.getItem('mh_teacher_id'); let myClassId = localStorage.getItem('mh_class_id');
         let myExpiryDate = null; let myServerTimeNow = Date.now();
-        let teacherWhatsAppNumber = "01155324374";
+        let teacherWhatsAppNumber = "";
         let cachedClassStudents = [];
         let cachedExamsMap = {};
         let cachedStudentResultsMap = {};
@@ -997,14 +1348,15 @@
         function showToast(msg, type = 'info') {
             const t = document.getElementById('toastMsg');
             t.innerText = msg;
-            t.style.background = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6';
+            t.style.borderColor = type === 'error' ? '#f43f5e' : type === 'success' ? '#10b981' : '#22d3ee';
+            t.style.background = type === 'error' ? 'rgba(136, 19, 55, 0.95)' : type === 'success' ? 'rgba(6, 78, 59, 0.95)' : 'rgba(15, 23, 42, 0.96)';
             t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 4000);
         }
 
         function switchTab(tabId, element) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
+            if (element) element.classList.add('active');
             document.querySelectorAll('.content-tab').forEach(el => el.style.display = 'none');
             document.getElementById(tabId).style.display = 'flex';
         }
@@ -1012,8 +1364,12 @@
         function switchAuthMode(mode) {
             document.getElementById('loginFormSection').style.display = mode === 'login' ? 'block' : 'none';
             document.getElementById('registerFormSection').style.display = mode === 'register' ? 'block' : 'none';
-            document.getElementById('tabLogin').style.cssText = mode === 'login' ? 'flex: 1; padding: 10px; border-radius: 10px; border: none; background: white; color: var(--primary-color); font-weight: 800; cursor: pointer; box-shadow: var(--shadow-sm); transition: 0.25s; font-family: inherit;' : 'flex: 1; padding: 10px; border-radius: 10px; border: none; background: transparent; color: #64748b; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;';
-            document.getElementById('tabRegister').style.cssText = mode === 'register' ? 'flex: 1; padding: 10px; border-radius: 10px; border: none; background: white; color: var(--primary-color); font-weight: 800; cursor: pointer; box-shadow: var(--shadow-sm); transition: 0.25s; font-family: inherit;' : 'flex: 1; padding: 10px; border-radius: 10px; border: none; background: transparent; color: #64748b; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;';
+            document.getElementById('tabLogin').style.cssText = mode === 'login'
+                ? 'flex: 1; padding: 10px; border-radius: 11px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;'
+                : 'flex: 1; padding: 10px; border-radius: 11px; border: none; background: transparent; color: #94a3b8; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;';
+            document.getElementById('tabRegister').style.cssText = mode === 'register'
+                ? 'flex: 1; padding: 10px; border-radius: 11px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;'
+                : 'flex: 1; padding: 10px; border-radius: 11px; border: none; background: transparent; color: #94a3b8; font-weight: 800; cursor: pointer; transition: 0.25s; font-family: inherit;';
         }
 
         function generateStrongFingerprint() {
@@ -1075,9 +1431,9 @@
                             document.getElementById('authScreen').style.display = 'flex';
                             document.querySelector('#authScreen .auth-box').innerHTML = `
                                 <i class='bx bx-shield-quarter' style="font-size: 60px; color: #f59e0b; margin-bottom: 10px;"></i>
-                                <h2 style="margin-top: 0; color: #1e293b;">أنت في صفحة الطلاب</h2>
-                                <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">أنت مسجل دخول حالياً بحساب (معلم / إدارة). يرجى الذهاب لصفحة المعلم، أو تسجيل الخروج من هنا.</p>
-                                <button class="btn" onclick="logoutStudent()" style="background: #ef4444;">تسجيل خروج للعودة</button>
+                                <h2 style="margin-top: 0; color: #f8fafc;">أنت في صفحة الطلاب</h2>
+                                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 25px;">أنت مسجل دخول حالياً بحساب (معلم / إدارة). يرجى الذهاب لصفحة المعلم، أو تسجيل الخروج من هنا.</p>
+                                <button class="btn" onclick="logoutStudent()" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">تسجيل خروج للعودة</button>
                             `;
                             return; 
                         }
@@ -1094,8 +1450,6 @@
                         }
 
                         const data = stuDoc.data();
-                        
-                        // 🚀 الفحص بالوقت الفولاذي
                         const timeData = await getTrueTime();
                         
                         if (!timeData.valid) {
@@ -1103,10 +1457,10 @@
                             document.getElementById('studentDashboard').style.display = 'none';
                             document.getElementById('authScreen').style.display = 'flex';
                             document.querySelector('#authScreen .auth-box').innerHTML = `
-                                <i class='bx bx-time-five' style="font-size: 60px; color: #ef4444; margin-bottom: 10px;"></i>
-                                <h2 style="margin-top: 0; color: #1e293b;">خطأ في الوقت</h2>
-                                <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">${timeData.msg}</p>
-                                <button class="btn" onclick="location.reload()" style="background: #3b82f6;">تحديث الصفحة 🔄</button>
+                                <i class='bx bx-time-five' style="font-size: 60px; color: #f43f5e; margin-bottom: 10px;"></i>
+                                <h2 style="margin-top: 0; color: #f8fafc;">خطأ في الوقت</h2>
+                                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 25px;">${timeData.msg}</p>
+                                <button class="btn" onclick="location.reload()">تحديث الصفحة 🔄</button>
                             `;
                             return; 
                         }
@@ -1247,8 +1601,6 @@
                 showToast('الأكواد سليمة، جاري إنشاء الحساب...', 'info');
 
                 const validityDays = actData.validityDays || 30; 
-                
-                // 🚀 الفحص بالوقت الصارم
                 const timeData = await getTrueTime();
                 if (!timeData.valid) {
                     return showToast(timeData.msg, 'error');
@@ -1309,8 +1661,6 @@
                 if (codeData.teacherId !== studentData.teacherId) return showToast('❌ هذا الكود ليس تابعاً لمدرسك!', 'error');
 
                 const validityDays = codeData.validityDays || 30;
-                
-                // 🚀 الفحص بالوقت الصارم
                 const timeData = await getTrueTime();
                 if (!timeData.valid) {
                     return showToast(timeData.msg, 'error');
@@ -1341,6 +1691,10 @@
             if (!myStudentId || !myTeacherId) return; 
             document.getElementById('displayStuName').innerText = myName;
 
+            const hr = new Date().getHours();
+            const greetEl = document.getElementById('timeGreetingText');
+            if (greetEl) greetEl.innerText = hr < 12 ? 'صباح التفوق' : 'مساء الإنجاز';
+
             try {
                 const [teacherSnap, examsSnap] = await Promise.all([
                     db.collection('users').doc(myTeacherId).get(),
@@ -1352,24 +1706,31 @@
                     let classrooms = teacherData.classrooms || [];
                     let myClass = classrooms.find(c => c.id === myClassId);
                     
-                    // رقم الواتساب (الافتراضي 01155324374 أو المسجل في بيانات المعلم)
+                    // جلب رقم واتساب المدرس الخاص بهذا الطالب فقط
                     const dbPhone = (myClass && myClass.whatsapp) || teacherData.whatsapp || teacherData.phone;
+                    const waBtn = document.getElementById('whatsappSupportBtn');
                     if (dbPhone && String(dbPhone).trim()) {
                         teacherWhatsAppNumber = String(dbPhone).trim();
+                        if (waBtn) waBtn.style.display = 'flex';
+                    } else {
+                        teacherWhatsAppNumber = "";
+                        if (waBtn) waBtn.style.display = 'none';
                     }
                     
-                    // تحديث شريط التنبيهات
-                    const customAnn = (myClass && myClass.announcement) || teacherData.announcement;
-                    if (customAnn && customAnn.trim()) {
-                        document.getElementById('teacherAnnouncementText').innerText = customAnn.trim();
-                    }
+                    // تحديث شريط التنبيهات من رسالة المعلم الخاصة بالفصل تحديداً
+                    const defaultAnn = 'أهلاً بك في فصلك الدراسي! تابع مواعيد الامتحانات والملازم الجديدة باستمرار.';
+                    const customAnn = (myClass && typeof myClass.announcement === 'string')
+                        ? myClass.announcement.trim()
+                        : (teacherData.announcement || '').trim();
+                    const annEl = document.getElementById('teacherAnnouncementText');
+                    if (annEl) annEl.innerText = customAnn || defaultAnn;
 
                     if (myClass) {
                         cachedClassStudents = myClass.students || [];
                         if(document.getElementById('displayClassName')) document.getElementById('displayClassName').innerText = myClass.name;
-                        renderMaterials('pdfsList', myClass.materials?.pdfs || [], '#ef4444', 'bxs-file-pdf');
-                        renderMaterials('videosList', myClass.materials?.videos || [], '#3b82f6', 'bx-video');
-                        renderMaterials('homeworkList', myClass.materials?.homework || [], '#f59e0b', 'bx-edit');
+                        renderMaterials('pdfsList', myClass.materials?.pdfs || [], 'linear-gradient(135deg, #f43f5e, #e11d48)', 'bxs-file-pdf');
+                        renderMaterials('videosList', myClass.materials?.videos || [], 'linear-gradient(135deg, #06b6d4, #0284c7)', 'bx-video');
+                        renderMaterials('homeworkList', myClass.materials?.homework || [], 'linear-gradient(135deg, #f59e0b, #d97706)', 'bx-edit');
                     }
                 }
 
@@ -1378,10 +1739,9 @@
                 cachedExamsMap = {};
                 leaderboardExamsList = [];
                 
-                // 🚀 الفحص بالوقت الصارم
                 const timeData = await getTrueTime();
                 if (!timeData.valid) {
-                    document.getElementById('examsList').innerHTML = `<p style="color:#ef4444; text-align: center; font-weight:bold;">${timeData.msg}</p>`;
+                    document.getElementById('examsList').innerHTML = `<p style="color:#fda4af; text-align: center; font-weight:bold;">${timeData.msg}</p>`;
                     return;
                 }
 
@@ -1397,29 +1757,28 @@
                         let btnHtml = ''; let cardStyle = '';
 
                         if (isExpired) {
-                            btnHtml = `<button disabled style="background: #fef2f2; color: #ef4444; border: 1px solid #ef4444; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-time-five'></i> منتهي</button>`;
-                            cardStyle = 'border-right: 5px solid #ef4444; opacity: 0.85; background: #fef2f2;';
+                            btnHtml = `<button disabled style="background: rgba(244, 63, 94, 0.16); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.45); padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: not-allowed; font-family: inherit;"><i class='bx bx-time-five'></i> منتهي</button>`;
+                            cardStyle = 'border-right: 4px solid #f43f5e !important; opacity: 0.85;';
                         } else {
-                            btnHtml = `<button id="btn-exam-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 25px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit;">بدء 🚀</button>`;
-                            cardStyle = 'border-right: 5px solid var(--primary-color);';
+                            btnHtml = `<button id="btn-exam-${doc.id}" onclick="startDashboardExam('${doc.id}')" style="background: linear-gradient(135deg, #6366f1, #8b5cf6, #0891b2); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 9px 22px; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit; box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);">بدء 🚀</button>`;
+                            cardStyle = 'border-right: 4px solid #22d3ee !important;';
                         }
                         
                         pendingResultChecks.push(doc.id); 
 
                         examsHtml += `
-                        <div class="material-card" id="exam-card-${doc.id}" style="${cardStyle} width: 100%; max-width: 100%;">
+                        <div class="material-card" id="exam-card-${doc.id}" style="${cardStyle}">
                             <div>
-                                <h3 style="margin: 0 0 5px 0; color: #1e293b;">${exam.title}</h3>
-                                <span style="font-size: 13px; color: #64748b;">${exam.endTime ? '⏱️ ينتهي: ' + new Date(exam.endTime).toLocaleString('ar-EG') : 'مفتوح دائماً'}</span>
+                                <h3 style="margin: 0 0 6px 0;">${exam.title}</h3>
+                                <span style="font-size: 12.5px;">${exam.endTime ? '⏱️ ينتهي: ' + new Date(exam.endTime).toLocaleString('ar-EG') : '🟢 متاح دائماً'}</span>
                             </div>
                             <div id="exam-btn-container-${doc.id}">${btnHtml}</div>
                         </div>`;
                     }
                 });
 
-                document.getElementById('examsList').innerHTML = examsHtml || '<p style="color:#94a3b8; text-align: center; grid-column: 1 / -1;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
+                document.getElementById('examsList').innerHTML = examsHtml || '<p style="color:#64748b; text-align: center; grid-column: 1 / -1;">لا توجد امتحانات مخصصة للفصل حالياً.</p>';
 
-                // جلب نتائج الطالب لكل الامتحانات وبناء سجل الدرجات
                 cachedStudentResultsMap = {};
                 await Promise.all(pendingResultChecks.map(async (examId) => {
                     try {
@@ -1432,15 +1791,13 @@
                             const card = document.getElementById(`exam-card-${examId}`);
                             if (btnContainer && card) {
                                 let reviewBtn = (examObj && examObj.showResults) 
-                                    ? `<button onclick="openDashboardReview('${examId}')" style="background: #eef2ff; color: var(--primary-color); border: 1px solid #c7d2fe; padding: 8px 12px; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit; font-size: 12.5px;"><i class='bx bx-show'></i> مراجعة</button>` 
+                                    ? `<button onclick="openDashboardReview('${examId}')" style="background: rgba(99, 102, 241, 0.22); color: #c7d2fe; border: 1px solid rgba(129, 140, 248, 0.45); padding: 8px 12px; border-radius: 12px; font-weight: 800; cursor: pointer; font-family: inherit; font-size: 12px;"><i class='bx bx-show'></i> مراجعة</button>` 
                                     : '';
                                 btnContainer.innerHTML = `<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
-                                    <button disabled style="background: #f1f5f9; color: #10b981; border: 1px solid #10b981; padding: 8px 12px; border-radius: 12px; font-weight: bold; cursor: not-allowed; font-family: inherit; font-size: 12.5px;"><i class='bx bx-check-double'></i> تم الامتحان</button>
+                                    <button disabled style="background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.45); padding: 8px 12px; border-radius: 12px; font-weight: bold; cursor: not-allowed; font-family: inherit; font-size: 12px;"><i class='bx bx-check-double'></i> مكتمل</button>
                                     ${reviewBtn}
                                 </div>`;
-                                card.style.borderRight = '5px solid #10b981';
-                                card.style.opacity = '0.95';
-                                card.style.background = '#f8fafc';
+                                card.style.borderRight = '4px solid #10b981';
                             }
                         }
                     } catch(e) {}
@@ -1449,7 +1806,7 @@
                 renderGradesHistory();
                 setupLeaderboardSection();
 
-            } catch (e) { document.getElementById('examsList').innerHTML = '<p style="color:#ef4444; text-align: center;">حدث خطأ في جلب البيانات.</p>'; }
+            } catch (e) { document.getElementById('examsList').innerHTML = '<p style="color:#fda4af; text-align: center;">حدث خطأ في جلب البيانات.</p>'; }
         }
 
         // 📊 بناء تبويب سجل الدرجات والإحصائيات
@@ -1461,7 +1818,7 @@
                 document.getElementById('statExamsCount').innerText = '0';
                 document.getElementById('statAvgPercent').innerText = '0%';
                 document.getElementById('statBestScore').innerText = '-';
-                gradesListEl.innerHTML = `<p style="color: #94a3b8; text-align: center; grid-column: 1 / -1; padding: 20px;">لم تقم بأداء أي امتحان بعد. ابدأ أول امتحان لك الآن! 🚀</p>`;
+                gradesListEl.innerHTML = `<p style="color: #64748b; text-align: center; grid-column: 1 / -1; padding: 20px;">لم تقم بأداء أي امتحان بعد. ابدأ أول امتحان لك الآن! 🚀</p>`;
                 return;
             }
 
@@ -1477,7 +1834,6 @@
                 const dateStr = res.submittedAt && res.submittedAt.toDate ? res.submittedAt.toDate().toLocaleDateString('ar-EG') : 'مكتمل';
 
                 if (exam.showResults) {
-                    // إعادة حساب الدرجة الصحيحة بدقة لعرضها حتى للامتحانات المسلمة سابقاً
                     const realQs = (exam.questions || []).filter(q => q.type !== 'heading');
                     let calcScore = res.score;
                     let calcTotal = res.total;
@@ -1499,35 +1855,35 @@
                         bestPercent = pct;
                         bestScoreLabel = `${calcScore}/${calcTotal}`;
                     }
-                    const barColor = pct >= 85 ? '#10b981' : pct >= 50 ? '#4f46e5' : '#ef4444';
+                    const barColor = pct >= 85 ? '#10b981' : pct >= 50 ? '#22d3ee' : '#f43f5e';
 
                     html += `
-                    <div class="material-card" style="flex-direction: column; align-items: stretch; border-right: 5px solid ${barColor};">
+                    <div class="material-card" style="flex-direction: column; align-items: stretch; border-right: 4px solid ${barColor} !important;">
                         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                             <div>
-                                <h4 style="margin: 0 0 4px 0; color: var(--text-main);">${exam.title}</h4>
-                                <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">📅 التاريخ: ${dateStr}</span>
+                                <h4 style="margin: 0 0 4px 0;">${exam.title}</h4>
+                                <span style="font-size: 12px; font-weight: 700;">📅 التاريخ: ${dateStr}</span>
                             </div>
                             <div style="text-align: left;">
-                                <span style="font-size: 20px; font-weight: 900; color: ${barColor}; direction: ltr; display: inline-block;">${calcScore} / ${calcTotal}</span>
-                                <span style="display: block; font-size: 11px; font-weight: 800; color: var(--text-muted);">${pct}%</span>
+                                <span style="font-size: 20px; font-weight: 900; color: ${barColor} !important; direction: ltr; display: inline-block;">${calcScore} / ${calcTotal}</span>
+                                <span style="display: block; font-size: 11px; font-weight: 800;">${pct}%</span>
                             </div>
                         </div>
-                        <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                        <div style="width: 100%; height: 7px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
                             <div style="width: ${pct}%; height: 100%; background: ${barColor}; border-radius: 10px;"></div>
                         </div>
-                        <button onclick="openDashboardReview('${examId}')" style="background: var(--primary-light); color: var(--primary-color); border: 1px solid #c7d2fe; padding: 9px; font-weight: 800; font-size: 13px; cursor: pointer;">
+                        <button onclick="openDashboardReview('${examId}')" style="background: rgba(99, 102, 241, 0.2); color: #c7d2fe; border: 1px solid rgba(129, 140, 248, 0.4); padding: 9px; font-weight: 800; font-size: 13px; cursor: pointer;">
                             <i class='bx bx-list-check'></i> مراجعة إجاباتي بالتفصيل
                         </button>
                     </div>`;
                 } else {
                     html += `
-                    <div class="material-card" style="border-right: 5px solid #f59e0b;">
+                    <div class="material-card" style="border-right: 4px solid #f59e0b !important;">
                         <div>
-                            <h4 style="margin: 0 0 4px 0; color: var(--text-main);">${exam.title}</h4>
-                            <span style="font-size: 12px; color: var(--text-muted);">📅 التاريخ: ${dateStr}</span>
+                            <h4 style="margin: 0 0 4px 0;">${exam.title}</h4>
+                            <span style="font-size: 12px;">📅 التاريخ: ${dateStr}</span>
                         </div>
-                        <span style="background: #fef3c7; color: #b45309; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 800;">🔒 مخفية من المعلم</span>
+                        <span style="background: rgba(245, 158, 11, 0.18); color: #fbbf24 !important; border: 1px solid rgba(251, 191, 36, 0.35); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 800;">🔒 مخفية</span>
                     </div>`;
                 }
             });
@@ -1556,8 +1912,8 @@
             });
 
             reviewBox.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <h3 style="margin:0; font-size:17px; color:var(--primary-color);">📋 نموذج مراجعة: ${exam.title}</h3>
-                <button onclick="document.getElementById('dashboardReviewBox').style.display='none'" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; padding:4px 10px; font-weight:800; cursor:pointer; font-family:inherit;">إغلاق ✖</button>
+                <h3 style="margin:0; font-size:17px; color:#22d3ee;">📋 نموذج مراجعة: ${exam.title}</h3>
+                <button onclick="document.getElementById('dashboardReviewBox').style.display='none'" style="background:rgba(244,63,94,0.2); color:#fda4af; border:1px solid rgba(244,63,94,0.4); border-radius:8px; padding:4px 10px; font-weight:800; cursor:pointer; font-family:inherit;">إغلاق ✖</button>
             </div>` + buildReviewHTML(items);
             reviewBox.style.display = 'flex';
             reviewBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1581,31 +1937,31 @@
 
                 if (item.type === 'essay') {
                     return `<div class="review-item essay">
-                        <div style="font-weight:800; margin-bottom:6px; color:#0f172a;">${item.num}. ${item.text.replace(/\\n/g, '<br>')}</div>
-                        <div style="font-size:13.5px; color:#1e40af; font-weight:700;">✍️ إجابتك: ${item.userAns || 'لم تتم الإجابة'}</div>
-                        <div style="font-size:12px; color:#3b82f6; margin-top:4px;">ℹ️ سؤال مقالي (يُصحح بواسطة المعلم)</div>
+                        <div style="font-weight:800; margin-bottom:6px; color:#f8fafc;">${item.num}. ${item.text.replace(/\\n/g, '<br>')}</div>
+                        <div style="font-size:13.5px; color:#93c5fd; font-weight:700;">✍️ إجابتك: ${item.userAns || 'لم تتم الإجابة'}</div>
+                        <div style="font-size:12px; color:#60a5fa; margin-top:4px;">ℹ️ سؤال مقالي (يُصحح بواسطة المعلم)</div>
                     </div>`;
                 }
 
                 const statusClass = item.isCorrect ? 'correct' : 'wrong';
                 const statusBadge = item.isCorrect 
-                    ? `<span style="color:#10b981; font-weight:900; font-size:13px;">✅ إجابة صحيحة</span>`
-                    : `<span style="color:#ef4444; font-weight:900; font-size:13px;">❌ إجابة خاطئة</span>`;
+                    ? `<span style="color:#34d399; font-weight:900; font-size:13px;">✅ إجابة صحيحة</span>`
+                    : `<span style="color:#fda4af; font-weight:900; font-size:13px;">❌ إجابة خاطئة</span>`;
 
                 return `<div class="review-item ${statusClass}">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
-                        <div style="font-weight:800; color:#0f172a; line-height:1.5;">${item.num}. ${item.text.replace(/\\n/g, '<br>')}</div>
+                        <div style="font-weight:800; color:#f8fafc; line-height:1.5;">${item.num}. ${item.text.replace(/\\n/g, '<br>')}</div>
                         <div style="flex-shrink:0;">${statusBadge}</div>
                     </div>
-                    <div style="font-size:13.5px; font-weight:700; color:${item.isCorrect ? '#047857' : '#b91c1c'};">
+                    <div style="font-size:13.5px; font-weight:700; color:${item.isCorrect ? '#6ee7b7' : '#fda4af'};">
                         إجابتك: ${getOptText(item.userAns)}
                     </div>
-                    ${!item.isCorrect ? `<div style="font-size:13.5px; font-weight:800; color:#047857; margin-top:4px;">✔️ الإجابة الصحيحة: ${getOptText(item.correctAns)}</div>` : ''}
+                    ${!item.isCorrect ? `<div style="font-size:13.5px; font-weight:800; color:#34d399; margin-top:4px;">✔️ الإجابة الصحيحة: ${getOptText(item.correctAns)}</div>` : ''}
                 </div>`;
             }).join('');
         }
 
-        // 🏆 لوحة شرف الأوائل (تدعم ترتيب الامتحان وتتحول تلقائياً لأوائل الفصل إذا كانت قواعد Firestore مقيدة)
+        // 🏆 لوحة شرف الأوائل
         function setupLeaderboardSection() {
             const lbSection = document.getElementById('leaderboardSection');
             const selectEl = document.getElementById('leaderboardExamSelect');
@@ -1640,7 +1996,7 @@
                 .slice(0, 5);
 
             if (scored.length === 0) {
-                listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin:10px 0;">لم يقم طلاب الفصل بأداء امتحانات مصححة بعد. كن الأول! 🚀</p>`;
+                listEl.innerHTML = `<p style="text-align:center; color:#94a3b8; font-size:13px; margin:10px 0;">لم يقم طلاب الفصل بأداء امتحانات مصححة بعد. كن الأول! 🚀</p>`;
                 return;
             }
 
@@ -1651,12 +2007,12 @@
                 return `
                 <div class="rank-row ${rankClass} ${isMeClass}">
                     <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
-                        <div class="rank-badge" style="background:white; box-shadow:var(--shadow-sm);">${medal}</div>
-                        <span style="font-weight:800; color:var(--text-main); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                            ${r.name || 'طالب'} ${r.id === myStudentId ? '<small style="color:var(--primary-color);">(أنت)</small>' : ''}
+                        <div class="rank-badge">${medal}</div>
+                        <span style="font-weight:800; color:#f8fafc; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${r.name || 'طالب'} ${r.id === myStudentId ? '<small style="color:#22d3ee;">(أنت)</small>' : ''}
                         </span>
                     </div>
-                    <span style="font-weight:900; color:var(--primary-color); font-size:15px; direction:ltr; flex-shrink:0;">${r.label}</span>
+                    <span style="font-weight:900; color:#22d3ee; font-size:15px; direction:ltr; flex-shrink:0;">${r.label}</span>
                 </div>`;
             }).join('');
         }
@@ -1666,11 +2022,11 @@
             const listEl = document.getElementById('leaderboardList');
             if (!examId || !listEl) return;
 
-            listEl.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted); font-size:13px;"><i class='bx bx-loader-alt bx-spin'></i> جاري ترتيب الأوائل...</div>`;
+            listEl.innerHTML = `<div style="text-align:center; padding:16px; color:#94a3b8; font-size:13px;"><i class='bx bx-loader-alt bx-spin'></i> جاري ترتيب الأوائل...</div>`;
             try {
                 const snap = await db.collection('online_exams').doc(examId).collection('results').get();
                 if (snap.empty) {
-                    listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin:10px 0;">لم يقم أحد بتسليم هذا الامتحان بعد. كن الأول! 🚀</p>`;
+                    listEl.innerHTML = `<p style="text-align:center; color:#94a3b8; font-size:13px; margin:10px 0;">لم يقم أحد بتسليم هذا الامتحان بعد. كن الأول! 🚀</p>`;
                     return;
                 }
 
@@ -1690,57 +2046,58 @@
                     return `
                     <div class="rank-row ${rankClass} ${isMeClass}">
                         <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
-                            <div class="rank-badge" style="background:white; box-shadow:var(--shadow-sm);">${medal}</div>
-                            <span style="font-weight:800; color:var(--text-main); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                ${r.studentName || 'طالب'} ${r.id === myStudentId ? '<small style="color:var(--primary-color);">(أنت)</small>' : ''}
+                            <div class="rank-badge">${medal}</div>
+                            <span style="font-weight:800; color:#f8fafc; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${r.studentName || 'طالب'} ${r.id === myStudentId ? '<small style="color:#22d3ee;">(أنت)</small>' : ''}
                             </span>
                         </div>
-                        <span style="font-weight:900; color:var(--primary-color); font-size:15px; direction:ltr; flex-shrink:0;">${r.score} / ${r.total}</span>
+                        <span style="font-weight:900; color:#22d3ee; font-size:15px; direction:ltr; flex-shrink:0;">${r.score} / ${r.total}</span>
                     </div>`;
                 }).join('');
             } catch (e) {
-                // في حالة تقييد قواعد Firestore لقراءة نتائج باقي الطلاب، يتم عرض أوائل الفصل تلقائياً
                 document.getElementById('leaderboardExamSelect').style.display = 'none';
                 renderClassStudentsLeaderboard();
             }
         }
 
-        // 💬 زر تواصل واتساب سريع برقمك (01155324374)
+        // 💬 زر تواصل واتساب سريع برقم المدرس الخاص بالطالب فقط
         function contactTeacherWhatsApp() {
-            let phone = String(teacherWhatsAppNumber || "01155324374").replace(/[^0-9]/g, '');
+            if (!teacherWhatsAppNumber) return;
+            let phone = String(teacherWhatsAppNumber).replace(/[^0-9]/g, '');
             if (phone.startsWith('01')) phone = '2' + phone;
-            const msg = encodeURIComponent(`السلام عليكم يا مستر، أنا الطالب (${myName || 'طالب'}) من فصل (${document.getElementById('displayClassName').innerText}) على منصة M&H.`);
+            const className = document.getElementById('displayClassName')?.innerText || '';
+            const msg = encodeURIComponent(`السلام عليكم يا مستر، أنا الطالب (${myName || 'طالب'}) من فصل (${className}) على منصة M&H.`);
             window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
         }
 
         function renderMaterials(containerId, items, color, icon) {
             const container = document.getElementById(containerId);
             if (items.length === 0) {
-                container.innerHTML = `<p style="color: #94a3b8; text-align: center; width: 100%; grid-column: 1 / -1; font-size: 13px;">لا توجد مواد مرفوعة في هذا القسم حالياً.</p>`;
+                container.innerHTML = `<p style="color: #64748b; text-align: center; width: 100%; grid-column: 1 / -1; font-size: 13px;">لا توجد مواد مرفوعة في هذا القسم حالياً.</p>`;
                 return;
             }
             let html = '';
             items.forEach(item => {
                 let actionBtnHtml = '';
                 if (item.isExamMode) {
-                    actionBtnHtml = `<button onclick="startDashboardExam('${item.url}')" style="background: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; white-space: nowrap;"><i class='bx bx-laptop'></i> بدء الواجب</button>`;
+                    actionBtnHtml = `<button onclick="startDashboardExam('${item.url}')" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; white-space: nowrap;"><i class='bx bx-laptop'></i> بدء الواجب</button>`;
                 } else {
                     let directUrl = item.url;
                     if (directUrl.includes('drive.google.com/file/d/')) {
                         const fileIdMatch = directUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                         if (fileIdMatch && fileIdMatch[1]) directUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[1]}`;
                     }
-                    let btnText = icon.includes('video') ? 'مشاهدة' : 'تنزيل / عرض';
+                    let btnText = icon.includes('video') ? 'مشاهدة' : 'فتح / تنزيل';
                     let btnIcon = icon.includes('video') ? 'bx-play-circle' : 'bx-cloud-download';
-                    actionBtnHtml = `<a href="${directUrl}" target="_blank" style="background: #f1f5f9; color: #475569; text-decoration: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid #cbd5e1; display: flex; align-items: center; gap: 5px; transition: 0.2s; white-space: nowrap;"><i class='bx ${btnIcon}'></i> ${btnText}</a>`;
+                    actionBtnHtml = `<a href="${directUrl}" target="_blank" style="background: rgba(255, 255, 255, 0.08); color: #e2e8f0; text-decoration: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; font-size: 13px; border: 1px solid rgba(255, 255, 255, 0.16); display: flex; align-items: center; gap: 5px; white-space: nowrap;"><i class='bx ${btnIcon}' style="color:#22d3ee;"></i> ${btnText}</a>`;
                 }
                 html += `
-                <div class="material-card" style="width: 100%; max-width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                    <div style="display: flex; align-items: center; gap: 15px; overflow: hidden;">
+                <div class="material-card">
+                    <div style="display: flex; align-items: center; gap: 14px; overflow: hidden;">
                         <div class="material-icon" style="background: ${color}; flex-shrink: 0;"><i class='bx ${icon}'></i></div>
                         <div style="overflow: hidden;">
-                            <h4 style="margin: 0 0 5px 0; color: #1e293b; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</h4>
-                            <span style="font-size: 11px; color: #64748b; font-weight: bold;">تاريخ النشر: ${item.date}</span>
+                            <h4 style="margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</h4>
+                            <span style="font-size: 11.5px; font-weight: 700;">📅 ${item.date}</span>
                         </div>
                     </div>
                     ${actionBtnHtml}
@@ -1772,8 +2129,6 @@
                 }
                 
                 let rawExamData = docSnap.data();
-                
-                // 🚀 الفحص بالوقت الصارم قبل فتح الامتحان
                 const timeData = await getTrueTime();
                 if (!timeData.valid) {
                     if(btn) { btn.innerHTML = originalText; btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
@@ -1791,8 +2146,7 @@
 
                 if (resultSnap.exists) {
                     if(btn) { 
-                        btn.innerHTML = `<i class='bx bx-check-double'></i> تم الامتحان`;
-                        btn.style.background = '#f1f5f9'; btn.style.color = '#10b981'; btn.style.border = '1px solid #10b981';
+                        btn.innerHTML = `<i class='bx bx-check-double'></i> مكتمل`;
                     }
                     return showToast('✋ لقد قمت بتسليم هذا الامتحان مسبقاً!', 'error');
                 }
@@ -1851,6 +2205,18 @@
             }, 1000);
         }
 
+        function updateExamProgressPill(totalCount) {
+            const pill = document.getElementById('examProgressPill');
+            if (!pill) return;
+            let answered = 0;
+            for (let i = 0; i < totalCount; i++) {
+                const radio = document.querySelector(`input[name="q_${i}"]:checked`);
+                const text = document.querySelector(`textarea[name="q_${i}"]`);
+                if (radio || (text && text.value.trim().length > 0)) answered++;
+            }
+            pill.innerText = `تم حل: ${answered} / ${totalCount}`;
+        }
+
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
             let html = '';
@@ -1864,17 +2230,18 @@
 
                 if (q.type === 'mcq' && q.options) {
                     q.options.forEach(opt => {
-                        html += `<label class="option-label"><input type="radio" name="q_${index}" value="${opt.l}"> (${opt.l}) ${opt.t}</label>`;
+                        html += `<label class="option-label"><input type="radio" name="q_${index}" value="${opt.l}" onchange="updateExamProgressPill(${realQuestions.length})"> (${opt.l}) ${opt.t}</label>`;
                     });
                 } else if (q.type === 'tf_inline') {
-                    html += `<label class="option-label"><input type="radio" name="q_${index}" value="ص"> صح</label>
-                             <label class="option-label"><input type="radio" name="q_${index}" value="خ"> خطأ</label>`;
+                    html += `<label class="option-label"><input type="radio" name="q_${index}" value="ص" onchange="updateExamProgressPill(${realQuestions.length})"> صح</label>
+                             <label class="option-label"><input type="radio" name="q_${index}" value="خ" onchange="updateExamProgressPill(${realQuestions.length})"> خطأ</label>`;
                 } else if (q.type === 'essay') {
-                    html += `<textarea name="q_${index}" class="ui-input" rows="3" placeholder="اكتب إجابتك هنا..."></textarea>`;
+                    html += `<textarea name="q_${index}" class="ui-input" rows="3" placeholder="اكتب إجابتك هنا..." oninput="updateExamProgressPill(${realQuestions.length})"></textarea>`;
                 }
                 html += `</div>`;
             });
             container.innerHTML = html;
+            updateExamProgressPill(realQuestions.length);
         }
 
         async function submitExam(isAuto = false) {
@@ -1904,7 +2271,7 @@
             document.getElementById('examSection').style.display = 'none';
             const resultSec = document.getElementById('resultSection');
             resultSec.style.display = 'block';
-            resultSec.innerHTML = `<i class='bx bx-loader-alt bx-spin' style="font-size: 80px; color: var(--primary-color);"></i><h2 style="color: #0f172a;">جاري إرسال وتصحيح الإجابات... ⏳</h2>`;
+            resultSec.innerHTML = `<i class='bx bx-loader-alt bx-spin' style="font-size: 80px; color: #22d3ee;"></i><h2 style="color: #f8fafc;">جاري إرسال وتصحيح الإجابات... ⏳</h2>`;
 
             try {
                 const result = await SecureExamEngine.gradeAndSave(studentAnswers, activeStudentId, myName, myTeacherId, myClassId);
@@ -1915,29 +2282,29 @@
 
                 if (result.showResults) {
                     let percentage = (result.correctCount / result.totalAutoGraded) * 100;
-                    let feedbackColor = percentage >= 85 ? "#10b981" : percentage >= 50 ? "#3b82f6" : "#ef4444";
-                    let feedbackText = percentage >= 85 ? "أداء ممتاز! 🌟" : percentage >= 50 ? "لقد اجتزت الاختبار 👍" : "تحتاج إلى مزيد من المذاكرة 📚";
+                    let feedbackColor = percentage >= 85 ? "#34d399" : percentage >= 50 ? "#22d3ee" : "#fda4af";
+                    let feedbackText = percentage >= 85 ? "أداء أسطوري! 🌟" : percentage >= 50 ? "لقد اجتزت الاختبار بنجاح 👍" : "تحتاج إلى مزيد من المذاكرة 📚";
 
                     scoreHtml = `
-                        <div style="margin-top: 20px; background: #f8fafc; padding: 24px; border-radius: 20px; border: 1px solid var(--border-light);">
-                            <p style="font-size: 16px; font-weight: bold; color: #475569; margin: 0 0 8px 0;">نتيجتك هي:</p>
-                            <div style="font-size: 48px; font-weight: 900; color: var(--primary-color); direction: ltr; display: inline-block;">${result.correctCount} / ${result.totalAutoGraded}</div>
+                        <div style="margin-top: 20px; background: rgba(5, 8, 17, 0.65); padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                            <p style="font-size: 16px; font-weight: bold; color: #94a3b8; margin: 0 0 8px 0;">نتيجتك هي:</p>
+                            <div style="font-size: 48px; font-weight: 900; color: #22d3ee; direction: ltr; display: inline-block;">${result.correctCount} / ${result.totalAutoGraded}</div>
                             <p style="font-weight: bold; margin-top: 10px; color: ${feedbackColor};">${feedbackText}</p>
                         </div>`;
 
                     if (result.reviewItems && result.reviewItems.length > 0) {
-                        reviewBtnHtml = `<button class="btn" onclick="const rb = document.getElementById('examReviewContainer'); rb.style.display = rb.style.display === 'flex' ? 'none' : 'flex';" style="background: #eef2ff; color: var(--primary-color); border: 1.5px solid #c7d2fe; box-shadow: none; margin-top: 16px;">
+                        reviewBtnHtml = `<button class="btn" onclick="const rb = document.getElementById('examReviewContainer'); rb.style.display = rb.style.display === 'flex' ? 'none' : 'flex';" style="background: rgba(99, 102, 241, 0.22); color: #c7d2fe; border: 1.5px solid rgba(129, 140, 248, 0.45); box-shadow: none; margin-top: 16px;">
                             <i class='bx bx-list-check'></i> مراجعة إجاباتي بالتفصيل
                         </button>`;
                         reviewContainerHtml = `<div id="examReviewContainer" class="review-box">${buildReviewHTML(result.reviewItems)}</div>`;
                     }
                 } else {
-                    scoreHtml = `<div id="hiddenResultMsg" style="margin-top: 20px; color: #b45309; background: #fef3c7; padding: 15px; border-radius: 14px; font-weight: bold;">النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.</div>`;
+                    scoreHtml = `<div id="hiddenResultMsg" style="margin-top: 20px; color: #fde68a; background: rgba(245, 158, 11, 0.16); padding: 15px; border-radius: 14px; font-weight: bold; border: 1px solid rgba(251, 191, 36, 0.4);">النتيجة مخفية حالياً. سيقوم معلمك بإبلاغك بدرجتك لاحقاً.</div>`;
                 }
 
-                resultSec.innerHTML = `<i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i><h2 style="color: #0f172a;">تم تسليم الامتحان بنجاح!</h2>${scoreHtml}${reviewBtnHtml}${reviewContainerHtml}<button class="btn" onclick="location.reload()" style="background: #3b82f6; margin-top: 20px;">العودة للرئيسية</button>`;
+                resultSec.innerHTML = `<i class='bx bx-check-circle' style="font-size: 80px; color: #10b981;"></i><h2 style="color: #f8fafc;">تم تسليم الامتحان بنجاح!</h2>${scoreHtml}${reviewBtnHtml}${reviewContainerHtml}<button class="btn" onclick="location.reload()" style="margin-top: 20px;">العودة للرئيسية</button>`;
             } catch (error) {
-                resultSec.innerHTML = `<i class='bx bx-error-circle' style="font-size: 80px; color: #ef4444;"></i><h2 style="color: #ef4444;">فشل إرسال النتيجة!</h2><p style="font-weight: bold; color: #475569;">${error.message}</p><button class="btn" onclick="submitExam(true)" style="background: #ef4444; margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>`;
+                resultSec.innerHTML = `<i class='bx bx-error-circle' style="font-size: 80px; color: #f43f5e;"></i><h2 style="color: #fda4af;">فشل إرسال النتيجة!</h2><p style="font-weight: bold; color: #94a3b8;">${error.message}</p><button class="btn" onclick="submitExam(true)" style="background: linear-gradient(135deg, #f43f5e, #e11d48); margin-top: 15px;">حاول الإرسال مرة أخرى 🔄</button>`;
             }
         }
 
@@ -1946,7 +2313,7 @@
             if (input.type === "password") {
                 input.type = "text";
                 icon.classList.replace('bx-show', 'bx-hide');
-                icon.style.color = 'var(--primary-color)';
+                icon.style.color = '#22d3ee';
             } else {
                 input.type = "password";
                 icon.classList.replace('bx-hide', 'bx-show');
