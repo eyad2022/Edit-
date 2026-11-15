@@ -1642,6 +1642,11 @@
         }
 
         function switchTab(tabId, element) {
+            if (myExpiryDate && getCurrentTrustedTime() >= myExpiryDate) {
+                document.getElementById('studentDashboard').style.display = 'none';
+                document.getElementById('renewalScreen').style.display = 'flex';
+                return;
+            }
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if (element) element.classList.add('active');
             document.querySelectorAll('.content-tab').forEach(el => el.style.display = 'none');
@@ -1832,7 +1837,7 @@
             }
         });
 
-        // ⏳ تحديث مفاعل عداد الاشتراك الحي باليوم والساعة والدقيقة والثانية (مؤمّن بمؤقت المعالج الداخلي)
+        // ⏳ تحديث مفاعل عداد الاشتراك الحي باليوم والساعة والدقيقة والثانية (يقفل تلقائياً فور الانتهاء)
         function updateSubscriptionBadge() {
             const badge = document.getElementById('subscriptionBadge');
             const textEl = document.getElementById('subscriptionDaysText');
@@ -1879,7 +1884,8 @@
                     if (textEl) textEl.innerText = 'باقي: 0 يوم | 00 ساعة | 00 دقيقة | 00 ثانية';
 
                     const examSec = document.getElementById('examSection');
-                    if (!examSec || examSec.style.display === 'none') {
+                    const isExamHidden = !examSec || window.getComputedStyle(examSec).display === 'none';
+                    if (isExamHidden) {
                         document.getElementById('studentDashboard').style.display = 'none';
                         document.getElementById('renewalScreen').style.display = 'flex';
                     }
