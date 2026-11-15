@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
@@ -1319,7 +1319,16 @@
 
         db.enablePersistence({synchronizeTabs:true}).catch(function(err) { console.log('خطأ في الكاش', err); });
         
-        // 🚀 محرك الوقت الفولاذي للطالب (Zero Trust Time Engine)
+        // 🚀 محرك الوقت الفولاذي للطالب (Zero Trust Monotonic Time Engine)
+        let trustedAnchorServerTime = 0;
+        let trustedAnchorPerfTime = 0;
+
+        function getCurrentTrustedTime() {
+            return trustedAnchorServerTime
+                ? trustedAnchorServerTime + (performance.now() - trustedAnchorPerfTime)
+                : Date.now();
+        }
+
         async function getTrueTime() {
             let localTime = Date.now();
             let lastTrustedTime = parseInt(localStorage.getItem('mh_trusted_time')) || 0;
@@ -1349,6 +1358,8 @@
 
             if (realTime) {
                 localStorage.setItem('mh_trusted_time', realTime);
+                trustedAnchorServerTime = realTime;
+                trustedAnchorPerfTime = performance.now();
                 return { time: realTime, valid: true };
             }
 
@@ -1361,6 +1372,10 @@
             }
 
             localStorage.setItem('mh_trusted_time', localTime);
+            if (!trustedAnchorServerTime) {
+                trustedAnchorServerTime = localTime;
+                trustedAnchorPerfTime = performance.now();
+            }
             return { time: localTime, valid: true };
         }
 
@@ -1608,7 +1623,6 @@
 
         let timerInterval = null;
         let subscriptionTimerInterval = null;
-        let serverTimeOffset = 0;
         let activeStudentId = "";
         let myStudentId = localStorage.getItem('mh_student_id'); let myName = localStorage.getItem('mh_student_name');
         let myClassCode = localStorage.getItem('mh_class_code'); let myTeacherId = localStorage.getItem('mh_teacher_id'); let myClassId = localStorage.getItem('mh_class_id');
@@ -1776,7 +1790,8 @@
                         myClassCode = data.classCode;
                         myExpiryDate = data.expiryDate || null;
                         myServerTimeNow = timeData.time;
-                        serverTimeOffset = timeData.time - Date.now();
+                        trustedAnchorServerTime = timeData.time;
+                        trustedAnchorPerfTime = performance.now();
                         
                         localStorage.setItem('mh_student_id', myStudentId);
                         localStorage.setItem('mh_student_name', myName);
@@ -1817,7 +1832,7 @@
             }
         });
 
-        // ⏳ تحديث مفاعل عداد الاشتراك الحي باليوم والساعة والدقيقة والثانية
+        // ⏳ تحديث مفاعل عداد الاشتراك الحي باليوم والساعة والدقيقة والثانية (مؤمّن بمؤقت المعالج الداخلي)
         function updateSubscriptionBadge() {
             const badge = document.getElementById('subscriptionBadge');
             const textEl = document.getElementById('subscriptionDaysText');
@@ -1847,7 +1862,7 @@
             const pods = [document.getElementById('podDays'), document.getElementById('podHours'), document.getElementById('podMins'), document.getElementById('podSecs')];
 
             const renderTick = () => {
-                const nowTrusted = Date.now() + serverTimeOffset;
+                const nowTrusted = getCurrentTrustedTime();
                 myServerTimeNow = nowTrusted;
                 const diffMs = myExpiryDate - nowTrusted;
 
@@ -2470,7 +2485,7 @@
         }
 
         async function startDashboardExam(examCode) {
-            if (myExpiryDate && (Date.now() + serverTimeOffset) > myExpiryDate) {
+            if (myExpiryDate && getCurrentTrustedTime() > myExpiryDate) {
                 document.getElementById('studentDashboard').style.display = 'none';
                 document.getElementById('renewalScreen').style.display = 'flex';
                 return showToast('⛔ انتهى اشتراكك! يرجى تجديد الاشتراك أولاً.', 'error');
@@ -2544,12 +2559,13 @@
             timerDisplay.style.display = 'block'; 
 
             const timeData = await getTrueTime();
-            let safeTime = timeData.valid ? timeData.time : Date.now(); 
+            if (!timeData.valid && !trustedAnchorServerTime) {
+                trustedAnchorServerTime = Date.now();
+                trustedAnchorPerfTime = performance.now();
+            }
 
-            let diff = endTimeMillis - safeTime;
-
-            timerInterval = setInterval(() => {
-                diff -= 1000; 
+            const updateExamTimerTick = () => {
+                const diff = endTimeMillis - getCurrentTrustedTime();
 
                 if (diff <= 0) {
                     clearInterval(timerInterval);
@@ -2571,7 +2587,10 @@
                     
                     timerDisplay.innerHTML = `⏳ متبقي: ${timeString}${minsStr}:${secsStr}`;
                 }
-            }, 1000);
+            };
+
+            updateExamTimerTick();
+            timerInterval = setInterval(updateExamTimerTick, 1000);
         }
 
         function updateExamProgressPill(totalCount) {
